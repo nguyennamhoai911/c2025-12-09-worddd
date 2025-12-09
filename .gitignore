@@ -1,0 +1,36 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment variables (Bảo mật - Không bao giờ up cái này)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.DS_Store
+Thumbs.db
+
+# Docker volumes (Nếu có mount trong thư mục)
+postgres_data/
+
+# Prisma generated (Optional, thường thì nên ignore client gen ra)
+/apps/backend/prisma/migrations/

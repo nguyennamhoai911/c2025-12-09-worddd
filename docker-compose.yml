@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Database chính (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: vocab_db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: vocab_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  # Redis (Dùng cho hàng đợi AI Queue sau này)
+  redis:
+    image: redis:alpine
+    container_name: vocab_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+volumes:
+  postgres_data:

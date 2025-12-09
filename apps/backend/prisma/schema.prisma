@@ -1,0 +1,52 @@
+// apps/backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Bảng User (Người dùng)
+model User {
+  id        String      @id @default(uuid()) // UUID an toàn hơn ID số tự tăng
+  email     String      @unique
+  password  String      // Sẽ lưu Hash password (không lưu plain text)
+  name      String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  // Relation: Một User có nhiều từ vựng
+  vocabItems VocabItem[]
+
+  @@map("users") // Tên bảng trong DB là 'users'
+}
+
+// 2. Bảng VocabItem (Từ vựng)
+model VocabItem {
+  id            String   @id @default(uuid())
+  word          String
+  meaning       String?  // Nghĩa chính
+  context       String?  // Ngữ cảnh câu văn (lấy từ Extension)
+  example       String?  // Ví dụ (AI generate hoặc lấy từ web)
+  
+  // Multimedia (Lưu link từ S3 hoặc Google Image)
+  imageUrl      String?  @map("image_url")
+  audioUrl      String?  @map("audio_url")
+  
+  // Tracking học tập
+  masteryLevel  Int      @default(0) @map("mastery_level") // 0-5
+  tags          String[] // Array các tag: ["IELTS", "Noun", "Hard"]
+  
+  // Relation Fields (Kết nối với User)
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id])
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt      @map("updated_at")
+
+  @@index([userId]) // Index để search theo user nhanh hơn
+  @@map("vocab_items")
+}
