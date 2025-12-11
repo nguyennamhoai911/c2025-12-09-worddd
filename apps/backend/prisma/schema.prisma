@@ -31,23 +31,24 @@ model User {
 
 model VocabItem {
   id String @id @default(uuid())
-  
+
   // --- CÁC CỘT KHỚP VỚI EXCEL ---
-  topic         String?   // Topic
-  word          String    // Word (Bắt buộc)
-  partOfSpeech  String?   @map("part_of_speech") // Part of speech
-  pronunciation String?   // Pronunciation
-  meaning       String?   // Meaning
-  example       String?   // Example
-  relatedWords  String?   @map("related_words") // Related words
-  occurrence    Int?      @default(1) // Occurrence
+  topic         String? // Topic
+  word          String // Word (Bắt buộc)
+  partOfSpeech  String? @map("part_of_speech") // Part of speech
+  pronunciation String? // Pronunciation
+  meaning       String? // Meaning
+  example       String? // Example
+  relatedWords  String? @map("related_words") // Related words
+  occurrence    Int?    @default(1)
+  isStarred     Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
 
   // --- CÁC CỘT HỆ THỐNG (Bắt buộc phải giữ) ---
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])
 
   // Map cột "Time" trong Excel vào createdAt
-  createdAt DateTime @default(now()) @map("created_at") 
+  createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Xóa các trường cũ không dùng nữa (imageUrl, audioUrl, tags, masteryLevel...)

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edge TTS Reader - Cài đặt</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 450px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+
+      .guide-section {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        line-height: 1.6;
+        backdrop-filter: blur(10px);
+      }
+
+      .guide-section h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+
+      .guide-section ol {
+        padding-left: 20px;
+      }
+
+      .guide-section li {
+        margin-bottom: 6px;
+      }
+
+      .guide-section a {
+        color: #fff;
+        text-decoration: underline;
+      }
+
+      .guide-section a:hover {
+        opacity: 0.8;
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+        position: relative;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-group input {
+        flex: 1;
+        padding: 10px 40px 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: monospace;
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        transition: all 0.2s;
+      }
+
+      .input-group input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.8);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+      }
+
+      .toggle-visibility {
+        position: absolute;
+        right: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px;
+        z-index: 10;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+
+      .toggle-visibility:hover {
+        opacity: 1;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .save-btn {
+        background: white;
+        color: #667eea;
+      }
+
+      .save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .test-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .test-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .status-message {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        text-align: center;
+        display: none;
+      }
+
+      .status-message.show {
+        display: block;
+      }
+
+      .status-message.success {
+        background: rgba(76, 175, 80, 0.9);
+        color: white;
+      }
+
+      .status-message.error {
+        background: rgba(244, 67, 54, 0.9);
+        color: white;
+      }
+
+      .status-message.warning {
+        background: rgba(255, 152, 0, 0.9);
+        color: white;
+      }
+
+      .status-message.loading {
+        background: rgba(33, 150, 243, 0.9);
+        color: white;
+      }
+
+      .info-note {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-top: 15px;
+        border-left: 3px solid rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>⚙️ Cài đặt Google Search API</h2>
+
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy API Key:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a href="https://console.cloud.google.com/" target="_blank"
+              >Google Cloud Console</a
+            >
+          </li>
+          <li>Tạo dự án mới hoặc chọn dự án hiện có</li>
+          <li>Bật Custom Search API</li>
+          <li>Tạo API Key từ phần "Credentials"</li>
+          <li>Dán API Key vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy Search Engine ID:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a
+              href="https://programmablesearchengine.google.com/"
+              target="_blank"
+              >Google Programmable Search Engine</a
+            >
+          </li>
+          <li>Tạo search engine mới</li>
+          <li>Sao chép Search Engine ID (cx)</li>
+          <li>Dán vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label>🔑 Main Google API Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="api-key-0"
+            class="api-key-input"
+            placeholder="Key chính (bắt buộc)"
+          />
+          <button type="button" class="toggle-visibility">👁️</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>🔍 Main Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="cx-0"
+            class="cx-input"
+            placeholder="CX chính (bắt buộc)"
+          />
+        </div>
+      </div>
+
+      <details
+        style="
+          margin-bottom: 15px;
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 6px;
+          padding: 10px;
+        "
+      >
+        <summary style="cursor: pointer; font-weight: 600; font-size: 13px">
+          ➕ Mở rộng: 4 Backup Keys (Dự phòng)
+        </summary>
+
+        <div
+          style="
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 2px solid rgba(255, 255, 255, 0.3);
+          "
+        >
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #1:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-1"
+              class="api-key-input"
+              placeholder="API Key dự phòng 1"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-1"
+              class="cx-input"
+              placeholder="CX ID dự phòng 1"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #2:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-2"
+              class="api-key-input"
+              placeholder="API Key dự phòng 2"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-2"
+              class="cx-input"
+              placeholder="CX ID dự phòng 2"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #3:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-3"
+              class="api-key-input"
+              placeholder="API Key dự phòng 3"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-3"
+              class="cx-input"
+              placeholder="CX ID dự phòng 3"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #4:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-4"
+              class="api-key-input"
+              placeholder="API Key dự phòng 4"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-4"
+              class="cx-input"
+              placeholder="CX ID dự phòng 4"
+            />
+          </div>
+        </div>
+      </details>
+
+      <div class="input-group">
+        <label for="search-engine-input">Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="search-engine-input"
+            placeholder="Nhập Search Engine ID"
+          />
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="save-btn" id="save-btn">💾 Lưu</button>
+        <button class="test-btn" id="test-btn">🧪 Kiểm tra</button>
+      </div>
+      <div
+        class="guide-section"
+        style="
+          margin-top: 20px;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          padding-top: 15px;
+        "
+      >
+        <h3>🎙️ Cài đặt Azure Speech (Pronunciation):</h3>
+        <ol>
+          <li>
+            Tạo resource <strong>Speech Services</strong> trên Azure Portal
+          </li>
+          <li>Lấy Key và Region (ví dụ: eastus, southeastasia)</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-key-input">Azure Speech Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="azure-key-input"
+            placeholder="Nhập Azure Subscription Key"
+          />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-region-input">Azure Region:</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="azure-region-input"
+            placeholder="Ví dụ: eastus"
+          />
+        </div>
+      </div>
+      <div class="status-message" id="status-message"></div>
+
+      <div class="info-note">
+        💡 <strong>Lưu ý:</strong> Nếu không cấu hình Google API, extension sẽ
+        tự động sử dụng Unsplash để lấy hình ảnh.
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

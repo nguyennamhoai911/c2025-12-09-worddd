@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Edge TTS Reader & Vocabulary Coach",
+  "version": "1.2",
+  "description": "Đọc văn bản, Check phát âm Azure, Dịch ngữ cảnh & Ôn tập từ vựng",
+  "permissions": ["storage", "microphone", "alarms"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["popup.css"]
+    }
+  ],
+  "host_permissions": [
+    "https://translate.google.com/*",
+    "https://translate.googleapis.com/*",
+    "https://commons.wikimedia.org/*",
+    "https://api.duckduckgo.com/*",
+    "https://www.googleapis.com/*",
+    "https://api.unsplash.com/*",
+    "https://*.cognitiveservices.azure.com/*"
+  ]
+}

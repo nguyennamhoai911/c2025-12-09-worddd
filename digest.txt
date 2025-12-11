@@ -3,6 +3,8 @@ Directory structure:
     ├── AI_CONTEXT.md
     ├── docker-compose.yml
     └── apps/
+        ├── extension.crx
+        ├── extension.pem
         ├── tree.txt
         ├── backend/
         │   ├── README.md
@@ -63,6 +65,13 @@ Directory structure:
         │   └── test/
         │       ├── app.e2e-spec.ts
         │       └── jest-e2e.json
+        ├── extension/
+        │   ├── background.js
+        │   ├── content.js
+        │   ├── manifest.json
+        │   ├── popup.css
+        │   ├── popup.html
+        │   └── popup.js
         └── frontend/
             ├── README.md
             ├── eslint.config.mjs
@@ -183,6 +192,46 @@ volumes:
 
 
 ================================================
+FILE: apps/extension.crx
+================================================
+[Binary file]
+
+
+================================================
+FILE: apps/extension.pem
+================================================
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCrbUhiqOJ58LhD
+LHaHpcW8G0IRVgG2xN01/1r72xQzhDxR0zgBDwpOuzSr6Z7ciKAv/6Na0ngp/uLr
+t7MqC+ZFdodkSA/62OsGT0HT2i4fP/Tcq1rO2r7a6AWE0p8PmnsHnjHBkc8iJ/He
+1ERa2ItBC5pforCelahTiQTftFqv3Oi98MjeMZL4neFngqqnfR24Vy+bUibShLjL
+vzDwK65NbPz7FKMdl+8+fcfgpvN0Xh8Bbeq/ZGHNkrcUYYEXIg14JYWctWmeBp5+
+0ZB/cG2tZ6LL0HuJy3SwEEghTHLVVb5Uxfma4S1CfoArsSICCTmvgxs5haH600AF
+y0C67Rg/AgMBAAECggEAFEWaF8Cs94qV36u0YJoj5fi7OV2YWkqxdh86XSotG2J5
+15tItidXKrRMqD+6P44Qk1yBrs3Q0/aGUyWoFELP+krn+93hteJM+LQKrsjQR3XC
+uQ2ycV/AzhY+ANT/ZlL4VZBJhgB+JCXhHl6vrqaI4SpEGSceB8Le4vIDF4k2aDFf
+sLObfrHGdi/NWxsiB7LFSYCdoxmP1mZkx26cdlRP9LU3ot2Za+gc3i9SMrelwsoJ
+VhQyubbl8GNq8IZKROOVscaAhbziqy1PRy/4HviG1OW3m7VJNKYGA3F3KTWdnF0y
+J5VGco0farTDvanRHhY62tlzFRzrfA0MmJacJOYI8QKBgQDnnGklNniD05KoeZaR
+2BMhxpfNtqqvtYX6wJfDHWHmLjYKs44gOsQDs36raNAjNl8xJH51t0pe1HEn0RI/
+ltiCvpd5S7yxjAfGbgMu/Xq+bBYvr48CXOrshrIdDzkqz+uRZgJWxg2LYkBAe81r
+ZXuOgHmjs5TQrgfEbllyIatblQKBgQC9ennTRxg4TdztH5Ys7rO+5EYM4KaTUvZQ
+Lxz+iihgbtmFEm9QKjFgM/u6sP1yBQ4NxLSAQ/fvC5WXUx/cg/3g9cyZ82Cw7up7
+KZrwgZulKpLnI35J4BHLTP5rubiuBoLd0+UQTlViU9meJSsrWciiGOUzILrSuKkb
+nJ+ymoGPgwKBgHuTOYqQWJbFkO9xCERCjFquEhrBRqq/aH/UuGRzTeO5bj4hdUh+
+8kyjPYeJQdw3y2x18z8tj3GvWbyL0Xe6LUT9Geau4Tu94fwegHZW6mGlW+UPf3cc
+Sn/ukiPtFmxgSWjni4Hu5BUlU/DT3VNa7ySmKcCNNW5uHFjTI8hAbKRNAoGBAKYc
+rJcEOgCKioe77F2B+0T8PUlm3cJEtjo/w4yHtLQuGjamnb3K77SmficCqX7/XX3G
+mHPmooMIReH/duxNLxK8it3g10Dmg9zr8bCt/7UCKP3ISRwc+5ye6GGq1XSDstEk
+xinQctycJCmX7ku4D8PETZPQOtkoGOFjI0JiX/lfAoGAMLpVvGf/ncOTVazUAKJU
+ZIGexPhTKLVt9F/G/EkRnIBF/TEPcNOJXbsYA0GgJ0qw652chWs34CCquIhk1U4V
+z3zM/k5PfbZspGpqT5yatnQz/jwLNAhl2SPL4Xezg6Bx8iQbkmuY66+B/xTdmZBv
+sTbdiRavz2sw0XuG5X5CoUQ=
+-----END PRIVATE KEY-----
+
+
+
+================================================
 FILE: apps/tree.txt
 ================================================
 [Binary file]
@@ -282,7 +331,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 ## Stay in touch
 
-- Author - [Kamil MyÅ›liwiec](https://twitter.com/kammysliwiec)
+- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
 - Website - [https://nestjs.com](https://nestjs.com/)
 - Twitter - [@nestframework](https://twitter.com/nestframework)
 
@@ -447,25 +496,25 @@ FILE: apps/backend/package.json
 FILE: apps/backend/tree.txt
 ================================================
 backend
-â”œâ”€â”€ README.md
-â”œâ”€â”€ eslint.config.mjs
-â”œâ”€â”€ nest-cli.json
-â”œâ”€â”€ package-lock.json
-â”œâ”€â”€ package.json
-â”œâ”€â”€ prisma
-â”‚   â””â”€â”€ schema.prisma
-â”œâ”€â”€ src
-â”‚   â”œâ”€â”€ app.controller.spec.ts
-â”‚   â”œâ”€â”€ app.controller.ts
-â”‚   â”œâ”€â”€ app.module.ts
-â”‚   â”œâ”€â”€ app.service.ts
-â”‚   â””â”€â”€ main.ts
-â”œâ”€â”€ test
-â”‚   â”œâ”€â”€ app.e2e-spec.ts
-â”‚   â””â”€â”€ jest-e2e.json
-â”œâ”€â”€ tree.txt
-â”œâ”€â”€ tsconfig.build.json
-â””â”€â”€ tsconfig.json
+├── README.md
+├── eslint.config.mjs
+├── nest-cli.json
+├── package-lock.json
+├── package.json
+├── prisma
+│   └── schema.prisma
+├── src
+│   ├── app.controller.spec.ts
+│   ├── app.controller.ts
+│   ├── app.module.ts
+│   ├── app.service.ts
+│   └── main.ts
+├── test
+│   ├── app.e2e-spec.ts
+│   └── jest-e2e.json
+├── tree.txt
+├── tsconfig.build.json
+└── tsconfig.json
 
 
 
@@ -555,23 +604,24 @@ model User {
 
 model VocabItem {
   id String @id @default(uuid())
-  
+
   // --- CÁC CỘT KHỚP VỚI EXCEL ---
-  topic         String?   // Topic
-  word          String    // Word (Bắt buộc)
-  partOfSpeech  String?   @map("part_of_speech") // Part of speech
-  pronunciation String?   // Pronunciation
-  meaning       String?   // Meaning
-  example       String?   // Example
-  relatedWords  String?   @map("related_words") // Related words
-  occurrence    Int?      @default(1) // Occurrence
+  topic         String? // Topic
+  word          String // Word (Bắt buộc)
+  partOfSpeech  String? @map("part_of_speech") // Part of speech
+  pronunciation String? // Pronunciation
+  meaning       String? // Meaning
+  example       String? // Example
+  relatedWords  String? @map("related_words") // Related words
+  occurrence    Int?    @default(1)
+  isStarred     Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
 
   // --- CÁC CỘT HỆ THỐNG (Bắt buộc phải giữ) ---
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])
 
   // Map cột "Time" trong Excel vào createdAt
-  createdAt DateTime @default(now()) @map("created_at") 
+  createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Xóa các trường cũ không dùng nữa (imageUrl, audioUrl, tags, masteryLevel...)
@@ -685,7 +735,7 @@ async function bootstrap() {
 
   // Enable CORS with credentials
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'], // ðŸ‘ˆ ThÃªm cáº£ 2 port
+    origin: ['http://localhost:3000', 'http://localhost:3001'], // 👈 Thêm cả 2 port
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -700,7 +750,7 @@ async function bootstrap() {
   );
 
   await app.listen(5000);
-  console.log('ðŸš€ Backend running on http://localhost:5000');
+  console.log('🚀 Backend running on http://localhost:5000');
 }
 bootstrap();
 
@@ -712,7 +762,7 @@ import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import type { Response } from 'express'; // ðŸ‘ˆ ThÃªm "type"
+import type { Response } from 'express'; // 👈 Thêm "type"
 
 @Controller('auth')
 export class AuthController {
@@ -1045,7 +1095,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
       callbackURL: 'http://localhost:5000/auth/google/callback',
       scope: ['email', 'profile'],
-    } as StrategyOptions); // ðŸ‘ˆ ThÃªm "as StrategyOptions"
+    } as StrategyOptions); // 👈 Thêm "as StrategyOptions"
   }
 
   async validate(
@@ -1110,15 +1160,15 @@ import { AuthService } from '../auth.service';
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
     super({
-      usernameField: 'email', // Máº·c Ä‘á»‹nh lÃ  'username', mÃ¬nh Ä‘á»•i thÃ nh 'email' cho Ä‘Ãºng project
+      usernameField: 'email', // Mặc định là 'username', mình đổi thành 'email' cho đúng project
     });
   }
 
-  // HÃ m nÃ y sáº½ tá»± Ä‘á»™ng cháº¡y khi user login
+  // Hàm này sẽ tự động chạy khi user login
   async validate(email: string, pass: string): Promise<any> {
     const user = await this.authService.validateUser(email, pass);
     if (!user) {
-      throw new UnauthorizedException('Sai email hoáº·c máº­t kháº©u');
+      throw new UnauthorizedException('Sai email hoặc mật khẩu');
     }
     return user;
   }
@@ -1204,7 +1254,7 @@ FILE: apps/backend/src/modules/users/dto/create-user.dto.ts
 ================================================
 export class CreateUserDto {
   email: string;
-  password?: string; // Optional vÃ¬ sau nÃ y cÃ³ thá»ƒ login báº±ng Google
+  password?: string; // Optional vì sau này có thể login bằng Google
   name?: string;
 }
 
@@ -1230,7 +1280,6 @@ export class User {}
 ================================================
 FILE: apps/backend/src/modules/vocabulary/vocabulary.controller.ts
 ================================================
-// apps/backend/src/modules/vocabulary/vocabulary.controller.ts
 import {
   Controller,
   Get,
@@ -1243,6 +1292,7 @@ import {
   Request,
   UseInterceptors,
   UploadedFile,
+  Query, // 👈 Đảm bảo đã import Query
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VocabularyService } from './vocabulary.service';
@@ -1251,7 +1301,7 @@ import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('vocabulary')
-@UseGuards(JwtAuthGuard) // 🔐 Require login
+@UseGuards(JwtAuthGuard)
 export class VocabularyController {
   constructor(private readonly vocabularyService: VocabularyService) {}
 
@@ -1269,9 +1319,44 @@ export class VocabularyController {
     return this.vocabularyService.importFromCsv(req.user.id, file);
   }
 
+  // 👇 CẬP NHẬT HÀM FIND ALL
   @Get()
-  findAll(@Request() req) {
-    return this.vocabularyService.findAll(req.user.id);
+  findAll(
+    @Request() req,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    // 👇 Thêm lại tham số search chung (Quick Search dùng cái này)
+    @Query('search') search: string,
+    // Các Filter Params
+    @Query('word') word: string,
+    @Query('topic') topic: string,
+    @Query('partOfSpeech') partOfSpeech: string,
+    @Query('meaning') meaning: string,
+    // 👇 Sort Params (Mới thêm)
+    @Query('sortBy') sortBy: string,
+    @Query('sortOrder') sortOrder: string,
+  ) {
+    const pageNumber = page ? parseInt(page) : 1;
+    const limitNumber = limit ? parseInt(limit) : 20;
+
+    // Gom các filter
+    const filters = { word, topic, partOfSpeech, meaning };
+
+    // Tạo object sort
+    const sort = {
+      field: sortBy || 'createdAt', // Default field là ngày tạo
+      order: (sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc', // Default order là giảm dần (desc)
+    };
+
+    // 👇 Gọi hàm Service với ĐỦ 5 THAM SỐ
+    return this.vocabularyService.findAll(
+      req.user.id,
+      pageNumber,
+      limitNumber,
+      filters,
+      sort,
+      search // 👈 Quan trọng: Truyền search xuống service
+    );
   }
 
   @Get(':id')
@@ -1315,13 +1400,248 @@ export class VocabularyModule {}
 ================================================
 FILE: apps/backend/src/modules/vocabulary/vocabulary.service.ts
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x9d in position 1504: character maps to <undefined>
+// apps/backend/src/modules/vocabulary/vocabulary.service.ts
+
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { CreateVocabularyDto } from './dto/create-vocabulary.dto';
+import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
+import csv from 'csv-parser'; // Lib đọc CSV
+import { Readable } from 'stream'; // Lib có sẵn của Node.js
+
+// 👇 Define Interface cho các filter parameters
+interface VocabFilters {
+  word?: string;
+  topic?: string;
+  partOfSpeech?: string;
+  meaning?: string;
+}
+
+@Injectable()
+export class VocabularyService {
+  constructor(private prisma: PrismaService) {}
+
+  // --- 1. CREATE ---
+  async create(userId: string, createDto: CreateVocabularyDto) {
+    return this.prisma.vocabItem.create({
+      data: {
+        ...createDto,
+        userId,
+      },
+    });
+  }
+
+  // --- 2. FIND ALL (Search + Filter + Sort + Pagination) ---
+  async findAll(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+    filters: VocabFilters = {},
+    sort: { field: string; order: 'asc' | 'desc' } = {
+      field: 'createdAt',
+      order: 'desc',
+    }, // Default sort
+    search?: string, // 👈 Global Search param
+  ) {
+    const skip = (page - 1) * limit;
+
+    // Helper clean text
+    const clean = (text?: string) => text?.trim();
+
+    // 👇 Xây dựng câu query (Where Condition)
+    const whereCondition: Prisma.VocabItemWhereInput = {
+      userId, // Luôn filter theo user hiện tại
+
+      // 1. Các bộ lọc riêng lẻ (AND logic)
+      word: filters.word
+        ? { contains: clean(filters.word), mode: 'insensitive' }
+        : undefined,
+      topic: filters.topic
+        ? { contains: clean(filters.topic), mode: 'insensitive' }
+        : undefined,
+      partOfSpeech: filters.partOfSpeech
+        ? { contains: clean(filters.partOfSpeech), mode: 'insensitive' }
+        : undefined,
+      meaning: filters.meaning
+        ? { contains: clean(filters.meaning), mode: 'insensitive' }
+        : undefined,
+
+      // 2. Global Search (OR logic)
+      // Nếu có biến 'search', tìm nó trong Word HOẶC Meaning HOẶC Topic
+      ...(search
+        ? {
+            OR: [
+              { word: { contains: clean(search), mode: 'insensitive' } },
+              { meaning: { contains: clean(search), mode: 'insensitive' } },
+              { topic: { contains: clean(search), mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    // 👇 Xây dựng Sort (Order By)
+    const orderByInput: Prisma.VocabItemOrderByWithRelationInput[] = [];
+
+    if (sort.field) {
+      orderByInput.push({ [sort.field]: sort.order });
+    }
+    // Luôn add thêm id để đảm bảo thứ tự ổn định (Stable Sort)
+    orderByInput.push({ id: 'asc' });
+
+    // 👇 Execute Query
+    const [items, total] = await Promise.all([
+      this.prisma.vocabItem.findMany({
+        where: whereCondition,
+        skip: skip,
+        take: limit,
+        orderBy: orderByInput,
+      }),
+      this.prisma.vocabItem.count({ where: whereCondition }),
+    ]);
+
+    return {
+      data: items,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // --- 3. FIND ONE ---
+  async findOne(id: string, userId: string) {
+    const vocab = await this.prisma.vocabItem.findFirst({
+      where: { id, userId },
+    });
+
+    if (!vocab) {
+      throw new NotFoundException('Vocabulary not found');
+    }
+    return vocab;
+  }
+
+  // --- 4. UPDATE ---
+  async update(id: string, userId: string, updateDto: UpdateVocabularyDto) {
+    await this.findOne(id, userId); // Check exist
+    return this.prisma.vocabItem.update({
+      where: { id },
+      data: updateDto,
+    });
+  }
+
+  // --- 5. REMOVE ---
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId); // Check exist
+    return this.prisma.vocabItem.delete({
+      where: { id },
+    });
+  }
+  // apps/backend/src/modules/vocabulary/vocabulary.service.ts
+
+  // Update hàm create hoặc tạo một hàm mới là `upsertVocab`
+  async upsertVocab(userId: string, createDto: CreateVocabularyDto) {
+    // 1. Check if word exists for this user (Case insensitive)
+    const existing = await this.prisma.vocabItem.findFirst({
+      where: {
+        userId,
+        word: {
+          equals: createDto.word.trim(),
+          mode: 'insensitive', // Ignore case (hello == Hello)
+        },
+      },
+    });
+
+    if (existing) {
+      // 2. Scenario: Word exists -> Update status & increment occurrence
+      return this.prisma.vocabItem.update({
+        where: { id: existing.id },
+        data: {
+          isStarred: true, // Force star
+          occurrence: (existing.occurrence || 0) + 1,
+          // Optional: Update meaning/example nếu user gửi cái mới lên
+        },
+      });
+    } else {
+      // 3. Scenario: Word not found -> Create new full record
+      return this.prisma.vocabItem.create({
+        data: {
+          ...createDto,
+          userId,
+          isStarred: true, // Auto star khi add từ extension
+        },
+      });
+    }
+  }
+  // --- 6. IMPORT CSV ---
+  async importFromCsv(userId: string, file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    const results: any[] = [];
+    const stream = Readable.from(file.buffer.toString());
+
+    return new Promise((resolve, reject) => {
+      stream
+        .pipe(csv())
+        .on('data', (data) => results.push(data))
+        .on('end', async () => {
+          console.log(`📂 Parsed ${results.length} rows from CSV`);
+
+          let successCount = 0;
+          let errorCount = 0;
+
+          for (const row of results) {
+            try {
+              // Mapping cột trong CSV sang Database
+              await this.prisma.vocabItem.create({
+                data: {
+                  userId: userId,
+                  word: row['Word']?.trim(),
+                  topic: row['Topic']?.trim(),
+                  partOfSpeech: row['Part of speech']?.trim(),
+                  pronunciation: row['Pronunciation']?.trim(),
+                  meaning: row['Meaning']?.trim(),
+                  example: row['Example']?.trim(),
+                  relatedWords: row['Related words']?.trim(),
+                  occurrence: row['Occurrence']
+                    ? parseInt(row['Occurrence'])
+                    : 1,
+                },
+              });
+              successCount++;
+            } catch (error) {
+              errorCount++;
+            }
+          }
+
+          resolve({
+            message: 'Import finished',
+            total: results.length,
+            success: successCount,
+            failed: errorCount,
+          });
+        })
+        .on('error', (error) => {
+          reject(new BadRequestException('Invalid CSV file'));
+        });
+    });
+  }
+}
+
 
 
 ================================================
 FILE: apps/backend/src/modules/vocabulary/dto/create-vocabulary.dto.ts
 ================================================
 import {
+  IsBoolean,
   IsString,
   IsOptional,
   IsInt,
@@ -1362,6 +1682,10 @@ export class CreateVocabularyDto {
   @IsInt() // Phải là số nguyên (Integer)
   @Min(0) // Giá trị nhỏ nhất là 0
   occurrence?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isStarred?: boolean; // 👈 Add this property
 }
 
 
@@ -1411,7 +1735,7 @@ export class PrismaService
 {
   async onModuleInit() {
     await this.$connect();
-    console.log('âœ… DB Connected via Prisma');
+    console.log('✅ DB Connected via Prisma');
   }
 
   async onModuleDestroy() {
@@ -1462,6 +1786,2446 @@ FILE: apps/backend/test/jest-e2e.json
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
+  }
+}
+
+
+
+================================================
+FILE: apps/extension/background.js
+================================================
+// Setup Alarm khi Extension được Installed
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("Extension Installed. Setting up alarms...");
+  // Tạo alarm tên 'vocab_review' chạy mỗi 15 phút
+  chrome.alarms.create("vocab_review", {
+    periodInMinutes: 5,
+  });
+});
+
+// Lắng nghe Alarm trigger
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "vocab_review") {
+    // Tìm tab đang active để gửi message hiển thị Flashcard
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "SHOW_FLASHCARD",
+        });
+      }
+    });
+  }
+});
+
+
+
+================================================
+FILE: apps/extension/content.js
+================================================
+let popup = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let isSoundEnabled = true;
+let isPopupOpen = false;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
+let lastRecordedBlob = null; // Biến lưu file ghi âm gần nhất
+// Lưu từ vựng vào lịch sử (để hiện Flashcard sau này)
+async function saveToHistory(word, data) {
+  try {
+    const result = await chrome.storage.local.get(["vocabHistory"]);
+    let history = result.vocabHistory || [];
+    history = history.filter(
+      (item) =>
+        item && item.word && item.word.toLowerCase() !== word.toLowerCase()
+    );
+    history.unshift({
+      word: word,
+      data: data,
+      timestamp: Date.now(),
+    });
+    if (history.length > 50) history.pop();
+    await chrome.storage.local.set({ vocabHistory: history });
+  } catch (e) {
+    console.warn("Lỗi khi lưu lịch sử:", e);
+  }
+}
+
+// Lấy dữ liệu từ Cache (RAM/Storage)
+async function getFromCache(key) {
+  const storageKey = `cache_${key.toLowerCase().trim()}`;
+  const result = await chrome.storage.local.get([storageKey]);
+  const cachedItem = result[storageKey];
+
+  // Cache hết hạn sau 24h
+  if (cachedItem && Date.now() - cachedItem.timestamp < 24 * 60 * 60 * 1000) {
+    console.log(`⚡ Hit Cache for: ${key}`);
+    return cachedItem.data;
+  }
+  return null;
+}
+
+// Lưu data mới vào Cache
+async function saveToCache(key, data) {
+  const storageKey = `cache_${key.toLowerCase().trim()}`;
+  await chrome.storage.local.set({
+    [storageKey]: {
+      data: data,
+      timestamp: Date.now(),
+    },
+  });
+}
+// Tạo popup
+function createPopup() {
+  if (popup) {
+    popup.remove();
+  }
+
+  popup = document.createElement("div");
+  popup.id = "tts-popup";
+  popup.style.display = "none";
+  document.body.appendChild(popup);
+
+  return popup;
+}
+
+// Đóng popup và dừng âm thanh
+function closePopup() {
+  if (popup) {
+    popup.style.display = "none";
+  }
+  speechSynthesis.cancel();
+  isPopupOpen = false;
+}
+
+// Lấy nghĩa tiếng Việt từ Google Translate
+// --- 2. UPDATED TRANSLATION (WITH CONTEXT) ---
+// --- 2. TRANSLATION (SAFE MODE) ---
+// --- 2. TRANSLATION (DICTIONARY MODE) ---
+async function getTranslation(text, contextText = "") {
+  try {
+    let contextMeaning = null;
+
+    // 1. Dịch ngữ cảnh (giữ nguyên logic cũ)
+    if (
+      contextText &&
+      contextText.length > 0 &&
+      contextText.length < 500 &&
+      contextText !== text
+    ) {
+      try {
+        const urlContext = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
+          contextText
+        )}`;
+        const resCtx = await fetch(urlContext);
+        if (resCtx.ok) {
+          const dataCtx = await resCtx.json();
+          if (dataCtx && dataCtx[0]) {
+            contextMeaning = dataCtx[0].map((item) => item[0]).join("");
+          }
+        }
+      } catch (e) {
+        /* Ignore context error */
+      }
+    }
+
+    // 2. Dịch từ khóa & Lấy Từ điển (THÊM &dt=bd)
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&dt=bd&q=${encodeURIComponent(
+      text
+    )}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Google API Error");
+
+    const data = await response.json();
+
+    if (data) {
+      // Lấy nghĩa chính (như cũ)
+      const mainMeaning = data[0]
+        ? data[0].map((item) => item[0]).join("")
+        : "";
+
+      // Lấy dữ liệu từ điển (Noun, Verb...) - QUAN TRỌNG
+      let dict = [];
+      if (data[1]) {
+        data[1].forEach((group) => {
+          dict.push({
+            pos: group[0], // noun, verb, adjective...
+            terms: group[1].slice(0, 5), // Lấy top 5 nghĩa
+          });
+        });
+      }
+
+      return {
+        wordMeaning: mainMeaning,
+        contextMeaning: contextMeaning,
+        dict: dict, // Trả về thêm từ điển
+      };
+    }
+  } catch (error) {
+    console.error("Translation Error:", error);
+    return null;
+  }
+  return null;
+}
+
+// --- LOGIC MỚI: FALLBACK SYSTEM ---
+
+// Hàm helper để gọi Google API đơn lẻ
+async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
+      searchTerm
+    )}&cx=${cx}&searchType=image&key=${apiKey}&num=3`;
+
+    const response = await fetch(url);
+
+    // Nếu hết quota (403) hoặc quá tải (429) -> Throw error để loop bắt được
+    if (response.status === 403 || response.status === 429) {
+      throw new Error(`QUOTA_EXCEEDED`);
+    }
+
+    if (!response.ok) return null; // Lỗi khác thì return null luôn
+
+    const data = await response.json();
+    if (data.items && data.items.length > 0) {
+      return data.items.slice(0, 3).map((item) => item.link);
+    }
+  } catch (e) {
+    if (e.message === "QUOTA_EXCEEDED") throw e; // Ném tiếp ra ngoài
+    console.warn("Google Fetch Error:", e);
+  }
+  return null;
+}
+
+// Hàm chính: Loop qua danh sách Key
+async function getImages(englishText) {
+  const searchTerm = englishText.trim();
+  let images = [];
+
+  // 1. Lấy Settings
+  const result = await chrome.storage.sync.get([
+    "googleApiKeys",
+    "googleApiKey",
+    "googleSearchEngineId",
+  ]); // Lấy cả key cũ và mới để tương thích
+
+  // Convert cấu trúc cũ sang list nếu chưa có list
+  let keyList = result.googleApiKeys || [];
+  if (
+    keyList.length === 0 &&
+    result.googleApiKey &&
+    result.googleSearchEngineId
+  ) {
+    keyList.push({ key: result.googleApiKey, cx: result.googleSearchEngineId });
+  }
+
+  // 2. Thử Google Custom Search (Loop Fallback)
+  if (keyList.length > 0) {
+    for (let i = 0; i < keyList.length; i++) {
+      const { key, cx } = keyList[i];
+      if (!key || !cx) continue;
+
+      try {
+        console.log(`Trying Google Key #${i + 1}...`);
+        const resultImages = await tryFetchGoogleImage(searchTerm, key, cx);
+
+        if (resultImages && resultImages.length > 0) {
+          images = resultImages;
+          console.log(`✅ Success with Key #${i + 1}`);
+          break; // Tìm thấy ảnh thì thoát vòng lặp ngay
+        }
+      } catch (err) {
+        if (err.message === "QUOTA_EXCEEDED") {
+          console.warn(
+            `⚠️ Key #${i + 1} hết quota. Đang chuyển sang Key tiếp theo...`
+          );
+          continue; // Chuyển sang key tiếp theo trong vòng lặp
+        }
+      }
+    }
+  }
+
+  // 3. Nếu tất cả Google Keys đều tạch -> Dùng Unsplash (Last Resort)
+  if (images.length === 0) {
+    console.log("⚠️ All Google Keys failed or empty. Switching to Unsplash...");
+    images = await getImagesFromUnsplash(searchTerm);
+  }
+
+  return images;
+}
+// Lấy 3 hình ảnh từ Unsplash API
+async function getImagesFromUnsplash(searchTerm) {
+  try {
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
+        searchTerm
+      )}&per_page=3&client_id=E8nbwS_cEWGVX4rM0e_-Eq6IpI_QKlO4eFEKfOl3AUo`
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        return data.results.map((item) => item.urls.regular);
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching Unsplash images:", error);
+  }
+
+  return [];
+}
+
+// --- LOGIC MỚI: FALLBACK SYSTEM ---
+
+// Hàm helper để gọi Google API đơn lẻ
+async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
+      searchTerm
+    )}&cx=${cx}&searchType=image&key=${apiKey}&num=3`;
+
+    const response = await fetch(url);
+
+    // Nếu hết quota (403) hoặc quá tải (429) -> Throw error để loop bắt được
+    if (response.status === 403 || response.status === 429) {
+      throw new Error(`QUOTA_EXCEEDED`);
+    }
+
+    if (!response.ok) return null; // Lỗi khác thì return null luôn
+
+    const data = await response.json();
+    if (data.items && data.items.length > 0) {
+      return data.items.slice(0, 3).map((item) => item.link);
+    }
+  } catch (e) {
+    if (e.message === "QUOTA_EXCEEDED") throw e; // Ném tiếp ra ngoài
+    console.warn("Google Fetch Error:", e);
+  }
+  return null;
+}
+
+// Hàm chính: Loop qua danh sách Key
+async function getImages(englishText) {
+  const searchTerm = englishText.trim();
+  let images = [];
+
+  // 1. Lấy Settings
+  const result = await chrome.storage.sync.get([
+    "googleApiKeys",
+    "googleApiKey",
+    "googleSearchEngineId",
+  ]); // Lấy cả key cũ và mới để tương thích
+
+  // Convert cấu trúc cũ sang list nếu chưa có list
+  let keyList = result.googleApiKeys || [];
+  if (
+    keyList.length === 0 &&
+    result.googleApiKey &&
+    result.googleSearchEngineId
+  ) {
+    keyList.push({ key: result.googleApiKey, cx: result.googleSearchEngineId });
+  }
+
+  // 2. Thử Google Custom Search (Loop Fallback)
+  if (keyList.length > 0) {
+    for (let i = 0; i < keyList.length; i++) {
+      const { key, cx } = keyList[i];
+      if (!key || !cx) continue;
+
+      try {
+        console.log(`Trying Google Key #${i + 1}...`);
+        const resultImages = await tryFetchGoogleImage(searchTerm, key, cx);
+
+        if (resultImages && resultImages.length > 0) {
+          images = resultImages;
+          console.log(`✅ Success with Key #${i + 1}`);
+          break; // Tìm thấy ảnh thì thoát vòng lặp ngay
+        }
+      } catch (err) {
+        if (err.message === "QUOTA_EXCEEDED") {
+          console.warn(
+            `⚠️ Key #${i + 1} hết quota. Đang chuyển sang Key tiếp theo...`
+          );
+          continue; // Chuyển sang key tiếp theo trong vòng lặp
+        }
+      }
+    }
+  }
+
+  // 3. Nếu tất cả Google Keys đều tạch -> Dùng Unsplash (Last Resort)
+  if (images.length === 0) {
+    console.log("⚠️ All Google Keys failed or empty. Switching to Unsplash...");
+    images = await getImagesFromUnsplash(searchTerm);
+  }
+
+  return images;
+}
+
+// Lấy phiên âm của một từ
+async function getPhoneticForWord(word) {
+  try {
+    const response = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
+        word.trim()
+      )}`
+    );
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data && data[0]) {
+      const result = {
+        uk: null,
+        us: null,
+      };
+
+      data[0].phonetics?.forEach((p) => {
+        if (p.text) {
+          if (p.audio && p.audio.includes("-uk")) {
+            result.uk = p.text;
+          } else if (p.audio && p.audio.includes("-us")) {
+            result.us = p.text;
+          } else if (!result.us && !result.uk) {
+            result.us = p.text;
+          }
+        }
+      });
+
+      if (!result.uk && !result.us && data[0].phonetic) {
+        result.us = data[0].phonetic;
+      }
+
+      return result;
+    }
+  } catch (error) {
+    console.error("Error fetching phonetic:", error);
+  }
+  return null;
+}
+
+// Lấy phiên âm cho cả đoạn văn
+async function getPhoneticForText(text) {
+  const words = text
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+
+  const isLongText = words.length > 5;
+
+  const phonetics = await Promise.all(
+    words.map(async (word) => {
+      const cleanWord = word.replace(/[.,!?;:'"()]/g, "");
+      if (!cleanWord) return null;
+
+      const phonetic = await getPhoneticForWord(cleanWord);
+      return phonetic;
+    })
+  );
+
+  const ukParts = [];
+  const usParts = [];
+
+  phonetics.forEach((p, idx) => {
+    if (p) {
+      if (!isLongText && p.uk) {
+        ukParts.push(p.uk);
+      }
+      if (p.us) {
+        usParts.push(p.us);
+      } else if (p.uk) {
+        usParts.push(p.uk);
+      } else {
+        const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
+        usParts.push(cleanWord);
+      }
+    } else {
+      const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
+      if (!isLongText) ukParts.push(cleanWord);
+      usParts.push(cleanWord);
+    }
+  });
+
+  const formatPhonetics = (parts) => {
+    if (parts.length === 0) {
+      return null;
+    }
+    const combined = parts
+      .map((part) => (part ? part.replace(/^\/|\/$/g, "") : ""))
+      .filter(Boolean)
+      .join(" ");
+
+    if (combined) {
+      return `//${combined}//`;
+    }
+    return null;
+  };
+
+  return {
+    uk: null,
+    us: formatPhonetics(usParts),
+  };
+}
+
+// Sử dụng Edge TTS API
+async function speakWithEdgeTTS(text) {
+  if (!isSoundEnabled) return;
+
+  speechSynthesis.cancel();
+
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+
+    const voices = speechSynthesis.getVoices();
+    const ariaVoice =
+      voices.find(
+        (voice) => voice.name.includes("Aria") && voice.lang === "en-US"
+      ) ||
+      voices.find(
+        (voice) =>
+          voice.name.includes("Natural") && voice.lang.startsWith("en-US")
+      ) ||
+      voices.find(
+        (voice) =>
+          (voice.name.includes("Microsoft") || voice.name.includes("Online")) &&
+          voice.lang === "en-US"
+      ) ||
+      voices.find((voice) => voice.lang === "en-US");
+
+    if (ariaVoice) {
+      utterance.voice = ariaVoice;
+    }
+
+    speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error("Error with TTS:", error);
+  }
+}
+
+// Toggle âm thanh
+function toggleSound() {
+  isSoundEnabled = !isSoundEnabled;
+
+  if (!isSoundEnabled) {
+    speechSynthesis.cancel();
+  }
+
+  const btn = document.getElementById("sound-toggle");
+  if (btn) {
+    btn.innerHTML = isSoundEnabled
+      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
+    btn.style.opacity = isSoundEnabled ? "1" : "0.5";
+  }
+}
+
+// Thêm chức năng drag popup
+function enableDragging(header) {
+  header.style.cursor = "move";
+
+  header.addEventListener("mousedown", (e) => {
+    if (e.target.closest("button")) return;
+
+    isDragging = true;
+    const rect = popup.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+
+    header.style.cursor = "grabbing";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+
+    e.preventDefault();
+    const x = e.clientX - dragOffset.x;
+    const y = e.clientY - dragOffset.y;
+
+    popup.style.left = x + "px";
+    popup.style.top = y + "px";
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (isDragging) {
+      isDragging = false;
+      header.style.cursor = "move";
+    }
+  });
+}
+
+// Hiển thị popup
+// --- 3. SHOW POPUP (NEW POSITION & UI) ---
+// --- 3. SHOW POPUP (OPTIMIZED & SAFE) ---
+async function showPopup(rect, text, contextText) {
+  if (!popup) popup = createPopup();
+  isPopupOpen = true;
+
+  // 1. Hiển thị UI Loading ngay lập tức để user biết app đang chạy
+  popup.innerHTML =
+    '<div class="tts-content"><div class="tts-loading">⏳ Đang phân tích dữ liệu...</div></div>';
+  popup.style.display = "block";
+
+  // 2. Tính toán vị trí hiển thị (Ưu tiên hiện bên trên)
+  const popupHeight = 400; // Chiều cao ước lượng
+  let topPos = rect.top + window.scrollY - popupHeight - 20;
+  let leftPos = rect.left + window.scrollX;
+
+  // Nếu bị che ở trên thì lật xuống dưới
+  if (topPos < window.scrollY) topPos = rect.bottom + window.scrollY + 10;
+  // Nếu bị tràn lề phải thì đẩy sang trái
+  if (leftPos + 350 > window.innerWidth) leftPos = window.innerWidth - 360;
+
+  popup.style.top = `${topPos}px`;
+  popup.style.left = `${leftPos}px`;
+
+  try {
+    // A. Kiểm tra Cache trước
+    let data = await getFromCache(text);
+
+    // B. Nếu chưa có cache, gọi API
+    if (!data) {
+      // --- LOGIC QUAN TRỌNG: CHECK ĐỘ DÀI ---
+      // Nếu chọn quá dài (> 5 từ), ta coi là đoạn văn.
+      // Chỉ dịch, KHÔNG lấy ảnh và phiên âm từng từ để tránh treo máy.
+      const wordCount = text.trim().split(/\s+/).length;
+      const isLongText = wordCount > 5;
+
+      // Tạo danh sách các việc cần làm (Promises)
+      const promises = [getTranslation(text, contextText)];
+
+      if (!isLongText) {
+        // Nếu từ ngắn: Lấy thêm phiên âm và ảnh
+        promises.push(getPhoneticForText(text));
+        promises.push(getImages(text));
+      } else {
+        // Nếu từ dài: Trả về rỗng ngay lập tức (không gọi API)
+        promises.push(Promise.resolve(null)); // Phiên âm rỗng
+        promises.push(Promise.resolve([])); // Ảnh rỗng
+      }
+
+      // Chạy song song tất cả request
+      const [translation, phonetics, images] = await Promise.all(promises);
+
+      data = { translation, phonetics, images, text, contextText };
+
+      // Chỉ lưu cache nếu dịch thành công
+      if (translation) {
+        await saveToCache(text, data);
+        await saveToHistory(text, data);
+      }
+    } else {
+      // Nếu đã có cache nhưng ngữ cảnh mới, update lại ngữ cảnh
+      if (!data.contextMeaning && contextText) {
+        const translation = await getTranslation(text, contextText);
+        if (translation) data.translation = translation;
+      }
+    }
+
+    // C. Render UI (Nội dung Popup)
+    let content = `
+        <div class="tts-header" id="popup-header">
+          <button id="sound-toggle" class="sound-btn" title="Bật/Tắt tiếng">${
+            isSoundEnabled ? "🔊" : "🔇"
+          }</button>
+          <div style="flex:1"></div>
+          <button id="close-popup" class="close-btn" title="Đóng">✕</button>
+        </div>
+        
+        <div class="tts-actions">
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button id="replay-tts-btn" class="mic-btn" style="width:40px; height:40px; background:#4CAF50;" title="Nghe lại (TTS)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </button>
+                <button id="mic-btn" class="mic-btn" title="Kiểm tra phát âm (Azure)">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </button>
+            </div>
+            <div id="assessment-result"></div>
+        </div>
+
+        <div class="tts-content">
+      `;
+
+    // 1. Hiển thị Ảnh (Chỉ hiện nếu có)
+    if (data.images && data.images.length) {
+      content += `<div class="tts-images-container">
+            ${data.images
+              .map(
+                (url) =>
+                  `<div class="tts-image"><img src="${url}" onerror="this.style.display='none'"/></div>`
+              )
+              .join("")}
+        </div>`;
+    }
+
+    // 2. Hiển thị Phiên âm (Chỉ hiện nếu có)
+    if (data.phonetics && (data.phonetics.us || data.phonetics.uk)) {
+      content += `<div class="tts-phonetic">
+            ${
+              data.phonetics.uk
+                ? `<div class="phonetic-item"><span class="flag">🇬🇧</span><span class="phonetic-text">${data.phonetics.uk}</span></div>`
+                : ""
+            }
+            ${
+              data.phonetics.us
+                ? `<div class="phonetic-item"><span class="flag">🇺🇸</span><span class="phonetic-text">${data.phonetics.us}</span></div>`
+                : ""
+            }
+        </div>`;
+    }
+
+    // 3. Hiển thị Nghĩa (Dictionary Style) & Ngữ cảnh
+    if (data.translation) {
+      // 3.1. Hiện từ gốc
+      content += `<div class="word-text" style="font-size:24px; text-align:center; margin-bottom:5px;">${data.text}</div>`;
+
+      // 3.2. [NEW] LUÔN HIỆN NGHĨA CHÍNH (Google Translate Meaning)
+      // Lấy nghĩa chính từ data
+      const mainMeaning =
+        typeof data.translation === "string"
+          ? data.translation
+          : data.translation.wordMeaning;
+
+      if (mainMeaning) {
+        content += `<div class="primary-meaning">${mainMeaning}</div>`;
+      }
+
+      // 3.3. Hiện Từ điển chi tiết (Nếu có)
+      if (data.translation.dict && data.translation.dict.length > 0) {
+        content += `<div class="dict-container">`;
+        data.translation.dict.forEach((d) => {
+          content += `
+                    <div class="dict-row">
+                        <span class="dict-pos">${d.pos}</span>
+                        <span class="dict-meanings">${d.terms.join(", ")}</span>
+                    </div>
+                `;
+        });
+        content += `</div>`;
+      }
+      // (Bỏ phần else cũ vì mình đã hiện mainMeaning ở trên rồi)
+
+      // 3.4. Hiện Ngữ cảnh (Context)
+      if (data.translation.contextMeaning) {
+        content += `
+                <div class="context-box">
+                    <strong>Ngữ cảnh:</strong><br/>
+                    <em style="color:#777">"...${
+                      data.contextText || ""
+                    }..."</em><br/>
+                    👉 <span style="color:#2e7d32; font-weight:600;">${
+                      data.translation.contextMeaning
+                    }</span>
+                </div>
+            `;
+      }
+    } else {
+      content += `<div class="tts-info">Không tìm thấy bản dịch.</div>`;
+    }
+
+    content += `</div>`; // End tts-content
+    popup.innerHTML = content;
+
+    // D. Gán sự kiện cho các nút bấm
+    const header = document.getElementById("popup-header");
+    if (typeof enableDragging === "function") enableDragging(header);
+
+    document.getElementById("close-popup").onclick = closePopup;
+    document.getElementById("sound-toggle").onclick = toggleSound;
+    document.getElementById("replay-tts-btn").onclick = () =>
+      speakWithEdgeTTS(text);
+
+    const micBtn = document.getElementById("mic-btn");
+    if (micBtn) {
+      micBtn.onclick = (e) => {
+        e.stopPropagation();
+        // Đảm bảo hàm handleMicClick đã có trong code
+        if (typeof handleMicClick === "function") handleMicClick(text, micBtn);
+      };
+    }
+  } catch (err) {
+    console.error("Popup Render Error:", err);
+    // Hiển thị lỗi ra UI thay vì treo "Đang tải"
+    popup.innerHTML = `
+        <div class="tts-header"><button id="close-error" class="close-btn">✕</button></div>
+        <div class="tts-content" style="color:#ff5252; text-align:center; padding:20px;">
+            ⚠️ Lỗi xử lý: ${err.message}<br>
+            <span style="font-size:12px; color:#999;">Hãy thử reload trang hoặc kiểm tra kết nối mạng.</span>
+        </div>`;
+    document.getElementById("close-error").onclick = closePopup;
+  }
+}
+// --- 4. FLASHCARD SYSTEM (15 MINS) ---
+
+function showFlashcard(item) {
+  // Xóa cái cũ nếu đang hiện
+  const oldCard = document.getElementById("vocab-flashcard");
+  if (oldCard) oldCard.remove();
+
+  const card = document.createElement("div");
+  card.id = "vocab-flashcard";
+  card.className = "flashcard-slide-in"; // Animation class (trong CSS)
+
+  let imgHtml = "";
+  if (item.data.images && item.data.images.length > 0) {
+    imgHtml = `<img src="${item.data.images[0]}" style="width:100%; height:120px; object-fit:cover; border-radius:8px 8px 0 0; display:block;">`;
+  }
+
+  const meaning = item.data.translation.wordMeaning || item.data.translation;
+
+  card.innerHTML = `
+        ${imgHtml}
+        <div style="padding:15px;">
+            <div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:5px;">Ôn tập từ vựng</div>
+            <h3 style="margin:0; font-size:22px; color:#333;">${item.word}</h3>
+            <p style="margin:5px 0 10px 0; color:#555; font-size:14px;">${meaning}</p>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button id="fc-play-btn" style="background:#58cc02; border:none; border-radius:50%; width:32px; height:32px; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                    ▶
+                </button>
+                <div style="font-size:10px; color:#999;" id="fc-timer">10s</div>
+            </div>
+        </div>
+        <button id="fc-close" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer;">✕</button>
+    `;
+
+  document.body.appendChild(card);
+
+  // Auto đọc âm thanh
+  speakWithEdgeTTS(item.word);
+
+  // Bắt sự kiện
+  document.getElementById("fc-play-btn").onclick = () =>
+    speakWithEdgeTTS(item.word);
+  document.getElementById("fc-close").onclick = () => card.remove();
+
+  // Đếm ngược 10s rồi tự tắt
+  let timeLeft = 10;
+  const timerElem = document.getElementById("fc-timer");
+  const interval = setInterval(() => {
+    timeLeft--;
+    timerElem.innerText = `${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(interval);
+      card.classList.add("flashcard-slide-out"); // Animation biến mất
+      setTimeout(() => card.remove(), 500);
+    }
+  }, 1000);
+}
+
+// Lắng nghe tin nhắn từ background.js (Mỗi 15p)
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if (request.action === "SHOW_FLASHCARD") {
+    const result = await chrome.storage.local.get(["vocabHistory"]);
+    const history = result.vocabHistory || [];
+
+    if (history.length > 0) {
+      // Lấy ngẫu nhiên 1 từ trong 10 từ gần nhất
+      const recentItems = history.slice(0, 10);
+      const randomItem =
+        recentItems[Math.floor(Math.random() * recentItems.length)];
+      showFlashcard(randomItem);
+    }
+  }
+});
+
+// Xử lý sự kiện nhấn phím
+// --- 5. EVENT INPUT (CAPTURE CONTEXT) ---
+// --- 5. EVENT INPUT (SMART CONTEXT CAPTURE) ---
+document.addEventListener("keydown", async (e) => {
+  if (e.key === "Shift") {
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+
+    if (selectedText) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+
+      // --- LOGIC LẤY NGỮ CẢNH THÔNG MINH (SMART CONTEXT) ---
+      let contextText = "";
+
+      try {
+        if (selection.anchorNode && selection.anchorNode.parentElement) {
+          const parentText = selection.anchorNode.parentElement.innerText;
+
+          // Tìm vị trí của từ được chọn trong đoạn văn cha
+          // Lưu ý: indexOf có thể tìm sai nếu từ xuất hiện nhiều lần,
+          // nhưng đây là cách nhẹ nhất cho browser extension.
+          const startIdx = parentText.indexOf(selectedText);
+          const endIdx = startIdx + selectedText.length;
+
+          if (startIdx !== -1) {
+            // 1. Lấy tối đa 100 ký tự trước và sau từ đó
+            const lookBack = 100;
+            const lookAhead = 100;
+
+            // Xác định vùng cắt thô
+            let sliceStart = Math.max(0, startIdx - lookBack);
+            let sliceEnd = Math.min(parentText.length, endIdx + lookAhead);
+
+            // 2. Tinh chỉnh: Cố gắng tìm dấu chấm câu (.) để cắt cho đẹp
+            // Tìm dấu chấm gần nhất TRƯỚC vùng cắt (trong phạm vi sliceStart)
+            const lastDotBefore = parentText.lastIndexOf(".", startIdx);
+            if (lastDotBefore !== -1 && lastDotBefore >= sliceStart) {
+              sliceStart = lastDotBefore + 1; // Lấy sau dấu chấm
+            }
+
+            // Tìm dấu chấm gần nhất SAU vùng cắt
+            const firstDotAfter = parentText.indexOf(".", endIdx);
+            if (firstDotAfter !== -1 && firstDotAfter <= sliceEnd) {
+              sliceEnd = firstDotAfter + 1; // Lấy cả dấu chấm
+            }
+
+            // Cắt chuỗi
+            contextText = parentText.substring(sliceStart, sliceEnd).trim();
+
+            // Clean up: Xóa xuống dòng thừa
+            contextText = contextText.replace(/\s+/g, " ");
+          }
+        }
+      } catch (err) {
+        console.warn("Context extraction error:", err);
+        contextText = ""; // Fallback nếu lỗi
+      }
+
+      // Giới hạn cứng lần cuối để đảm bảo API không bao giờ chết
+      if (contextText.length > 200) {
+        contextText = "..." + contextText.substring(0, 200) + "...";
+      }
+      // -----------------------------------------------------
+
+      // Đọc ngay lập tức
+      speakWithEdgeTTS(selectedText);
+
+      // Gọi popup
+      showPopup(rect, selectedText, contextText);
+    } else if (isPopupOpen) {
+      closePopup();
+    }
+  } else if (e.key === "Escape" && isPopupOpen) {
+    closePopup();
+  }
+});
+
+// Khởi tạo
+async function init() {
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = () => {
+      const voices = speechSynthesis.getVoices();
+      console.log(
+        "Available voices:",
+        voices.filter((v) => v.lang.startsWith("en-US")).map((v) => v.name)
+      );
+    };
+  }
+  createPopup();
+}
+
+init();
+/* =========================================
+   CẬP NHẬT: LOGIC XỬ LÝ LỖI (ERROR HANDLING)
+   ========================================= */
+
+// 1. Xử lý khi bấm nút Mic
+async function handleMicClick(referenceText, btnElement) {
+  if (!isRecording) {
+    // Bắt đầu ghi âm
+    try {
+      // Check xem trình duyệt có hỗ trợ không
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Trình duyệt này không hỗ trợ ghi âm!");
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+
+      mediaRecorder.onstop = async () => {
+        // UI: Đang xử lý
+        const resultDiv = document.getElementById("assessment-result");
+        if (resultDiv) {
+          resultDiv.innerHTML =
+            '<div style="font-size:12px; color:#ddd; text-align:center; padding:5px;">⏳ Đang gửi lên Azure...<br>(Quá trình này mất khoảng 2-3s)</div>';
+        }
+
+        try {
+          // Gom chunk thành blob
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+
+          // [NEW] Lưu vào biến global để replay sau này
+          lastRecordedBlob = audioBlob;
+
+          // Debug: Log ra console để check
+          console.log("Audio recorded size:", audioBlob.size);
+
+          if (audioBlob.size < 1000) {
+            throw new Error("File ghi âm quá ngắn hoặc không có tiếng.");
+          }
+
+          // Gọi hàm xử lý chính (giữ nguyên logic cũ)
+          // Lưu ý: truyền thêm referenceText vào render để nút Standard hoạt động
+          const result = await assessPronunciation(audioBlob, referenceText);
+
+          // Render kết quả (truyền thêm referenceText)
+          renderAssessmentResult(result, resultDiv, referenceText);
+        } catch (err) {
+          // ... (giữ nguyên code xử lý lỗi cũ)
+          console.error("Processing Error:", err);
+          if (resultDiv) {
+            resultDiv.innerHTML = `<div style="color:#ff5252; font-size:13px; text-align:center; padding:5px;">❌ Lỗi: ${err.message}</div>`;
+          }
+        } finally {
+          // Luôn luôn tắt stream Mic để giải phóng RAM
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      btnElement.classList.add("recording");
+    } catch (err) {
+      console.error("Mic Access Error:", err);
+      alert("Không thể mở Mic. Hãy kiểm tra quyền truy cập!");
+    }
+  } else {
+    // Stop recording
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    isRecording = false;
+    btnElement.classList.remove("recording");
+  }
+}
+
+// 2. Gọi API Azure Speech (Đã bọc Try-Catch toàn bộ)
+async function assessPronunciation(audioBlob, referenceText) {
+  try {
+    const result = await chrome.storage.sync.get(["azureKey", "azureRegion"]);
+    const key = result.azureKey;
+    const region = result.azureRegion;
+
+    if (!key || !region) {
+      throw new Error("Chưa nhập Azure Key/Region trong cài đặt.");
+    }
+
+    // Convert WebM sang WAV 16kHz Mono
+    // Lỗi thường xảy ra ở đây do convert
+    const wavBlob = await convertAudioToWav(audioBlob);
+    console.log("Converted WAV size:", wavBlob.size);
+
+    const assessParams = {
+      ReferenceText: referenceText,
+      GradingSystem: "HundredMark",
+      Granularity: "Phoneme",
+      Dimension: "Comprehensive",
+    };
+
+    const paramsHeader = btoa(JSON.stringify(assessParams));
+    const url = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Ocp-Apim-Subscription-Key": key,
+        "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
+        Accept: "application/json",
+        "Pronunciation-Assessment": paramsHeader,
+      },
+      body: wavBlob,
+    });
+
+    if (!response.ok) {
+      // Nếu Azure trả lỗi (400, 401...)
+      const errText = await response.text();
+      console.error("Azure API Error:", response.status, errText);
+
+      if (response.status === 401)
+        throw new Error("Sai Azure Key hoặc Region.");
+      if (response.status === 400)
+        throw new Error("Bad Request (Audio lỗi hoặc Text quá dài).");
+
+      throw new Error(
+        `Azure Error ${response.status}: ${errText.substring(0, 50)}...`
+      );
+    }
+
+    return await response.json();
+  } catch (e) {
+    // Ném lỗi ra ngoài để handleMicClick bắt được
+    throw e;
+  }
+}
+/* ======================================================
+   HÀM HIỂN THỊ KẾT QUẢ CHI TIẾT (ELSA STYLE)
+   ====================================================== */
+// [UPDATE] Thêm tham số referenceText vào cuối
+function renderAssessmentResult(data, container, referenceText) {
+  if (!container) return;
+
+  console.log("🔍 Azure Response:", data);
+
+  // 1. Check lỗi cơ bản (Giữ nguyên)
+  if (!data || data.error) {
+    container.innerHTML = `<div style="color:#ff5252; text-align:center;">⚠️ ${
+      data?.error || "Lỗi API"
+    }</div>`;
+    return;
+  }
+  if (!data.NBest || !data.NBest[0]) {
+    container.innerHTML = `<div style="color:#ffb74d; text-align:center;">🤔 Không nghe rõ. Thử lại nhé!</div>`;
+    return;
+  }
+
+  const result = data.NBest[0];
+
+  // Lấy điểm tổng (Flattened JSON fix) - Giữ nguyên logic cũ
+  const totalScore =
+    result.AccuracyScore !== undefined
+      ? result.AccuracyScore
+      : result.PronunciationAssessment
+      ? result.PronunciationAssessment.AccuracyScore
+      : 0;
+
+  const words = result.Words || [];
+
+  // Xác định màu cho vòng tròn điểm tổng - Giữ nguyên
+  let scoreColor = "#ff5252";
+  if (totalScore >= 80) scoreColor = "#4caf50";
+  else if (totalScore >= 60) scoreColor = "#ffeb3b";
+
+  // --- BẮT ĐẦU RENDER HTML ---
+  // Thêm ID để dễ querySelector nút bấm
+  let html = `<div class="assessment-box" id="result-box-content" style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px; margin-top:10px;">`;
+
+  // [NEW] 2 Nút Playback: User Voice & Azure Standard
+  html += `
+    <div class="assessment-actions">
+        <button id="btn-play-user" class="action-btn-small btn-user-audio" title="Nghe lại giọng bạn">
+            🗣️ My Voice
+        </button>
+        <button id="btn-play-standard" class="action-btn-small btn-ref-audio" title="Nghe giọng chuẩn">
+            🎧 Standard
+        </button>
+    </div>
+  `;
+
+  // 1. Vòng tròn điểm số (Giữ nguyên)
+  html += `
+    <div class="total-score-circle" style="border-color: ${scoreColor}; color: ${scoreColor}">
+      ${Math.round(totalScore)}
+    </div>
+    <div style="text-align:center; color:#ddd; font-size:13px; margin-bottom:15px;">Điểm phát âm tổng quát</div>
+  `;
+
+  // 2. Container chứa các từ (Giữ nguyên logic loop words)
+  html += `<div class="analyzed-content">`;
+
+  words.forEach((word) => {
+    // ... (Giữ nguyên logic render từng từ và phoneme cũ của bạn ở đây) ...
+    // Để tiết kiệm không gian chat, tôi viết tắt đoạn này là "RENDER_WORDS_LOGIC"
+    // Bạn hãy copy paste lại đoạn logic loop words cũ vào đây nhé
+
+    const wordText = word.Word;
+    const wScore =
+      word.AccuracyScore ||
+      (word.PronunciationAssessment
+        ? word.PronunciationAssessment.AccuracyScore
+        : 0);
+    const errorType =
+      word.ErrorType ||
+      (word.PronunciationAssessment
+        ? word.PronunciationAssessment.ErrorType
+        : "None");
+    let wordColor = "#fff";
+    if (errorType === "Omission") wordColor = "#777";
+    else if (wScore < 60) wordColor = "#ff5252";
+
+    const phonemes = word.Phonemes || [];
+    let phonemeHtml = "";
+
+    if (errorType === "Omission") {
+      phonemeHtml = `<span style="font-size:10px; color:#999;">(missed)</span>`;
+    } else {
+      phonemes.forEach((p) => {
+        const pScore = p.AccuracyScore;
+        const pText = p.Phoneme;
+        let pClass = "p-bad";
+        if (pScore >= 90) pClass = "p-perfect";
+        else if (pScore >= 80) pClass = "p-good";
+        else if (pScore >= 60) pClass = "p-fair";
+        phonemeHtml += `<span class="phoneme-char ${pClass}" title="Âm: /${pText}/ - Điểm: ${pScore}">${pText}</span>`;
+      });
+    }
+
+    html += `
+      <div class="word-block">
+        <span class="word-text" style="color:${wordColor}">${wordText}</span>
+        <div class="phoneme-row">${phonemeHtml}</div>
+      </div>
+    `;
+  });
+
+  html += `</div>`; // Đóng analyzed-content
+  html += `</div>`; // Đóng assessment-box
+
+  container.innerHTML = html;
+
+  // [NEW] Gán sự kiện Click cho 2 nút vừa tạo
+  // Cần dùng setTimeout hoặc requestAnimationFrame để đảm bảo DOM đã được render
+  setTimeout(() => {
+    const btnUser = document.getElementById("btn-play-user");
+    const btnStandard = document.getElementById("btn-play-standard");
+
+    // Play User Recording
+    if (btnUser && lastRecordedBlob) {
+      btnUser.onclick = () => {
+        const audioUrl = URL.createObjectURL(lastRecordedBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+      };
+    }
+
+    // Play Standard (Dùng lại hàm speakWithEdgeTTS có sẵn)
+    if (btnStandard && referenceText) {
+      btnStandard.onclick = () => {
+        speakWithEdgeTTS(referenceText);
+      };
+    }
+  }, 0);
+}
+// 1. Chuyển đổi Blob Audio sang WAV 16kHz Mono
+async function convertAudioToWav(audioBlob) {
+  // Tạo AudioContext với sample rate 16000 (chuẩn Azure Speech)
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+    sampleRate: 16000,
+  });
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+  // Lấy dữ liệu channel 0 (Mono)
+  const pcmData = audioBuffer.getChannelData(0);
+
+  // Encode sang WAV
+  const wavBuffer = encodeWAV(pcmData, 16000);
+  return new Blob([wavBuffer], { type: "audio/wav" });
+}
+
+// 2. Hàm Encode cấu trúc file WAV
+function encodeWAV(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+
+  // Helper viết chuỗi
+  const writeString = (view, offset, string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+
+  /* RIFF identifier */
+  writeString(view, 0, "RIFF");
+  /* file length */
+  view.setUint32(4, 36 + samples.length * 2, true);
+  /* RIFF type */
+  writeString(view, 8, "WAVE");
+  /* format chunk identifier */
+  writeString(view, 12, "fmt ");
+  /* format chunk length */
+  view.setUint32(16, 16, true);
+  /* sample format (raw) */
+  view.setUint16(20, 1, true);
+  /* channel count (mono) */
+  view.setUint16(22, 1, true);
+  /* sample rate */
+  view.setUint32(24, sampleRate, true);
+  /* byte rate (sample rate * block align) */
+  view.setUint32(28, sampleRate * 2, true);
+  /* block align (channel count * bytes per sample) */
+  view.setUint16(32, 2, true);
+  /* bits per sample */
+  view.setUint16(34, 16, true);
+  /* data chunk identifier */
+  writeString(view, 36, "data");
+  /* data chunk length */
+  view.setUint32(40, samples.length * 2, true);
+
+  // Ghi dữ liệu PCM
+  floatTo16BitPCM(view, 44, samples);
+
+  return view;
+}
+
+// 3. Chuyển đổi Float sang 16-bit PCM
+function floatTo16BitPCM(output, offset, input) {
+  for (let i = 0; i < input.length; i++, offset += 2) {
+    let s = Math.max(-1, Math.min(1, input[i]));
+    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+}
+
+
+
+================================================
+FILE: apps/extension/manifest.json
+================================================
+{
+  "manifest_version": 3,
+  "name": "Edge TTS Reader & Vocabulary Coach",
+  "version": "1.2",
+  "description": "Đọc văn bản, Check phát âm Azure, Dịch ngữ cảnh & Ôn tập từ vựng",
+  "permissions": ["storage", "microphone", "alarms"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["popup.css"]
+    }
+  ],
+  "host_permissions": [
+    "https://translate.google.com/*",
+    "https://translate.googleapis.com/*",
+    "https://commons.wikimedia.org/*",
+    "https://api.duckduckgo.com/*",
+    "https://www.googleapis.com/*",
+    "https://api.unsplash.com/*",
+    "https://*.cognitiveservices.azure.com/*"
+  ]
+}
+
+
+================================================
+FILE: apps/extension/popup.css
+================================================
+:root {
+  --primary-color: #58cc02; /* Xanh lá kiểu Duolingo/Elsa */
+  --primary-dark: #46a302;
+  --accent-color: #1cb0f6; /* Xanh dương */
+  --text-primary: #3c3c3c;
+  --text-secondary: #777777;
+  --bg-color: #ffffff;
+  --card-bg: #f7f7f7;
+  --danger-color: #ff4b4b;
+  --warning-color: #ffc800;
+  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  --border-radius: 16px;
+}
+
+/* Reset & Base */
+* {
+  box-sizing: border-box;
+}
+
+#tts-popup {
+  position: absolute;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  padding: 0;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  z-index: 999999;
+  min-width: 320px;
+  max-width: 400px;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif; /* Font tròn trịa hiện đại */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- Header --- */
+.tts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: move;
+  user-select: none;
+}
+
+.sound-btn,
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #bbbbbb;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.sound-btn:hover {
+  background: #f0f8ff;
+  color: var(--accent-color);
+}
+
+.close-btn:hover {
+  background: #fff0f0;
+  color: var(--danger-color);
+}
+
+/* --- Content Area --- */
+.tts-content {
+  padding: 0 20px 20px 20px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* --- Images Grid --- */
+.tts-images-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.tts-image {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.tts-image:hover {
+  transform: scale(1.05);
+}
+
+.tts-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- Phonetic & Meaning --- */
+.tts-phonetic {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.phonetic-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.phonetic-item .flag {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+.phonetic-text {
+  font-family: "Lucida Console", monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tts-meaning {
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* --- Actions (Mic Button) --- */
+.tts-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 20px 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 20%);
+}
+
+.mic-btn {
+  background: var(--accent-color); /* Màu xanh chủ đạo */
+  border: none;
+  box-shadow: 0 4px 0 #118ec7; /* Hiệu ứng nút bấm 3D */
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  margin-bottom: 10px;
+}
+
+.mic-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #118ec7;
+}
+
+.mic-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #118ec7;
+}
+
+.mic-btn.recording {
+  background: var(--danger-color);
+  box-shadow: 0 4px 0 #d63e3e;
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 75, 75, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
+  }
+}
+
+/* --- Assessment Result (ELSA Style) --- */
+#assessment-result {
+  width: 100%;
+}
+
+.assessment-box {
+  background: #ffffff;
+  padding: 15px;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Vòng tròn điểm số */
+.total-score-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 5px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 auto 5px auto;
+  background: #fff;
+  color: var(--text-primary);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Text Word chính */
+.word-text {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 10px 0 5px 0;
+  color: #2b3b4e; /* Màu xanh đậm sang trọng */
+  letter-spacing: -0.5px;
+}
+
+/* Container Phonemes */
+.analyzed-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.word-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phoneme-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.phoneme-char {
+  font-family: "Roboto Mono", monospace;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Màu sắc điểm số (Color Grading) */
+/* Xanh (Excellent) */
+.p-perfect {
+  background-color: #dff6dd;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* Xanh nhạt (Good) */
+.p-good {
+  background-color: #f1f8e9;
+  color: #558b2f;
+  border: 1px solid #dcedc8;
+}
+
+/* Vàng (Fair) */
+.p-fair {
+  background-color: #fff8e1;
+  color: #fbc02d;
+  border: 1px solid #ffecb3;
+}
+
+/* Đỏ (Bad) */
+.p-bad {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  position: relative;
+}
+
+/* Loading & Info */
+.tts-loading,
+.tts-info {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  padding: 10px;
+}
+/* --- Flashcard Passive Learning --- */
+#vocab-flashcard {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 280px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 2147483647; /* Max z-index */
+  font-family: "Nunito", sans-serif;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.flashcard-slide-in {
+  animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.flashcard-slide-out {
+  animation: slideOutRight 0.5s forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* Style cho Context Box trong Popup chính */
+.context-box {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-left: 3px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  line-height: 1.4;
+}
+/* --- Dictionary Styles --- */
+.dict-container {
+  text-align: left;
+  margin: 10px 0;
+  padding: 0 10px;
+}
+
+.dict-row {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
+}
+
+.dict-pos {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-weight: 700;
+  min-width: 45px;
+  text-align: center;
+}
+
+.dict-meanings {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+/* --- New: Primary Meaning Style --- */
+.primary-meaning {
+  font-size: 18px; /* To hơn text thường */
+  color: var(--primary-dark); /* Màu xanh đậm cho dễ nhìn */
+  font-weight: 700;
+  text-align: center;
+  margin: 5px 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eee; /* Gạch chân nhẹ ngăn cách với dict */
+  line-height: 1.4;
+}
+/* --- Assessment Action Buttons --- */
+.assessment-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.action-btn-small {
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-user-audio {
+  background: #ffffff;
+  color: #d32f2f; /* Màu đỏ ghi âm */
+}
+.btn-user-audio:hover {
+  background: #ffebee;
+}
+
+.btn-ref-audio {
+  background: #ffffff;
+  color: #1976d2; /* Màu xanh Azure */
+}
+.btn-ref-audio:hover {
+  background: #e3f2fd;
+}
+
+
+
+================================================
+FILE: apps/extension/popup.html
+================================================
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edge TTS Reader - Cài đặt</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 450px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+
+      .guide-section {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        line-height: 1.6;
+        backdrop-filter: blur(10px);
+      }
+
+      .guide-section h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+
+      .guide-section ol {
+        padding-left: 20px;
+      }
+
+      .guide-section li {
+        margin-bottom: 6px;
+      }
+
+      .guide-section a {
+        color: #fff;
+        text-decoration: underline;
+      }
+
+      .guide-section a:hover {
+        opacity: 0.8;
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+        position: relative;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-group input {
+        flex: 1;
+        padding: 10px 40px 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: monospace;
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        transition: all 0.2s;
+      }
+
+      .input-group input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.8);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+      }
+
+      .toggle-visibility {
+        position: absolute;
+        right: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px;
+        z-index: 10;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+
+      .toggle-visibility:hover {
+        opacity: 1;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .save-btn {
+        background: white;
+        color: #667eea;
+      }
+
+      .save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .test-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .test-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .status-message {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        text-align: center;
+        display: none;
+      }
+
+      .status-message.show {
+        display: block;
+      }
+
+      .status-message.success {
+        background: rgba(76, 175, 80, 0.9);
+        color: white;
+      }
+
+      .status-message.error {
+        background: rgba(244, 67, 54, 0.9);
+        color: white;
+      }
+
+      .status-message.warning {
+        background: rgba(255, 152, 0, 0.9);
+        color: white;
+      }
+
+      .status-message.loading {
+        background: rgba(33, 150, 243, 0.9);
+        color: white;
+      }
+
+      .info-note {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-top: 15px;
+        border-left: 3px solid rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>⚙️ Cài đặt Google Search API</h2>
+
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy API Key:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a href="https://console.cloud.google.com/" target="_blank"
+              >Google Cloud Console</a
+            >
+          </li>
+          <li>Tạo dự án mới hoặc chọn dự án hiện có</li>
+          <li>Bật Custom Search API</li>
+          <li>Tạo API Key từ phần "Credentials"</li>
+          <li>Dán API Key vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy Search Engine ID:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a
+              href="https://programmablesearchengine.google.com/"
+              target="_blank"
+              >Google Programmable Search Engine</a
+            >
+          </li>
+          <li>Tạo search engine mới</li>
+          <li>Sao chép Search Engine ID (cx)</li>
+          <li>Dán vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label>🔑 Main Google API Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="api-key-0"
+            class="api-key-input"
+            placeholder="Key chính (bắt buộc)"
+          />
+          <button type="button" class="toggle-visibility">👁️</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>🔍 Main Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="cx-0"
+            class="cx-input"
+            placeholder="CX chính (bắt buộc)"
+          />
+        </div>
+      </div>
+
+      <details
+        style="
+          margin-bottom: 15px;
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 6px;
+          padding: 10px;
+        "
+      >
+        <summary style="cursor: pointer; font-weight: 600; font-size: 13px">
+          ➕ Mở rộng: 4 Backup Keys (Dự phòng)
+        </summary>
+
+        <div
+          style="
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 2px solid rgba(255, 255, 255, 0.3);
+          "
+        >
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #1:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-1"
+              class="api-key-input"
+              placeholder="API Key dự phòng 1"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-1"
+              class="cx-input"
+              placeholder="CX ID dự phòng 1"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #2:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-2"
+              class="api-key-input"
+              placeholder="API Key dự phòng 2"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-2"
+              class="cx-input"
+              placeholder="CX ID dự phòng 2"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #3:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-3"
+              class="api-key-input"
+              placeholder="API Key dự phòng 3"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-3"
+              class="cx-input"
+              placeholder="CX ID dự phòng 3"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #4:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-4"
+              class="api-key-input"
+              placeholder="API Key dự phòng 4"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-4"
+              class="cx-input"
+              placeholder="CX ID dự phòng 4"
+            />
+          </div>
+        </div>
+      </details>
+
+      <div class="input-group">
+        <label for="search-engine-input">Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="search-engine-input"
+            placeholder="Nhập Search Engine ID"
+          />
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="save-btn" id="save-btn">💾 Lưu</button>
+        <button class="test-btn" id="test-btn">🧪 Kiểm tra</button>
+      </div>
+      <div
+        class="guide-section"
+        style="
+          margin-top: 20px;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          padding-top: 15px;
+        "
+      >
+        <h3>🎙️ Cài đặt Azure Speech (Pronunciation):</h3>
+        <ol>
+          <li>
+            Tạo resource <strong>Speech Services</strong> trên Azure Portal
+          </li>
+          <li>Lấy Key và Region (ví dụ: eastus, southeastasia)</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-key-input">Azure Speech Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="azure-key-input"
+            placeholder="Nhập Azure Subscription Key"
+          />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-region-input">Azure Region:</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="azure-region-input"
+            placeholder="Ví dụ: eastus"
+          />
+        </div>
+      </div>
+      <div class="status-message" id="status-message"></div>
+
+      <div class="info-note">
+        💡 <strong>Lưu ý:</strong> Nếu không cấu hình Google API, extension sẽ
+        tự động sử dụng Unsplash để lấy hình ảnh.
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
+
+
+
+================================================
+FILE: apps/extension/popup.js
+================================================
+document.addEventListener("DOMContentLoaded", async () => {
+  // Elements cho Azure (Giữ nguyên)
+  const azureKeyInput = document.getElementById("azure-key-input");
+  const azureRegionInput = document.getElementById("azure-region-input");
+  const saveBtn = document.getElementById("save-btn");
+  const testBtn = document.getElementById("test-btn");
+
+  // Xử lý nút mắt thần (Toggle Visibility) cho tất cả input password
+  document.querySelectorAll(".toggle-visibility").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      // Tìm input cùng cấp với nút bấm
+      const input = e.target.parentElement.querySelector("input");
+      if (input) {
+        input.type = input.type === "password" ? "text" : "password";
+      }
+    });
+  });
+
+  // --- 1. LOAD DATA ---
+  chrome.storage.sync.get(
+    ["googleApiKeys", "azureKey", "azureRegion"], // Lưu ý: key mới là 'googleApiKeys' (dạng mảng)
+    (result) => {
+      // Load Azure
+      if (result.azureKey) azureKeyInput.value = result.azureKey;
+      if (result.azureRegion) azureRegionInput.value = result.azureRegion;
+
+      // Load Google Keys (List)
+      const keys = result.googleApiKeys || [];
+
+      // Loop qua 5 slot để điền dữ liệu
+      for (let i = 0; i < 5; i++) {
+        const keyInput = document.getElementById(`api-key-${i}`);
+        const cxInput = document.getElementById(`cx-${i}`);
+
+        if (keys[i]) {
+          if (keyInput) keyInput.value = keys[i].key || "";
+          if (cxInput) cxInput.value = keys[i].cx || "";
+        }
+      }
+    }
+  );
+
+  // --- 2. SAVE DATA ---
+  saveBtn.addEventListener("click", () => {
+    const azureKey = azureKeyInput.value.trim();
+    const azureRegion = azureRegionInput.value.trim();
+
+    // Gom dữ liệu từ 5 slot Google
+    let googleKeysList = [];
+    for (let i = 0; i < 5; i++) {
+      const keyVal = document.getElementById(`api-key-${i}`).value.trim();
+      const cxVal = document.getElementById(`cx-${i}`).value.trim();
+
+      // Chỉ lưu nếu có điền Key (CX có thể dùng chung hoặc riêng)
+      if (keyVal) {
+        googleKeysList.push({
+          key: keyVal,
+          cx: cxVal, // Nếu cx trống, logic bên content.js sẽ handle sau
+        });
+      }
+    }
+
+    // Validation
+    if (googleKeysList.length === 0) {
+      showStatusMessage("⚠️ Cần ít nhất 1 Google API Key chính!", "warning");
+      return;
+    }
+
+    // Save to Storage
+    chrome.storage.sync.set(
+      {
+        googleApiKeys: googleKeysList, // Lưu dạng mảng object
+        azureKey: azureKey,
+        azureRegion: azureRegion,
+      },
+      () => {
+        showStatusMessage(
+          `✅ Đã lưu ${googleKeysList.length} bộ key!`,
+          "success"
+        );
+        setTimeout(hideStatusMessage, 3000);
+      }
+    );
+  });
+
+  // --- 3. TEST API (Test key đầu tiên) ---
+  testBtn.addEventListener("click", async () => {
+    const key0 = document.getElementById("api-key-0").value.trim();
+    const cx0 = document.getElementById("cx-0").value.trim();
+
+    if (!key0 || !cx0) {
+      showStatusMessage("⚠️ Cần nhập Key & CX ở ô đầu tiên để test", "warning");
+      return;
+    }
+
+    showStatusMessage("⏳ Đang test Key chính...", "loading");
+
+    try {
+      const url = `https://www.googleapis.com/customsearch/v1?q=test&cx=${cx0}&searchType=image&key=${key0}&num=1`;
+      const response = await fetch(url);
+
+      if (response.ok) {
+        showStatusMessage("✅ Key chính hoạt động ngon lành!", "success");
+        setTimeout(hideStatusMessage, 3000);
+      } else {
+        const errorData = await response.json();
+        showStatusMessage(
+          `❌ Lỗi: ${errorData.error?.message || "Check lại Key/CX"}`,
+          "error"
+        );
+      }
+    } catch (error) {
+      showStatusMessage(`❌ Lỗi mạng: ${error.message}`, "error");
+    }
+  });
+});
+
+function showStatusMessage(message, type) {
+  const statusDiv = document.getElementById("status-message");
+  statusDiv.textContent = message;
+  statusDiv.className = `status-message show ${type}`;
+}
+
+function hideStatusMessage() {
+  const statusDiv = document.getElementById("status-message");
+  statusDiv.className = "status-message";
+}
+// Function xử lý khi click nút "Star Word"
+async function handleStarWord(wordToSave) {
+  try {
+    // 1. Get Auth Token (Token lưu ở storage khi user login extension)
+    const { token } = await chrome.storage.local.get(["token"]);
+    if (!token) {
+      alert("Please login via Extension first!");
+      return;
+    }
+
+    // 2. Auto-fetch Missing Info (Vì DB cần full info)
+    // Ví dụ: Gọi Google Translate API free endpoint để lấy nghĩa
+    const googleData = await fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURI(
+        wordToSave
+      )}`
+    ).then((res) => res.json());
+
+    const meaning = googleData[0][0][0]; // Extract meaning
+
+    // Ví dụ: Gọi Free Dictionary API để lấy phonetics & example
+    const dictData = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${wordToSave}`
+    ).then((res) => res.json());
+
+    const pronunciation = dictData[0]?.phonetics[0]?.text || "";
+    const example = dictData[0]?.meanings[0]?.definitions[0]?.example || "";
+    const partOfSpeech = dictData[0]?.meanings[0]?.partOfSpeech || "noun";
+
+    // 3. Prepare Payload
+    const payload = {
+      word: wordToSave,
+      meaning: meaning,
+      pronunciation: pronunciation,
+      example: example,
+      partOfSpeech: partOfSpeech,
+      topic: "From Extension", // Auto tag source
+      isStarred: true,
+    };
+
+    // 4. Send to YOUR Backend
+    const response = await fetch("http://localhost:5000/vocabulary", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      updateUI_StarActive(); // Đổi màu ngôi sao trên popup
+    }
+  } catch (err) {
+    console.error("Failed to save word:", err);
   }
 }
 
@@ -1968,27 +4732,775 @@ export default function GoogleCallbackPage() {
 ================================================
 FILE: apps/frontend/app/login/page.tsx
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 1222: character maps to <undefined>
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await login(email, password);
+      router.push('/vocabulary');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    // Redirect to backend Google OAuth
+    window.location.href = 'http://localhost:5000/auth/google';
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-center mb-8">🔐 Login</h1>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          >
+            {isLoading ? 'Loading...' : 'Login'}
+          </button>
+        </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleGoogleLogin}
+            className="mt-4 w-full flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 rounded hover:bg-gray-50"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link href="/register" className="text-blue-500 hover:underline">
+            Register
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 
 ================================================
 FILE: apps/frontend/app/register/page.tsx
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x9d in position 1134: character maps to <undefined>
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+export default function RegisterPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { register } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await register(email, password, name);
+      router.push('/vocabulary');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-center mb-8">📝 Register</h1>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Your name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          >
+            {isLoading ? 'Loading...' : 'Register'}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link href="/login" className="text-blue-500 hover:underline">
+            Login
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 
 ================================================
 FILE: apps/frontend/app/vocabulary/page.tsx
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in position 6546: character maps to <undefined>
+'use client';
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
+
+// --- INTERFACES ---
+interface VocabItem {
+  id: string;
+  word: string;
+  topic?: string | null;
+  partOfSpeech?: string | null;
+  pronunciation?: string | null;
+  meaning?: string | null;
+  example?: string | null;
+  relatedWords?: string | null;
+  occurrence: number;
+  isStarred: boolean;
+  createdAt: string;
+}
+
+interface FilterState {
+  word: string;
+  topic: string;
+  partOfSpeech: string;
+  meaning: string;
+}
+
+interface SortState {
+  key: string;
+  direction: 'asc' | 'desc';
+}
+
+export default function VocabularyPage() {
+  const { token } = useAuth();
+
+  // --- STATES ---
+  const [vocabs, setVocabs] = useState<VocabItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
+
+  const [filters, setFilters] = useState<FilterState>({
+    word: '', topic: '', partOfSpeech: '', meaning: ''
+  });
+
+  const [sortConfig, setSortConfig] = useState<SortState>({
+    key: 'createdAt',
+    direction: 'desc'
+  });
+
+  // --- QUICK SEARCH STATES ---
+  const [showSearch, setShowSearch] = useState(false);
+  const [quickSearchText, setQuickSearchText] = useState('');
+  const [quickSearchResults, setQuickSearchResults] = useState<VocabItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const quickSearchDebounce = useRef<NodeJS.Timeout | null>(null);
+
+  const [selectedVocab, setSelectedVocab] = useState<VocabItem | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // --- FETCH DATA ---
+  const fetchVocabs = useCallback(async (
+    pageNum = 1,
+    currentFilters = filters,
+    currentSort = sortConfig,
+    starred = showStarredOnly
+  ) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const params: any = {
+        page: pageNum,
+        limit: 20,
+        ...currentFilters,
+        sortBy: currentSort.key,
+        sortOrder: currentSort.direction
+      };
+
+      if (starred) {
+        params.isStarred = 'true';
+      }
+
+      const res = await axios.get('http://localhost:5000/vocabulary', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: params,
+      });
+
+      setVocabs(res.data.data);
+      setTotalPages(res.data.meta.lastPage);
+      setPage(res.data.meta.page);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, filters, sortConfig, showStarredOnly]);
+
+  useEffect(() => {
+    fetchVocabs();
+  }, [fetchVocabs]);
+
+  // --- HANDLERS ---
+  const handleToggleStar = async (id: string, currentStatus: boolean, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    // Optimistic Update
+    const toggleFunc = (list: VocabItem[]) =>
+      list.map(item => item.id === id ? { ...item, isStarred: !currentStatus } : item);
+
+    setVocabs(toggleFunc);
+    setQuickSearchResults(toggleFunc);
+    if (selectedVocab && selectedVocab.id === id) {
+      setSelectedVocab({ ...selectedVocab, isStarred: !currentStatus });
+    }
+
+    try {
+      await axios.patch(`http://localhost:5000/vocabulary/${id}`,
+        { isStarred: !currentStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error("Failed to star", error);
+      alert("Failed to update star");
+    }
+  };
+
+  const performQuickSearch = async (text: string) => {
+    if (!token || !text.trim()) {
+      setQuickSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await axios.get('http://localhost:5000/vocabulary', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: 1, limit: 5, search: text, sortBy: 'word', sortOrder: 'asc'
+        }
+      });
+      setQuickSearchResults(res.data.data);
+    } catch (error) {
+      console.error("Quick search error", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleQuickSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    setQuickSearchText(text);
+
+    if (quickSearchDebounce.current) clearTimeout(quickSearchDebounce.current);
+    quickSearchDebounce.current = setTimeout(() => {
+      performQuickSearch(text);
+    }, 300);
+  };
+
+  const handleQuickCreate = async () => {
+    if (!quickSearchText || !token) return;
+    try {
+      const res = await axios.post('http://localhost:5000/vocabulary',
+        { word: quickSearchText, isStarred: true },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(`Created "${quickSearchText}"`);
+      setShowSearch(false);
+      setQuickSearchText('');
+      fetchVocabs(1);
+      setSelectedVocab(res.data);
+    } catch (e) { alert("Error creating word"); }
+  };
+
+  useEffect(() => {
+    let lastKeyPressTime = 0;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT' && !showSearch) return;
+
+      if (e.code === 'Space') {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastKeyPressTime < 300) {
+          e.preventDefault();
+          setShowSearch(true);
+          setQuickSearchText('');
+          setQuickSearchResults([]);
+          setTimeout(() => searchInputRef.current?.focus(), 100);
+        }
+        lastKeyPressTime = currentTime;
+      }
+      if (e.code === 'Escape') {
+        setShowSearch(false);
+        setSelectedVocab(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    const newSort: SortState = { key, direction };
+    setSortConfig(newSort);
+    fetchVocabs(1, filters, newSort);
+  };
+
+  const getSortIcon = (colKey: string) => {
+    if (sortConfig.key !== colKey) return <span className="text-gray-300 ml-1">↕</span>;
+    return sortConfig.direction === 'asc' ? <span className="ml-1 text-indigo-600">▲</span> : <span className="ml-1 text-indigo-600">▼</span>;
+  };
+
+  const handleFilterChange = (field: keyof FilterState, value: string) => {
+    const newFilters = { ...filters, [field]: value };
+    setFilters(newFilters);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchVocabs(1, newFilters, sortConfig), 500);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this word?")) return;
+    try {
+      await axios.delete(`http://localhost:5000/vocabulary/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchVocabs(page, filters, sortConfig);
+      if (selectedVocab?.id === id) setSelectedVocab(null);
+    } catch (e) { alert("Failed"); }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !token) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      setIsUploading(true);
+      await axios.post('http://localhost:5000/vocabulary/import/csv', formData, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+      });
+      alert('Import success!');
+      fetchVocabs(1);
+    } catch (error) { alert('Import failed!'); }
+    finally { setIsUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
+  };
+
+  // --- RENDER ---
+  return (
+    <div className="min-h-screen bg-gray-50 p-6 text-black relative">
+
+      {/* QUICK SEARCH MODAL */}
+      {showSearch && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center pt-32 backdrop-blur-sm transition-all" onClick={() => setShowSearch(false)}>
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+              <span className="text-xl">🔍</span>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={quickSearchText}
+                onChange={handleQuickSearchChange}
+                onKeyDown={(e) => e.key === 'Enter' && quickSearchResults.length === 0 && handleQuickCreate()}
+                placeholder="Search English or Vietnamese..."
+                className="flex-1 text-xl font-light outline-none bg-transparent placeholder-gray-400 text-gray-800 h-10"
+              />
+              <div className="text-xs text-gray-400 border border-gray-200 px-2 py-1 rounded">ESC to close</div>
+            </div>
+            <div className="bg-gray-50 max-h-[60vh] overflow-y-auto">
+              {isSearching ? (
+                <div className="p-8 text-center text-gray-400">Searching...</div>
+              ) : quickSearchText && quickSearchResults.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-500 mb-4">No matching vocabulary found for "<span className="font-bold text-gray-800">{quickSearchText}</span>"</p>
+                  <button
+                    onClick={handleQuickCreate}
+                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 shadow-md transition-all flex items-center gap-2 mx-auto font-medium"
+                  >
+                    <span>+</span> Create new word "{quickSearchText}"
+                  </button>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {quickSearchResults.map(item => (
+                    <li
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedVocab(item);
+                        setShowSearch(false);
+                      }}
+                      className="p-4 hover:bg-indigo-50 cursor-pointer transition-colors flex justify-between items-center group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={(e) => handleToggleStar(item.id, item.isStarred, e)}
+                          className="focus:outline-none"
+                        >
+                          <StarIcon filled={item.isStarred} className={item.isStarred ? "text-yellow-400" : "text-gray-300"} />
+                        </button>
+                        <div>
+                          <div className="font-bold text-lg text-gray-800">{item.word}</div>
+                          <div className="text-sm text-gray-500 line-clamp-1">{item.meaning || <span className="italic opacity-50">No meaning</span>}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400 group-hover:text-indigo-500 px-2 py-1 border border-transparent group-hover:border-indigo-200 rounded">
+                        View detail ↵
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DETAIL POPUP */}
+      {selectedVocab && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedVocab(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-indigo-600 p-6 text-white relative">
+              <button onClick={() => setSelectedVocab(null)} className="absolute top-4 right-4 text-white/70 hover:text-white text-xl font-bold">✕</button>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="text-sm uppercase tracking-wider opacity-80 mb-1">{selectedVocab.partOfSpeech || 'Vocabulary'}</div>
+                  <h2 className="text-4xl font-bold">{selectedVocab.word}</h2>
+                  <div className="mt-2 font-mono bg-indigo-700/50 inline-block px-2 py-0.5 rounded text-sm">{selectedVocab.pronunciation || '/.../'}</div>
+                </div>
+                <button
+                  onClick={() => handleToggleStar(selectedVocab.id, selectedVocab.isStarred)}
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                >
+                  <StarIcon filled={selectedVocab.isStarred} className="text-yellow-400 w-8 h-8" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Meaning</label>
+                <div className="text-lg text-gray-800 font-medium border-l-4 border-indigo-500 pl-3">
+                  {selectedVocab.meaning || 'N/A'}
+                </div>
+              </div>
+              {selectedVocab.example && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Example</label>
+                  <div className="text-gray-600 italic bg-gray-50 p-3 rounded-lg">"{selectedVocab.example}"</div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Topic</label>
+                  <div className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded inline-block">{selectedVocab.topic || 'General'}</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Related Words</label>
+                  <div className="text-sm text-gray-700">{selectedVocab.relatedWords || '-'}</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Occurrence</label>
+                  <div className="text-sm text-gray-700">{selectedVocab.occurrence} times</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Created At</label>
+                  <div className="text-sm text-gray-700">{new Date(selectedVocab.createdAt).toLocaleDateString()}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                onClick={() => handleDelete(selectedVocab.id)}
+                className="text-red-600 hover:bg-red-50 px-4 py-2 rounded text-sm font-medium transition-colors"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedVocab(null)}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2 rounded text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">My Vocabulary</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Press <kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-xs border border-gray-300">Space</kbd> <kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-xs border border-gray-300">Space</kbd> to Quick Search
+          </p>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={() => {
+              const newValue = !showStarredOnly;
+              setShowStarredOnly(newValue);
+              fetchVocabs(1, filters, sortConfig, newValue);
+            }}
+            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${showStarredOnly
+              ? 'bg-yellow-50 border-yellow-400 text-yellow-700'
+              : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+          >
+            <StarIcon filled={showStarredOnly} className={showStarredOnly ? "text-yellow-500" : "text-gray-400"} />
+            <span className="text-sm font-medium">{showStarredOnly ? 'Starred Only' : 'All Words'}</span>
+          </button>
+
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition-colors text-sm font-medium"
+          >
+            {isUploading ? 'Importing...' : '📂 Import CSV'}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+        <div className="overflow-x-auto pb-4">
+          <table className="min-w-full divide-y divide-gray-200 table-fixed">
+            <thead className="bg-gray-50 select-none">
+              <tr>
+                <th className="w-12 px-2 py-3 text-center text-xs font-bold text-gray-500 uppercase border-r border-gray-200">★</th>
+                <th onClick={() => handleSort('createdAt')} className="w-32 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Time {getSortIcon('createdAt')}</th>
+                <th onClick={() => handleSort('topic')} className="w-32 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Topic {getSortIcon('topic')}</th>
+                <th onClick={() => handleSort('word')} className="w-40 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Word {getSortIcon('word')}</th>
+                <th className="w-24 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Type</th>
+                <th className="w-32 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Pronun.</th>
+                <th className="w-48 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Meaning</th>
+                <th className="w-64 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Example</th>
+                <th className="w-48 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Related</th>
+                <th onClick={() => handleSort('occurrence')} className="w-20 px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Count {getSortIcon('occurrence')}</th>
+                <th className="w-24 px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase sticky right-0 bg-gray-50 shadow-l z-10">Actions</th>
+              </tr>
+              <tr className="bg-white border-b border-gray-200">
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Filter..." value={filters.topic} onChange={(e) => handleFilterChange('topic', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Filter..." value={filters.word} onChange={(e) => handleFilterChange('word', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Type..." value={filters.partOfSpeech} onChange={(e) => handleFilterChange('partOfSpeech', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Meaning..." value={filters.meaning} onChange={(e) => handleFilterChange('meaning', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 sticky right-0 bg-white z-10"></td>
+              </tr>
+            </thead>
+
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr><td colSpan={11} className="text-center py-10 text-gray-500">Loading data...</td></tr>
+              ) : vocabs.length === 0 ? (
+                <tr><td colSpan={11} className="text-center py-10 text-gray-500">No vocabulary found.</td></tr>
+              ) : (
+                vocabs.map((vocab) => (
+                  <tr
+                    key={vocab.id}
+                    className="hover:bg-indigo-50/30 group transition-colors cursor-pointer"
+                    onClick={() => setSelectedVocab(vocab)}
+                  >
+                    <td className="px-2 py-3 text-center border-r border-gray-100 align-top" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={(e) => handleToggleStar(vocab.id, vocab.isStarred, e)} className="hover:bg-gray-100 rounded-full p-1">
+                        <StarIcon filled={vocab.isStarred} className={vocab.isStarred ? "text-yellow-400 w-5 h-5" : "text-gray-300 w-5 h-5"} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top">{new Date(vocab.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.topic && <span className="bg-gray-100 px-2 py-0.5 rounded text-xs">{vocab.topic}</span>}</td>
+                    <td className="px-4 py-3 text-sm font-bold text-indigo-700 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.word}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top italic">{vocab.partOfSpeech}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.pronunciation}</td>
+                    <td className="px-4 py-3 text-sm text-gray-800 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.meaning}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top italic">{vocab.example}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.relatedWords}</td>
+                    <td className="px-4 py-3 text-sm text-center font-semibold text-gray-500 border-r border-gray-100 align-top">{vocab.occurrence}</td>
+                    <td className="px-2 py-3 text-center align-top sticky right-0 bg-white group-hover:bg-indigo-50/30 shadow-l z-10 border-l border-gray-200" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-col gap-2 items-center">
+                        <button onClick={() => alert("Edit: " + vocab.word)} className="text-blue-600 hover:text-blue-800 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 w-full">Edit</button>
+                        <button onClick={() => handleDelete(vocab.id)} className="text-red-600 hover:text-red-800 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50 w-full">Del</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center sticky bottom-0 z-20">
+          <button disabled={page <= 1} onClick={() => { const newPage = page - 1; setPage(newPage); fetchVocabs(newPage, filters, sortConfig); }} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium">← Previous</button>
+          <span className="text-sm font-medium text-gray-600">Page <span className="text-indigo-600 font-bold">{page}</span> of {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => { const newPage = page + 1; setPage(newPage); fetchVocabs(newPage, filters, sortConfig); }} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium">Next →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StarIcon({ filled, className }: { filled: boolean; className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? "0" : "2"}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      width="24"
+      height="24"
+    >
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  );
+}
 
 
 ================================================
 FILE: apps/frontend/app/vocabulary/tree.txt
 ================================================
 vocabulary
-â”œâ”€â”€ page.tsx
-â””â”€â”€ tree.txt
+├── page.tsx
+└── tree.txt
 
 
 

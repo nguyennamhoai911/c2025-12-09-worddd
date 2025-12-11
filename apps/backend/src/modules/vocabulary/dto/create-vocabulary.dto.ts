@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsString,
   IsOptional,
   IsInt,
@@ -39,4 +40,8 @@ export class CreateVocabularyDto {
   @IsInt() // Phải là số nguyên (Integer)
   @Min(0) // Giá trị nhỏ nhất là 0
   occurrence?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isStarred?: boolean; // 👈 Add this property
 }

@@ -1,0 +1,473 @@
+:root {
+  --primary-color: #58cc02; /* Xanh lá kiểu Duolingo/Elsa */
+  --primary-dark: #46a302;
+  --accent-color: #1cb0f6; /* Xanh dương */
+  --text-primary: #3c3c3c;
+  --text-secondary: #777777;
+  --bg-color: #ffffff;
+  --card-bg: #f7f7f7;
+  --danger-color: #ff4b4b;
+  --warning-color: #ffc800;
+  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  --border-radius: 16px;
+}
+
+/* Reset & Base */
+* {
+  box-sizing: border-box;
+}
+
+#tts-popup {
+  position: absolute;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  padding: 0;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  z-index: 999999;
+  min-width: 320px;
+  max-width: 400px;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif; /* Font tròn trịa hiện đại */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- Header --- */
+.tts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: move;
+  user-select: none;
+}
+
+.sound-btn,
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #bbbbbb;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.sound-btn:hover {
+  background: #f0f8ff;
+  color: var(--accent-color);
+}
+
+.close-btn:hover {
+  background: #fff0f0;
+  color: var(--danger-color);
+}
+
+/* --- Content Area --- */
+.tts-content {
+  padding: 0 20px 20px 20px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* --- Images Grid --- */
+.tts-images-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.tts-image {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.tts-image:hover {
+  transform: scale(1.05);
+}
+
+.tts-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- Phonetic & Meaning --- */
+.tts-phonetic {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.phonetic-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.phonetic-item .flag {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+.phonetic-text {
+  font-family: "Lucida Console", monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tts-meaning {
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* --- Actions (Mic Button) --- */
+.tts-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 20px 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 20%);
+}
+
+.mic-btn {
+  background: var(--accent-color); /* Màu xanh chủ đạo */
+  border: none;
+  box-shadow: 0 4px 0 #118ec7; /* Hiệu ứng nút bấm 3D */
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  margin-bottom: 10px;
+}
+
+.mic-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #118ec7;
+}
+
+.mic-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #118ec7;
+}
+
+.mic-btn.recording {
+  background: var(--danger-color);
+  box-shadow: 0 4px 0 #d63e3e;
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 75, 75, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
+  }
+}
+
+/* --- Assessment Result (ELSA Style) --- */
+#assessment-result {
+  width: 100%;
+}
+
+.assessment-box {
+  background: #ffffff;
+  padding: 15px;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Vòng tròn điểm số */
+.total-score-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 5px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 auto 5px auto;
+  background: #fff;
+  color: var(--text-primary);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Text Word chính */
+.word-text {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 10px 0 5px 0;
+  color: #2b3b4e; /* Màu xanh đậm sang trọng */
+  letter-spacing: -0.5px;
+}
+
+/* Container Phonemes */
+.analyzed-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.word-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phoneme-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.phoneme-char {
+  font-family: "Roboto Mono", monospace;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Màu sắc điểm số (Color Grading) */
+/* Xanh (Excellent) */
+.p-perfect {
+  background-color: #dff6dd;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* Xanh nhạt (Good) */
+.p-good {
+  background-color: #f1f8e9;
+  color: #558b2f;
+  border: 1px solid #dcedc8;
+}
+
+/* Vàng (Fair) */
+.p-fair {
+  background-color: #fff8e1;
+  color: #fbc02d;
+  border: 1px solid #ffecb3;
+}
+
+/* Đỏ (Bad) */
+.p-bad {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  position: relative;
+}
+
+/* Loading & Info */
+.tts-loading,
+.tts-info {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  padding: 10px;
+}
+/* --- Flashcard Passive Learning --- */
+#vocab-flashcard {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 280px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 2147483647; /* Max z-index */
+  font-family: "Nunito", sans-serif;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.flashcard-slide-in {
+  animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.flashcard-slide-out {
+  animation: slideOutRight 0.5s forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* Style cho Context Box trong Popup chính */
+.context-box {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-left: 3px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  line-height: 1.4;
+}
+/* --- Dictionary Styles --- */
+.dict-container {
+  text-align: left;
+  margin: 10px 0;
+  padding: 0 10px;
+}
+
+.dict-row {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
+}
+
+.dict-pos {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-weight: 700;
+  min-width: 45px;
+  text-align: center;
+}
+
+.dict-meanings {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+/* --- New: Primary Meaning Style --- */
+.primary-meaning {
+  font-size: 18px; /* To hơn text thường */
+  color: var(--primary-dark); /* Màu xanh đậm cho dễ nhìn */
+  font-weight: 700;
+  text-align: center;
+  margin: 5px 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eee; /* Gạch chân nhẹ ngăn cách với dict */
+  line-height: 1.4;
+}
+/* --- Assessment Action Buttons --- */
+.assessment-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.action-btn-small {
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-user-audio {
+  background: #ffffff;
+  color: #d32f2f; /* Màu đỏ ghi âm */
+}
+.btn-user-audio:hover {
+  background: #ffebee;
+}
+
+.btn-ref-audio {
+  background: #ffffff;
+  color: #1976d2; /* Màu xanh Azure */
+}
+.btn-ref-audio:hover {
+  background: #e3f2fd;
+}

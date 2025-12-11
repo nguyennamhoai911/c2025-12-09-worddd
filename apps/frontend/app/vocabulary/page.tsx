@@ -1,527 +1,526 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../../contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
 
-interface Vocabulary {
+// --- INTERFACES ---
+interface VocabItem {
   id: string;
   word: string;
-  meaning?: string;
-  context?: string;
-  masteryLevel: number;
-  tags: string[];
+  topic?: string | null;
+  partOfSpeech?: string | null;
+  pronunciation?: string | null;
+  meaning?: string | null;
+  example?: string | null;
+  relatedWords?: string | null;
+  occurrence: number;
+  isStarred: boolean;
   createdAt: string;
 }
 
+interface FilterState {
+  word: string;
+  topic: string;
+  partOfSpeech: string;
+  meaning: string;
+}
+
+interface SortState {
+  key: string;
+  direction: 'asc' | 'desc';
+}
+
 export default function VocabularyPage() {
-  const { user, token, logout, isLoading: authLoading } = useAuth();
-  const router = useRouter();
+  const { token } = useAuth();
 
-  // Refs & States cho tính năng Import
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  // --- STATES ---
+  const [vocabs, setVocabs] = useState<VocabItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
 
-  const [vocabs, setVocabs] = useState<Vocabulary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState({
-    word: "",
-    meaning: "",
-    context: "",
-    masteryLevel: 0,
-    tags: [] as string[],
+  const [filters, setFilters] = useState<FilterState>({
+    word: '', topic: '', partOfSpeech: '', meaning: ''
   });
 
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, authLoading, router]);
+  const [sortConfig, setSortConfig] = useState<SortState>({
+    key: 'createdAt',
+    direction: 'desc'
+  });
 
-  // Fetch vocabularies
-  useEffect(() => {
-    if (token) {
-      fetchVocabs();
-    }
-  }, [token]);
+  // --- QUICK SEARCH STATES ---
+  const [showSearch, setShowSearch] = useState(false);
+  const [quickSearchText, setQuickSearchText] = useState('');
+  const [quickSearchResults, setQuickSearchResults] = useState<VocabItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const quickSearchDebounce = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchVocabs = async () => {
+  const [selectedVocab, setSelectedVocab] = useState<VocabItem | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // --- FETCH DATA ---
+  const fetchVocabs = useCallback(async (
+    pageNum = 1,
+    currentFilters = filters,
+    currentSort = sortConfig,
+    starred = showStarredOnly
+  ) => {
+    if (!token) return;
+    setLoading(true);
     try {
-      setError("");
-      const response = await fetch("http://localhost:5000/vocabulary", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const params: any = {
+        page: pageNum,
+        limit: 20,
+        ...currentFilters,
+        sortBy: currentSort.key,
+        sortOrder: currentSort.direction
+      };
+
+      if (starred) {
+        params.isStarred = 'true';
+      }
+
+      const res = await axios.get('http://localhost:5000/vocabulary', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: params,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      if (Array.isArray(data)) {
-        setVocabs(data);
-      } else {
-        console.error("Invalid data format:", data);
-        setVocabs([]);
-        setError("Invalid data format from server");
-      }
-    } catch (err: any) {
-      console.error("Error fetching:", err);
-      setError(err.message || "Failed to load vocabulary");
-      setVocabs([]);
+      setVocabs(res.data.data);
+      setTotalPages(res.data.meta.lastPage);
+      setPage(res.data.meta.page);
+    } catch (error) {
+      console.error("Fetch error:", error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  }, [token, filters, sortConfig, showStarredOnly]);
+
+  useEffect(() => {
+    fetchVocabs();
+  }, [fetchVocabs]);
+
+  // --- HANDLERS ---
+  const handleToggleStar = async (id: string, currentStatus: boolean, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    // Optimistic Update
+    const toggleFunc = (list: VocabItem[]) =>
+      list.map(item => item.id === id ? { ...item, isStarred: !currentStatus } : item);
+
+    setVocabs(toggleFunc);
+    setQuickSearchResults(toggleFunc);
+    if (selectedVocab && selectedVocab.id === id) {
+      setSelectedVocab({ ...selectedVocab, isStarred: !currentStatus });
+    }
+
+    try {
+      await axios.patch(`http://localhost:5000/vocabulary/${id}`,
+        { isStarred: !currentStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error("Failed to star", error);
+      alert("Failed to update star");
     }
   };
 
-  // --- START: IMPORT CSV LOGIC ---
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!token) {
-      alert("Please login first");
+  const performQuickSearch = async (text: string) => {
+    if (!token || !text.trim()) {
+      setQuickSearchResults([]);
       return;
     }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
+    setIsSearching(true);
     try {
-      setIsUploading(true);
-      setError("");
-      
-      // Dùng fetch thay vì axios để đồng bộ với code cũ
-      const response = await fetch("http://localhost:5000/vocabulary/import/csv", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Lưu ý: Không set Content-Type thủ công khi dùng FormData với fetch,
-          // browser sẽ tự động set boundary.
-        },
-        body: formData,
+      const res = await axios.get('http://localhost:5000/vocabulary', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: 1, limit: 5, search: text, sortBy: 'word', sortOrder: 'asc'
+        }
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Import failed");
-      }
-
-      alert(`Import Success! Inserted: ${result.success}, Failed: ${result.failed}`);
-      
-      // Refresh list thay vì reload trang
-      await fetchVocabs();
-      
-    } catch (err: any) {
-      console.error("Import error:", err);
-      setError(err.message || "Failed to import CSV");
+      setQuickSearchResults(res.data.data);
+    } catch (error) {
+      console.error("Quick search error", error);
     } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setIsSearching(false);
     }
   };
-  // --- END: IMPORT CSV LOGIC ---
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  const handleQuickSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    setQuickSearchText(text);
 
-    const url = editingId
-      ? `http://localhost:5000/vocabulary/${editingId}`
-      : "http://localhost:5000/vocabulary";
+    if (quickSearchDebounce.current) clearTimeout(quickSearchDebounce.current);
+    quickSearchDebounce.current = setTimeout(() => {
+      performQuickSearch(text);
+    }, 300);
+  };
 
-    const method = editingId ? "PATCH" : "POST";
-
+  const handleQuickCreate = async () => {
+    if (!quickSearchText || !token) return;
     try {
-      console.log("Submitting:", { url, method, formData, token });
+      const res = await axios.post('http://localhost:5000/vocabulary',
+        { word: quickSearchText, isStarred: true },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(`Created "${quickSearchText}"`);
+      setShowSearch(false);
+      setQuickSearchText('');
+      fetchVocabs(1);
+      setSelectedVocab(res.data);
+    } catch (e) { alert("Error creating word"); }
+  };
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
+  useEffect(() => {
+    let lastKeyPressTime = 0;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT' && !showSearch) return;
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
+      if (e.code === 'Space') {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastKeyPressTime < 300) {
+          e.preventDefault();
+          setShowSearch(true);
+          setQuickSearchText('');
+          setQuickSearchResults([]);
+          setTimeout(() => searchInputRef.current?.focus(), 100);
+        }
+        lastKeyPressTime = currentTime;
       }
+      if (e.code === 'Escape') {
+        setShowSearch(false);
+        setSelectedVocab(null);
+      }
+    };
 
-      await fetchVocabs();
-      resetForm();
-    } catch (err: any) {
-      console.error("Submit error:", err);
-      setError(err.message || "Failed to save");
-    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    const newSort: SortState = { key, direction };
+    setSortConfig(newSort);
+    fetchVocabs(1, filters, newSort);
+  };
+
+  const getSortIcon = (colKey: string) => {
+    if (sortConfig.key !== colKey) return <span className="text-gray-300 ml-1">↕</span>;
+    return sortConfig.direction === 'asc' ? <span className="ml-1 text-indigo-600">▲</span> : <span className="ml-1 text-indigo-600">▼</span>;
+  };
+
+  const handleFilterChange = (field: keyof FilterState, value: string) => {
+    const newFilters = { ...filters, [field]: value };
+    setFilters(newFilters);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchVocabs(1, newFilters, sortConfig), 500);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this word?")) return;
-
     try {
-      const response = await fetch(`http://localhost:5000/vocabulary/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await axios.delete(`http://localhost:5000/vocabulary/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete");
-      }
-
-      await fetchVocabs();
-    } catch (err: any) {
-      setError(err.message || "Failed to delete");
-    }
+      fetchVocabs(page, filters, sortConfig);
+      if (selectedVocab?.id === id) setSelectedVocab(null);
+    } catch (e) { alert("Failed"); }
   };
 
-  const handleEdit = (vocab: Vocabulary) => {
-    setFormData({
-      word: vocab.word,
-      meaning: vocab.meaning || "",
-      context: vocab.context || "",
-      masteryLevel: vocab.masteryLevel,
-      tags: vocab.tags,
-    });
-    setEditingId(vocab.id);
-    setShowForm(true);
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !token) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      setIsUploading(true);
+      await axios.post('http://localhost:5000/vocabulary/import/csv', formData, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+      });
+      alert('Import success!');
+      fetchVocabs(1);
+    } catch (error) { alert('Import failed!'); }
+    finally { setIsUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
-  const resetForm = () => {
-    setFormData({
-      word: "",
-      meaning: "",
-      context: "",
-      masteryLevel: 0,
-      tags: [],
-    });
-    setEditingId(null);
-    setShowForm(false);
-  };
-
-  // Loading state
-  if (authLoading || isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">
-            Loading your vocabulary...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Not logged in
-  if (!user || !token) {
-    return null;
-  }
-
+  // --- RENDER ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
-      <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="container mx-auto px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📚</span>
-            </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              My Vocabulary
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-full">
-              {user.avatar && (
-                <img
-                  src={user.avatar}
-                  alt={user.name || ""}
-                  className="w-8 h-8 rounded-full ring-2 ring-blue-500"
-                />
-              )}
-              <span className="text-sm font-medium text-gray-700">
-                {user.name}
-              </span>
-            </div>
-            <button
-              onClick={logout}
-              className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gray-50 p-6 text-black relative">
 
-      <div className="container mx-auto px-6 lg:px-8 py-8 max-w-6xl">
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg mb-6 flex items-start gap-3 shadow-sm">
-            <span className="text-xl">⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Stats and Action Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <div className="bg-white px-6 py-3 rounded-xl shadow-sm border border-gray-200">
-              <div className="text-sm text-gray-500">Total Words</div>
-              <div className="text-2xl font-bold text-gray-800">
-                {vocabs.length}
-              </div>
+      {/* QUICK SEARCH MODAL */}
+      {showSearch && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center pt-32 backdrop-blur-sm transition-all" onClick={() => setShowSearch(false)}>
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+              <span className="text-xl">🔍</span>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={quickSearchText}
+                onChange={handleQuickSearchChange}
+                onKeyDown={(e) => e.key === 'Enter' && quickSearchResults.length === 0 && handleQuickCreate()}
+                placeholder="Search English or Vietnamese..."
+                className="flex-1 text-xl font-light outline-none bg-transparent placeholder-gray-400 text-gray-800 h-10"
+              />
+              <div className="text-xs text-gray-400 border border-gray-200 px-2 py-1 rounded">ESC to close</div>
             </div>
-            <div className="bg-gradient-to-br from-blue-500 to-purple-600 px-6 py-3 rounded-xl shadow-md text-white">
-              <div className="text-sm opacity-90">Mastered</div>
-              <div className="text-2xl font-bold">
-                {vocabs.filter((v) => v.masteryLevel === 5).length}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Input file ẩn */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".csv"
-              className="hidden"
-            />
-            
-            {/* Nút Import CSV */}
-            <button
-              onClick={handleImportClick}
-              disabled={isUploading}
-              className={`px-6 py-3 rounded-xl font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2 ${
-                isUploading
-                  ? "bg-gray-400 text-white cursor-not-allowed"
-                  : "bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700"
-              }`}
-            >
-              {isUploading ? (
-                <>
-                  <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
-                  Importing...
-                </>
+            <div className="bg-gray-50 max-h-[60vh] overflow-y-auto">
+              {isSearching ? (
+                <div className="p-8 text-center text-gray-400">Searching...</div>
+              ) : quickSearchText && quickSearchResults.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-500 mb-4">No matching vocabulary found for "<span className="font-bold text-gray-800">{quickSearchText}</span>"</p>
+                  <button
+                    onClick={handleQuickCreate}
+                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 shadow-md transition-all flex items-center gap-2 mx-auto font-medium"
+                  >
+                    <span>+</span> Create new word "{quickSearchText}"
+                  </button>
+                </div>
               ) : (
-                <>📂 Import CSV</>
+                <ul className="divide-y divide-gray-100">
+                  {quickSearchResults.map(item => (
+                    <li
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedVocab(item);
+                        setShowSearch(false);
+                      }}
+                      className="p-4 hover:bg-indigo-50 cursor-pointer transition-colors flex justify-between items-center group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={(e) => handleToggleStar(item.id, item.isStarred, e)}
+                          className="focus:outline-none"
+                        >
+                          <StarIcon filled={item.isStarred} className={item.isStarred ? "text-yellow-400" : "text-gray-300"} />
+                        </button>
+                        <div>
+                          <div className="font-bold text-lg text-gray-800">{item.word}</div>
+                          <div className="text-sm text-gray-500 line-clamp-1">{item.meaning || <span className="italic opacity-50">No meaning</span>}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400 group-hover:text-indigo-500 px-2 py-1 border border-transparent group-hover:border-indigo-200 rounded">
+                        View detail ↵
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </button>
-
-            {/* Nút Add New Word */}
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className={`px-6 py-3 rounded-xl font-medium transition-all shadow-md hover:shadow-lg ${
-                showForm
-                  ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
-              }`}
-            >
-              {showForm ? "✕ Cancel" : "+ Add New Word"}
-            </button>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Form */}
-        {showForm && (
-          <div className="bg-white p-8 rounded-2xl shadow-lg mb-8 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <span className="text-2xl">{editingId ? "✏️" : "➕"}</span>
-              {editingId ? "Edit Word" : "Add New Word"}
-            </h3>
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Word <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter word"
-                    value={formData.word}
-                    onChange={(e) =>
-                      setFormData({ ...formData, word: e.target.value })
-                    }
-                    required
-                    className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  />
+      {/* DETAIL POPUP */}
+      {selectedVocab && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedVocab(null)}>
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-indigo-600 p-6 text-white relative">
+              <button onClick={() => setSelectedVocab(null)} className="absolute top-4 right-4 text-white/70 hover:text-white text-xl font-bold">✕</button>
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="text-sm uppercase tracking-wider opacity-80 mb-1">{selectedVocab.partOfSpeech || 'Vocabulary'}</div>
+                  <h2 className="text-4xl font-bold">{selectedVocab.word}</h2>
+                  <div className="mt-2 font-mono bg-indigo-700/50 inline-block px-2 py-0.5 rounded text-sm">{selectedVocab.pronunciation || '/.../'}</div>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Meaning
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter meaning"
-                    value={formData.meaning}
-                    onChange={(e) =>
-                      setFormData({ ...formData, meaning: e.target.value })
-                    }
-                    className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  />
+                <button
+                  onClick={() => handleToggleStar(selectedVocab.id, selectedVocab.isStarred)}
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                >
+                  <StarIcon filled={selectedVocab.isStarred} className="text-yellow-400 w-8 h-8" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Meaning</label>
+                <div className="text-lg text-gray-800 font-medium border-l-4 border-indigo-500 pl-3">
+                  {selectedVocab.meaning || 'N/A'}
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Context / Example
-                  </label>
-                  <textarea
-                    placeholder="Enter a sentence or context"
-                    value={formData.context}
-                    onChange={(e) =>
-                      setFormData({ ...formData, context: e.target.value })
-                    }
-                    rows={3}
-                    className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"
-                  />
+              </div>
+              {selectedVocab.example && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Example</label>
+                  <div className="text-gray-600 italic bg-gray-50 p-3 rounded-lg">"{selectedVocab.example}"</div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Topic</label>
+                  <div className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded inline-block">{selectedVocab.topic || 'General'}</div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mastery Level
-                  </label>
-                  <select
-                    value={formData.masteryLevel}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        masteryLevel: +e.target.value,
-                      })
-                    }
-                    className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white"
-                  >
-                    <option value={0}>⭐ Level 0 - New</option>
-                    <option value={1}>⭐ Level 1</option>
-                    <option value={2}>⭐⭐ Level 2</option>
-                    <option value={3}>⭐⭐⭐ Level 3</option>
-                    <option value={4}>⭐⭐⭐⭐ Level 4</option>
-                    <option value={5}>⭐⭐⭐⭐⭐ Level 5 - Mastered</option>
-                  </select>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Related Words</label>
+                  <div className="text-sm text-gray-700">{selectedVocab.relatedWords || '-'}</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Occurrence</label>
+                  <div className="text-sm text-gray-700">{selectedVocab.occurrence} times</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Created At</label>
+                  <div className="text-sm text-gray-700">{new Date(selectedVocab.createdAt).toLocaleDateString()}</div>
                 </div>
               </div>
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-                >
-                  {editingId ? "✓ Update Word" : "✓ Save Word"}
-                </button>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-6 py-3 rounded-xl font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+            </div>
 
-        {/* List */}
-        <div className="grid gap-6">
-          {!Array.isArray(vocabs) ? (
-            <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
-              <span className="text-6xl mb-4 block">⚠️</span>
-              <p className="text-red-500 font-medium">
-                Error: Invalid data format
-              </p>
-            </div>
-          ) : vocabs.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
-              <span className="text-6xl mb-4 block">📚</span>
-              <p className="text-gray-500 text-lg mb-2">No vocabulary yet</p>
-              <p className="text-gray-400">
-                Click "Add New Word" or "Import CSV" to start building your collection!
-              </p>
-            </div>
-          ) : (
-            vocabs.map((vocab) => (
-              <div
-                key={vocab.id}
-                className="bg-white border-2 border-gray-100 p-6 rounded-2xl shadow-sm hover:shadow-lg hover:border-blue-200 transition-all group"
+            <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                onClick={() => handleDelete(selectedVocab.id)}
+                className="text-red-600 hover:bg-red-50 px-4 py-2 rounded text-sm font-medium transition-colors"
               >
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
-                      {vocab.word}
-                    </h3>
-                    {vocab.meaning && (
-                      <div className="flex items-start gap-2 mb-3">
-                        <span className="text-blue-500 mt-1">📝</span>
-                        <p className="text-gray-700 leading-relaxed">
-                          {vocab.meaning}
-                        </p>
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedVocab(null)}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2 rounded text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">My Vocabulary</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Press <kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-xs border border-gray-300">Space</kbd> <kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-xs border border-gray-300">Space</kbd> to Quick Search
+          </p>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={() => {
+              const newValue = !showStarredOnly;
+              setShowStarredOnly(newValue);
+              fetchVocabs(1, filters, sortConfig, newValue);
+            }}
+            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${showStarredOnly
+              ? 'bg-yellow-50 border-yellow-400 text-yellow-700'
+              : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+          >
+            <StarIcon filled={showStarredOnly} className={showStarredOnly ? "text-yellow-500" : "text-gray-400"} />
+            <span className="text-sm font-medium">{showStarredOnly ? 'Starred Only' : 'All Words'}</span>
+          </button>
+
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition-colors text-sm font-medium"
+          >
+            {isUploading ? 'Importing...' : '📂 Import CSV'}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+        <div className="overflow-x-auto pb-4">
+          <table className="min-w-full divide-y divide-gray-200 table-fixed">
+            <thead className="bg-gray-50 select-none">
+              <tr>
+                <th className="w-12 px-2 py-3 text-center text-xs font-bold text-gray-500 uppercase border-r border-gray-200">★</th>
+                <th onClick={() => handleSort('createdAt')} className="w-32 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Time {getSortIcon('createdAt')}</th>
+                <th onClick={() => handleSort('topic')} className="w-32 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Topic {getSortIcon('topic')}</th>
+                <th onClick={() => handleSort('word')} className="w-40 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Word {getSortIcon('word')}</th>
+                <th className="w-24 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Type</th>
+                <th className="w-32 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Pronun.</th>
+                <th className="w-48 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Meaning</th>
+                <th className="w-64 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Example</th>
+                <th className="w-48 px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200">Related</th>
+                <th onClick={() => handleSort('occurrence')} className="w-20 px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 border-r border-gray-200 transition-colors">Count {getSortIcon('occurrence')}</th>
+                <th className="w-24 px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase sticky right-0 bg-gray-50 shadow-l z-10">Actions</th>
+              </tr>
+              <tr className="bg-white border-b border-gray-200">
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Filter..." value={filters.topic} onChange={(e) => handleFilterChange('topic', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Filter..." value={filters.word} onChange={(e) => handleFilterChange('word', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Type..." value={filters.partOfSpeech} onChange={(e) => handleFilterChange('partOfSpeech', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"><input className="w-full border rounded px-2 py-1 text-xs focus:border-indigo-500 outline-none" placeholder="Meaning..." value={filters.meaning} onChange={(e) => handleFilterChange('meaning', e.target.value)} /></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 border-r border-gray-100"></td>
+                <td className="p-2 sticky right-0 bg-white z-10"></td>
+              </tr>
+            </thead>
+
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr><td colSpan={11} className="text-center py-10 text-gray-500">Loading data...</td></tr>
+              ) : vocabs.length === 0 ? (
+                <tr><td colSpan={11} className="text-center py-10 text-gray-500">No vocabulary found.</td></tr>
+              ) : (
+                vocabs.map((vocab) => (
+                  <tr
+                    key={vocab.id}
+                    className="hover:bg-indigo-50/30 group transition-colors cursor-pointer"
+                    onClick={() => setSelectedVocab(vocab)}
+                  >
+                    <td className="px-2 py-3 text-center border-r border-gray-100 align-top" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={(e) => handleToggleStar(vocab.id, vocab.isStarred, e)} className="hover:bg-gray-100 rounded-full p-1">
+                        <StarIcon filled={vocab.isStarred} className={vocab.isStarred ? "text-yellow-400 w-5 h-5" : "text-gray-300 w-5 h-5"} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top">{new Date(vocab.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.topic && <span className="bg-gray-100 px-2 py-0.5 rounded text-xs">{vocab.topic}</span>}</td>
+                    <td className="px-4 py-3 text-sm font-bold text-indigo-700 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.word}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top italic">{vocab.partOfSpeech}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.pronunciation}</td>
+                    <td className="px-4 py-3 text-sm text-gray-800 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.meaning}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top italic">{vocab.example}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-normal break-words border-r border-gray-100 align-top">{vocab.relatedWords}</td>
+                    <td className="px-4 py-3 text-sm text-center font-semibold text-gray-500 border-r border-gray-100 align-top">{vocab.occurrence}</td>
+                    <td className="px-2 py-3 text-center align-top sticky right-0 bg-white group-hover:bg-indigo-50/30 shadow-l z-10 border-l border-gray-200" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-col gap-2 items-center">
+                        <button onClick={() => alert("Edit: " + vocab.word)} className="text-blue-600 hover:text-blue-800 text-xs border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 w-full">Edit</button>
+                        <button onClick={() => handleDelete(vocab.id)} className="text-red-600 hover:text-red-800 text-xs border border-red-200 px-2 py-1 rounded hover:bg-red-50 w-full">Del</button>
                       </div>
-                    )}
-                    {vocab.context && (
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl mt-3 border border-blue-100">
-                        <p className="text-sm text-gray-600 italic">
-                          "{vocab.context}"
-                        </p>
-                      </div>
-                    )}
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <span
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                          vocab.masteryLevel === 5
-                            ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
-                            : vocab.masteryLevel >= 3
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {"⭐".repeat(Math.max(1, vocab.masteryLevel))} Level{" "}
-                        {vocab.masteryLevel}
-                      </span>
-                      {vocab.tags &&
-                        vocab.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full font-medium"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(vocab)}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all hover:scale-110"
-                      title="Edit"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDelete(vocab.id)}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all hover:scale-110"
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center sticky bottom-0 z-20">
+          <button disabled={page <= 1} onClick={() => { const newPage = page - 1; setPage(newPage); fetchVocabs(newPage, filters, sortConfig); }} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium">← Previous</button>
+          <span className="text-sm font-medium text-gray-600">Page <span className="text-indigo-600 font-bold">{page}</span> of {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => { const newPage = page + 1; setPage(newPage); fetchVocabs(newPage, filters, sortConfig); }} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium">Next →</button>
         </div>
       </div>
     </div>
+  );
+}
+
+function StarIcon({ filled, className }: { filled: boolean; className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? "0" : "2"}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      width="24"
+      height="24"
+    >
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
   );
 }
