@@ -1,5 +1,3 @@
-// apps/backend/src/modules/vocabulary/vocabulary.service.ts
-
 import {
   Injectable,
   NotFoundException,
@@ -9,32 +7,95 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateVocabularyDto } from './dto/create-vocabulary.dto';
 import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
-import csv from 'csv-parser'; // Lib đọc CSV
-import { Readable } from 'stream'; // Lib có sẵn của Node.js
+import csv from 'csv-parser';
+import { Readable } from 'stream';
 
-// 👇 Define Interface cho các filter parameters
 interface VocabFilters {
   word?: string;
   topic?: string;
   partOfSpeech?: string;
   meaning?: string;
+  isStarred?: boolean;
 }
 
 @Injectable()
 export class VocabularyService {
   constructor(private prisma: PrismaService) {}
+  // 👇 THÊM METHOD NÀY
+  async addScore(id: string, userId: string, score: number) {
+    // 1. Lấy từ vựng hiện tại để lấy mảng điểm cũ
+    const vocab = await this.findOne(id, userId);
 
-  // --- 1. CREATE ---
-  async create(userId: string, createDto: CreateVocabularyDto) {
-    return this.prisma.vocabItem.create({
+    // 2. Push điểm mới vào mảng
+    // (PostgreSQL Prisma hỗ trợ push trực tiếp, nhưng để an toàn logic ta làm thủ công)
+    const currentScores = vocab.pronunciationScores || [];
+    const newScores = [...currentScores, score];
+
+    // Optional: Giới hạn chỉ lưu 10 lần gần nhất để nhẹ DB
+    if (newScores.length > 10) newScores.shift();
+
+    return this.prisma.vocabItem.update({
+      where: { id },
       data: {
-        ...createDto,
-        userId,
+        pronunciationScores: newScores,
       },
     });
   }
 
-  // --- 2. FIND ALL (Search + Filter + Sort + Pagination) ---
+  // --- 1. SMART UPSERT (LOGIC TRÁNH TRÙNG LẶP) ---
+  async upsertVocab(userId: string, createDto: CreateVocabularyDto) {
+    const cleanWord = createDto.word.trim();
+    console.log(
+      `🔍 Checking existence for word: "${cleanWord}" (User: ${userId})`,
+    );
+
+    // 1. Tìm xem từ đã có chưa (Không phân biệt hoa thường)
+    const existing = await this.prisma.vocabItem.findFirst({
+      where: {
+        userId,
+        word: {
+          equals: cleanWord,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (existing) {
+      console.log(
+        `✅ Word exists (ID: ${existing.id}). Updating count only...`,
+      );
+      // 2a. Nếu có rồi -> Chỉ tăng count & cập nhật time (BỎ TỰ ĐỘNG STAR)
+      return this.prisma.vocabItem.update({
+        where: { id: existing.id },
+        data: {
+          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Không ép star nữa)
+          occurrence: (existing.occurrence || 0) + 1,
+          // Nếu muốn update thêm thông tin thì uncomment dòng dưới:
+          // ...createDto
+        },
+      });
+    } else {
+      console.log(`🆕 Word not found. Creating new entry...`);
+      // 2b. Nếu chưa có -> Tạo mới
+      return this.prisma.vocabItem.create({
+        data: {
+          ...createDto, // 👈 Backend sẽ dùng giá trị isStarred từ Frontend gửi lên (false)
+          word: cleanWord,
+          userId,
+          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Để không bị override)
+        },
+      });
+    }
+  }
+
+  // --- GIỮ LẠI HÀM CREATE GỐC ---
+  async create(userId: string, createDto: CreateVocabularyDto) {
+    return this.prisma.vocabItem.create({
+      data: { ...createDto, userId },
+    });
+  }
+
+  // --- 2. FIND ALL ---
   async findAll(
     userId: string,
     page: number = 1,
@@ -43,19 +104,15 @@ export class VocabularyService {
     sort: { field: string; order: 'asc' | 'desc' } = {
       field: 'createdAt',
       order: 'desc',
-    }, // Default sort
-    search?: string, // 👈 Global Search param
+    },
+    search?: string,
   ) {
     const skip = (page - 1) * limit;
-
-    // Helper clean text
     const clean = (text?: string) => text?.trim();
 
-    // 👇 Xây dựng câu query (Where Condition)
     const whereCondition: Prisma.VocabItemWhereInput = {
-      userId, // Luôn filter theo user hiện tại
+      userId,
 
-      // 1. Các bộ lọc riêng lẻ (AND logic)
       word: filters.word
         ? { contains: clean(filters.word), mode: 'insensitive' }
         : undefined,
@@ -68,9 +125,8 @@ export class VocabularyService {
       meaning: filters.meaning
         ? { contains: clean(filters.meaning), mode: 'insensitive' }
         : undefined,
+      isStarred: filters.isStarred === true ? true : undefined,
 
-      // 2. Global Search (OR logic)
-      // Nếu có biến 'search', tìm nó trong Word HOẶC Meaning HOẶC Topic
       ...(search
         ? {
             OR: [
@@ -82,20 +138,14 @@ export class VocabularyService {
         : {}),
     };
 
-    // 👇 Xây dựng Sort (Order By)
     const orderByInput: Prisma.VocabItemOrderByWithRelationInput[] = [];
-
-    if (sort.field) {
-      orderByInput.push({ [sort.field]: sort.order });
-    }
-    // Luôn add thêm id để đảm bảo thứ tự ổn định (Stable Sort)
+    if (sort.field) orderByInput.push({ [sort.field]: sort.order });
     orderByInput.push({ id: 'asc' });
 
-    // 👇 Execute Query
     const [items, total] = await Promise.all([
       this.prisma.vocabItem.findMany({
         where: whereCondition,
-        skip: skip,
+        skip,
         take: limit,
         orderBy: orderByInput,
       }),
@@ -104,11 +154,7 @@ export class VocabularyService {
 
     return {
       data: items,
-      meta: {
-        total,
-        page,
-        lastPage: Math.ceil(total / limit),
-      },
+      meta: { total, page, lastPage: Math.ceil(total / limit) },
     };
   }
 
@@ -117,71 +163,25 @@ export class VocabularyService {
     const vocab = await this.prisma.vocabItem.findFirst({
       where: { id, userId },
     });
-
-    if (!vocab) {
-      throw new NotFoundException('Vocabulary not found');
-    }
+    if (!vocab) throw new NotFoundException('Vocabulary not found');
     return vocab;
   }
 
   // --- 4. UPDATE ---
   async update(id: string, userId: string, updateDto: UpdateVocabularyDto) {
-    await this.findOne(id, userId); // Check exist
-    return this.prisma.vocabItem.update({
-      where: { id },
-      data: updateDto,
-    });
+    await this.findOne(id, userId);
+    return this.prisma.vocabItem.update({ where: { id }, data: updateDto });
   }
 
   // --- 5. REMOVE ---
   async remove(id: string, userId: string) {
-    await this.findOne(id, userId); // Check exist
-    return this.prisma.vocabItem.delete({
-      where: { id },
-    });
+    await this.findOne(id, userId);
+    return this.prisma.vocabItem.delete({ where: { id } });
   }
-  // apps/backend/src/modules/vocabulary/vocabulary.service.ts
 
-  // Update hàm create hoặc tạo một hàm mới là `upsertVocab`
-  async upsertVocab(userId: string, createDto: CreateVocabularyDto) {
-    // 1. Check if word exists for this user (Case insensitive)
-    const existing = await this.prisma.vocabItem.findFirst({
-      where: {
-        userId,
-        word: {
-          equals: createDto.word.trim(),
-          mode: 'insensitive', // Ignore case (hello == Hello)
-        },
-      },
-    });
-
-    if (existing) {
-      // 2. Scenario: Word exists -> Update status & increment occurrence
-      return this.prisma.vocabItem.update({
-        where: { id: existing.id },
-        data: {
-          isStarred: true, // Force star
-          occurrence: (existing.occurrence || 0) + 1,
-          // Optional: Update meaning/example nếu user gửi cái mới lên
-        },
-      });
-    } else {
-      // 3. Scenario: Word not found -> Create new full record
-      return this.prisma.vocabItem.create({
-        data: {
-          ...createDto,
-          userId,
-          isStarred: true, // Auto star khi add từ extension
-        },
-      });
-    }
-  }
   // --- 6. IMPORT CSV ---
   async importFromCsv(userId: string, file: Express.Multer.File) {
-    if (!file) {
-      throw new BadRequestException('File is required');
-    }
-
+    if (!file) throw new BadRequestException('File is required');
     const results: any[] = [];
     const stream = Readable.from(file.buffer.toString());
 
@@ -190,35 +190,26 @@ export class VocabularyService {
         .pipe(csv())
         .on('data', (data) => results.push(data))
         .on('end', async () => {
-          console.log(`📂 Parsed ${results.length} rows from CSV`);
-
           let successCount = 0;
           let errorCount = 0;
-
           for (const row of results) {
             try {
-              // Mapping cột trong CSV sang Database
-              await this.prisma.vocabItem.create({
-                data: {
-                  userId: userId,
-                  word: row['Word']?.trim(),
-                  topic: row['Topic']?.trim(),
-                  partOfSpeech: row['Part of speech']?.trim(),
-                  pronunciation: row['Pronunciation']?.trim(),
-                  meaning: row['Meaning']?.trim(),
-                  example: row['Example']?.trim(),
-                  relatedWords: row['Related words']?.trim(),
-                  occurrence: row['Occurrence']
-                    ? parseInt(row['Occurrence'])
-                    : 1,
-                },
+              await this.upsertVocab(userId, {
+                word: row['Word']?.trim(),
+                topic: row['Topic']?.trim(),
+                partOfSpeech: row['Part of speech']?.trim(),
+                pronunciation: row['Pronunciation']?.trim(),
+                meaning: row['Meaning']?.trim(),
+                example: row['Example']?.trim(),
+                relatedWords: row['Related words']?.trim(),
+                occurrence: row['Occurrence'] ? parseInt(row['Occurrence']) : 1,
+                isStarred: false, // Import CSV cũng mặc định không Star
               });
               successCount++;
             } catch (error) {
               errorCount++;
             }
           }
-
           resolve({
             message: 'Import finished',
             total: results.length,
@@ -226,9 +217,7 @@ export class VocabularyService {
             failed: errorCount,
           });
         })
-        .on('error', (error) => {
-          reject(new BadRequestException('Invalid CSV file'));
-        });
+        .on('error', () => reject(new BadRequestException('Invalid CSV file')));
     });
   }
 }

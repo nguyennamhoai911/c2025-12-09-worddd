@@ -30,18 +30,19 @@ model User {
 // apps/backend/prisma/schema.prisma
 
 model VocabItem {
-  id String @id @default(uuid())
-
+  id                  String  @id @default(uuid())
+  // 👇 THÊM DÒNG NÀY: Lưu lịch sử điểm số (PostgreSQL hỗ trợ mảng Int[])
+  pronunciationScores Int[]   @default([])
   // --- CÁC CỘT KHỚP VỚI EXCEL ---
-  topic         String? // Topic
-  word          String // Word (Bắt buộc)
-  partOfSpeech  String? @map("part_of_speech") // Part of speech
-  pronunciation String? // Pronunciation
-  meaning       String? // Meaning
-  example       String? // Example
-  relatedWords  String? @map("related_words") // Related words
-  occurrence    Int?    @default(1)
-  isStarred     Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
+  topic               String? // Topic
+  word                String // Word (Bắt buộc)
+  partOfSpeech        String? @map("part_of_speech") // Part of speech
+  pronunciation       String? // Pronunciation
+  meaning             String? // Meaning
+  example             String? // Example
+  relatedWords        String? @map("related_words") // Related words
+  occurrence          Int?    @default(1)
+  isStarred           Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
 
   // --- CÁC CỘT HỆ THỐNG (Bắt buộc phải giữ) ---
   userId String @map("user_id")

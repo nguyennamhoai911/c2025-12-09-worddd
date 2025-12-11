@@ -7,7 +7,7 @@ async function bootstrap() {
 
   // Enable CORS with credentials
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'], // 👈 Thêm cả 2 port
+    origin: true, // 👈 Thêm cả 2 port
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -10,7 +10,7 @@ import {
   Request,
   UseInterceptors,
   UploadedFile,
-  Query, // 👈 Đảm bảo đã import Query
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VocabularyService } from './vocabulary.service';
@@ -23,57 +23,70 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class VocabularyController {
   constructor(private readonly vocabularyService: VocabularyService) {}
 
+  // 👇 THÊM ROUTE NÀY: Lưu điểm phát âm
+  @Patch(':id/score')
+  async addScore(
+    @Request() req,
+    @Param('id') id: string,
+    @Body('score') score: number,
+  ) {
+    return this.vocabularyService.addScore(id, req.user.id, score);
+  }
   @Post()
   create(@Request() req, @Body() createDto: CreateVocabularyDto) {
-    return this.vocabularyService.create(req.user.id, createDto);
+    // 👇 UPDATE: Sử dụng upsertVocab để handle logic create hoặc update nếu đã tồn tại
+    return this.vocabularyService.upsertVocab(req.user.id, createDto);
   }
 
   @Post('import/csv')
   @UseInterceptors(FileInterceptor('file'))
-  async importCsv(
-    @Request() req,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async importCsv(@Request() req, @UploadedFile() file: Express.Multer.File) {
     return this.vocabularyService.importFromCsv(req.user.id, file);
   }
 
-  // 👇 CẬP NHẬT HÀM FIND ALL
   @Get()
   findAll(
     @Request() req,
     @Query('page') page: string,
     @Query('limit') limit: string,
-    // 👇 Thêm lại tham số search chung (Quick Search dùng cái này)
-    @Query('search') search: string,
-    // Các Filter Params
+    @Query('search') search: string, // Quick search (tìm chung)
+    // Filter Params
     @Query('word') word: string,
     @Query('topic') topic: string,
     @Query('partOfSpeech') partOfSpeech: string,
     @Query('meaning') meaning: string,
-    // 👇 Sort Params (Mới thêm)
+    @Query('isStarred') isStarred: string, // Filter từ yêu thích
+    // Sort Params
     @Query('sortBy') sortBy: string,
     @Query('sortOrder') sortOrder: string,
   ) {
     const pageNumber = page ? parseInt(page) : 1;
     const limitNumber = limit ? parseInt(limit) : 20;
 
-    // Gom các filter
-    const filters = { word, topic, partOfSpeech, meaning };
-
-    // Tạo object sort
-    const sort = {
-      field: sortBy || 'createdAt', // Default field là ngày tạo
-      order: (sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc', // Default order là giảm dần (desc)
+    // Gom các filter criteria vào một object
+    const filters = {
+      word,
+      topic,
+      partOfSpeech,
+      meaning,
+      // Convert string 'true' thành boolean true, ngược lại là false/undefined
+      isStarred: isStarred === 'true',
     };
 
-    // 👇 Gọi hàm Service với ĐỦ 5 THAM SỐ
+    // Config sort option
+    const sort = {
+      field: sortBy || 'createdAt',
+      order: (sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc',
+    };
+
+    // Call service với full arguments
     return this.vocabularyService.findAll(
       req.user.id,
       pageNumber,
       limitNumber,
       filters,
       sort,
-      search // 👈 Quan trọng: Truyền search xuống service
+      search,
     );
   }
 

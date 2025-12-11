@@ -1,3 +1,46 @@
+/* =================================================================
+   PART 1: AUTO-SYNC TOKEN & CONFIG (2-WAY SYNC)
+   ================================================================= */
+if (
+  window.location.origin.includes("localhost:3000") ||
+  window.location.origin.includes("127.0.0.1:3000")
+) {
+  console.log("🟢 Detected Vocabulary Web App!");
+
+  // 1. WEB -> EXTENSION: Sync Token (Lấy Token từ Web đẩy sang Extension)
+  const token = localStorage.getItem("token");
+  if (token) {
+    chrome.storage.sync.set({ authToken: token }, () => {
+      console.log(
+        "✅ Token synced to Extension successfully!",
+        token.substring(0, 10) + "..."
+      );
+    });
+  } else {
+    console.log("⚠️ No token found in Web App. Please login.");
+  }
+
+  // 2. EXTENSION -> WEB: Sync Azure Config (Lấy Key từ Extension bơm ngược lại Web App)
+  chrome.storage.sync.get(["azureKey", "azureRegion"], (data) => {
+    if (data.azureKey && data.azureRegion) {
+      // Kiểm tra xem Web App đã có chưa, nếu chưa hoặc khác thì update
+      const currentWebKey = localStorage.getItem("azureKey");
+
+      if (currentWebKey !== data.azureKey) {
+        localStorage.setItem("azureKey", data.azureKey);
+        localStorage.setItem("azureRegion", data.azureRegion);
+        console.log("🚀 Azure Config synced from Extension to Web App!");
+
+        // Dispatch event để React nhận biết thay đổi ngay lập tức (Real-time update)
+        window.dispatchEvent(new Event("storage"));
+      }
+    }
+  });
+}
+
+/* =================================================================
+   PART 2: MAIN EXTENSION LOGIC
+   ================================================================= */
 let popup = null;
 let mediaRecorder = null;
 let audioChunks = [];
@@ -7,6 +50,7 @@ let isPopupOpen = false;
 let isDragging = false;
 let dragOffset = { x: 0, y: 0 };
 let lastRecordedBlob = null; // Biến lưu file ghi âm gần nhất
+
 // Lưu từ vựng vào lịch sử (để hiện Flashcard sau này)
 async function saveToHistory(word, data) {
   try {
@@ -76,9 +120,6 @@ function closePopup() {
 }
 
 // Lấy nghĩa tiếng Việt từ Google Translate
-// --- 2. UPDATED TRANSLATION (WITH CONTEXT) ---
-// --- 2. TRANSLATION (SAFE MODE) ---
-// --- 2. TRANSLATION (DICTIONARY MODE) ---
 async function getTranslation(text, contextText = "") {
   try {
     let contextMeaning = null;
@@ -250,92 +291,6 @@ async function getImagesFromUnsplash(searchTerm) {
   }
 
   return [];
-}
-
-// --- LOGIC MỚI: FALLBACK SYSTEM ---
-
-// Hàm helper để gọi Google API đơn lẻ
-async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
-  try {
-    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
-      searchTerm
-    )}&cx=${cx}&searchType=image&key=${apiKey}&num=3`;
-
-    const response = await fetch(url);
-
-    // Nếu hết quota (403) hoặc quá tải (429) -> Throw error để loop bắt được
-    if (response.status === 403 || response.status === 429) {
-      throw new Error(`QUOTA_EXCEEDED`);
-    }
-
-    if (!response.ok) return null; // Lỗi khác thì return null luôn
-
-    const data = await response.json();
-    if (data.items && data.items.length > 0) {
-      return data.items.slice(0, 3).map((item) => item.link);
-    }
-  } catch (e) {
-    if (e.message === "QUOTA_EXCEEDED") throw e; // Ném tiếp ra ngoài
-    console.warn("Google Fetch Error:", e);
-  }
-  return null;
-}
-
-// Hàm chính: Loop qua danh sách Key
-async function getImages(englishText) {
-  const searchTerm = englishText.trim();
-  let images = [];
-
-  // 1. Lấy Settings
-  const result = await chrome.storage.sync.get([
-    "googleApiKeys",
-    "googleApiKey",
-    "googleSearchEngineId",
-  ]); // Lấy cả key cũ và mới để tương thích
-
-  // Convert cấu trúc cũ sang list nếu chưa có list
-  let keyList = result.googleApiKeys || [];
-  if (
-    keyList.length === 0 &&
-    result.googleApiKey &&
-    result.googleSearchEngineId
-  ) {
-    keyList.push({ key: result.googleApiKey, cx: result.googleSearchEngineId });
-  }
-
-  // 2. Thử Google Custom Search (Loop Fallback)
-  if (keyList.length > 0) {
-    for (let i = 0; i < keyList.length; i++) {
-      const { key, cx } = keyList[i];
-      if (!key || !cx) continue;
-
-      try {
-        console.log(`Trying Google Key #${i + 1}...`);
-        const resultImages = await tryFetchGoogleImage(searchTerm, key, cx);
-
-        if (resultImages && resultImages.length > 0) {
-          images = resultImages;
-          console.log(`✅ Success with Key #${i + 1}`);
-          break; // Tìm thấy ảnh thì thoát vòng lặp ngay
-        }
-      } catch (err) {
-        if (err.message === "QUOTA_EXCEEDED") {
-          console.warn(
-            `⚠️ Key #${i + 1} hết quota. Đang chuyển sang Key tiếp theo...`
-          );
-          continue; // Chuyển sang key tiếp theo trong vòng lặp
-        }
-      }
-    }
-  }
-
-  // 3. Nếu tất cả Google Keys đều tạch -> Dùng Unsplash (Last Resort)
-  if (images.length === 0) {
-    console.log("⚠️ All Google Keys failed or empty. Switching to Unsplash...");
-    images = await getImagesFromUnsplash(searchTerm);
-  }
-
-  return images;
 }
 
 // Lấy phiên âm của một từ
@@ -531,68 +486,55 @@ function enableDragging(header) {
   });
 }
 
-// Hiển thị popup
-// --- 3. SHOW POPUP (NEW POSITION & UI) ---
-// --- 3. SHOW POPUP (OPTIMIZED & SAFE) ---
+// --- SHOW POPUP (WITH STAR BUTTON) ---
 async function showPopup(rect, text, contextText) {
   if (!popup) popup = createPopup();
   isPopupOpen = true;
 
-  // 1. Hiển thị UI Loading ngay lập tức để user biết app đang chạy
+  // 1. Hiển thị UI Loading
   popup.innerHTML =
     '<div class="tts-content"><div class="tts-loading">⏳ Đang phân tích dữ liệu...</div></div>';
   popup.style.display = "block";
 
-  // 2. Tính toán vị trí hiển thị (Ưu tiên hiện bên trên)
-  const popupHeight = 400; // Chiều cao ước lượng
+  // 2. Tính toán vị trí hiển thị
+  const popupHeight = 400;
   let topPos = rect.top + window.scrollY - popupHeight - 20;
   let leftPos = rect.left + window.scrollX;
 
-  // Nếu bị che ở trên thì lật xuống dưới
   if (topPos < window.scrollY) topPos = rect.bottom + window.scrollY + 10;
-  // Nếu bị tràn lề phải thì đẩy sang trái
   if (leftPos + 350 > window.innerWidth) leftPos = window.innerWidth - 360;
 
   popup.style.top = `${topPos}px`;
   popup.style.left = `${leftPos}px`;
 
   try {
-    // A. Kiểm tra Cache trước
+    // A. Kiểm tra Cache
     let data = await getFromCache(text);
 
     // B. Nếu chưa có cache, gọi API
     if (!data) {
-      // --- LOGIC QUAN TRỌNG: CHECK ĐỘ DÀI ---
-      // Nếu chọn quá dài (> 5 từ), ta coi là đoạn văn.
-      // Chỉ dịch, KHÔNG lấy ảnh và phiên âm từng từ để tránh treo máy.
       const wordCount = text.trim().split(/\s+/).length;
       const isLongText = wordCount > 5;
 
-      // Tạo danh sách các việc cần làm (Promises)
       const promises = [getTranslation(text, contextText)];
 
       if (!isLongText) {
-        // Nếu từ ngắn: Lấy thêm phiên âm và ảnh
         promises.push(getPhoneticForText(text));
         promises.push(getImages(text));
       } else {
-        // Nếu từ dài: Trả về rỗng ngay lập tức (không gọi API)
         promises.push(Promise.resolve(null)); // Phiên âm rỗng
         promises.push(Promise.resolve([])); // Ảnh rỗng
       }
 
-      // Chạy song song tất cả request
       const [translation, phonetics, images] = await Promise.all(promises);
 
       data = { translation, phonetics, images, text, contextText };
 
-      // Chỉ lưu cache nếu dịch thành công
       if (translation) {
         await saveToCache(text, data);
         await saveToHistory(text, data);
       }
     } else {
-      // Nếu đã có cache nhưng ngữ cảnh mới, update lại ngữ cảnh
       if (!data.contextMeaning && contextText) {
         const translation = await getTranslation(text, contextText);
         if (translation) data.translation = translation;
@@ -606,6 +548,13 @@ async function showPopup(rect, text, contextText) {
             isSoundEnabled ? "🔊" : "🔇"
           }</button>
           <div style="flex:1"></div>
+          
+          <button id="btn-star" class="star-btn" title="Lưu từ vựng">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </button>
+
           <button id="close-popup" class="close-btn" title="Đóng">✕</button>
         </div>
         
@@ -624,7 +573,7 @@ async function showPopup(rect, text, contextText) {
         <div class="tts-content">
       `;
 
-    // 1. Hiển thị Ảnh (Chỉ hiện nếu có)
+    // 1. Hiển thị Ảnh
     if (data.images && data.images.length) {
       content += `<div class="tts-images-container">
             ${data.images
@@ -636,7 +585,7 @@ async function showPopup(rect, text, contextText) {
         </div>`;
     }
 
-    // 2. Hiển thị Phiên âm (Chỉ hiện nếu có)
+    // 2. Hiển thị Phiên âm
     if (data.phonetics && (data.phonetics.us || data.phonetics.uk)) {
       content += `<div class="tts-phonetic">
             ${
@@ -652,13 +601,10 @@ async function showPopup(rect, text, contextText) {
         </div>`;
     }
 
-    // 3. Hiển thị Nghĩa (Dictionary Style) & Ngữ cảnh
+    // 3. Hiển thị Nghĩa
     if (data.translation) {
-      // 3.1. Hiện từ gốc
       content += `<div class="word-text" style="font-size:24px; text-align:center; margin-bottom:5px;">${data.text}</div>`;
 
-      // 3.2. [NEW] LUÔN HIỆN NGHĨA CHÍNH (Google Translate Meaning)
-      // Lấy nghĩa chính từ data
       const mainMeaning =
         typeof data.translation === "string"
           ? data.translation
@@ -668,7 +614,6 @@ async function showPopup(rect, text, contextText) {
         content += `<div class="primary-meaning">${mainMeaning}</div>`;
       }
 
-      // 3.3. Hiện Từ điển chi tiết (Nếu có)
       if (data.translation.dict && data.translation.dict.length > 0) {
         content += `<div class="dict-container">`;
         data.translation.dict.forEach((d) => {
@@ -681,9 +626,7 @@ async function showPopup(rect, text, contextText) {
         });
         content += `</div>`;
       }
-      // (Bỏ phần else cũ vì mình đã hiện mainMeaning ở trên rồi)
 
-      // 3.4. Hiện Ngữ cảnh (Context)
       if (data.translation.contextMeaning) {
         content += `
                 <div class="context-box">
@@ -704,7 +647,7 @@ async function showPopup(rect, text, contextText) {
     content += `</div>`; // End tts-content
     popup.innerHTML = content;
 
-    // D. Gán sự kiện cho các nút bấm
+    // D. Gán sự kiện
     const header = document.getElementById("popup-header");
     if (typeof enableDragging === "function") enableDragging(header);
 
@@ -717,13 +660,17 @@ async function showPopup(rect, text, contextText) {
     if (micBtn) {
       micBtn.onclick = (e) => {
         e.stopPropagation();
-        // Đảm bảo hàm handleMicClick đã có trong code
         if (typeof handleMicClick === "function") handleMicClick(text, micBtn);
       };
     }
+
+    // ⭐ XỬ LÝ SỰ KIỆN CLICK NÚT SAO ⭐
+    const starBtn = document.getElementById("btn-star");
+    if (starBtn) {
+      starBtn.onclick = () => handleStarClick(data, starBtn);
+    }
   } catch (err) {
     console.error("Popup Render Error:", err);
-    // Hiển thị lỗi ra UI thay vì treo "Đang tải"
     popup.innerHTML = `
         <div class="tts-header"><button id="close-error" class="close-btn">✕</button></div>
         <div class="tts-content" style="color:#ff5252; text-align:center; padding:20px;">
@@ -733,6 +680,73 @@ async function showPopup(rect, text, contextText) {
     document.getElementById("close-error").onclick = closePopup;
   }
 }
+
+// --- HÀM XỬ LÝ LƯU TỪ (STAR CLICK) ---
+async function handleStarClick(data, btn) {
+  // 1. Lấy token từ Storage (đã được Auto-sync)
+  const storage = await chrome.storage.sync.get(["authToken"]);
+  const token = storage.authToken;
+
+  if (!token) {
+    alert(
+      "⚠️ Chưa tìm thấy Token!\nHãy mở trang localhost:3000 và đăng nhập để Extension tự động lấy Token."
+    );
+    window.open("http://localhost:3000/login", "_blank");
+    return;
+  }
+
+  // 2. Prepare Payload
+  const mainMeaning =
+    typeof data.translation === "string"
+      ? data.translation
+      : data.translation.wordMeaning;
+  const partOfSpeech =
+    data.translation.dict && data.translation.dict[0]
+      ? data.translation.dict[0].pos
+      : "unknown";
+  const pronunciation = data.phonetics
+    ? data.phonetics.us || data.phonetics.uk || ""
+    : "";
+  // Clean text (bỏ //)
+  const cleanPronun = pronunciation.replace(/\/\//g, "");
+
+  const payload = {
+    word: data.text,
+    meaning: mainMeaning || "",
+    pronunciation: cleanPronun,
+    partOfSpeech: partOfSpeech,
+    example: data.contextText || "",
+    isStarred: true,
+  };
+
+  // 3. Call API
+  btn.style.opacity = "0.5";
+  try {
+    const res = await fetch("http://localhost:5000/vocabulary", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      btn.classList.add("active"); // CSS sẽ làm nó vàng lên
+      // Animation nhẹ để biết đã lưu
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+    } else {
+      const err = await res.json();
+      alert("Lỗi lưu từ: " + (err.message || "Server Error"));
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Lỗi kết nối: Không gọi được localhost:5000");
+  } finally {
+    btn.style.opacity = "1";
+  }
+}
+
 // --- 4. FLASHCARD SYSTEM (15 MINS) ---
 
 function showFlashcard(item) {
@@ -828,8 +842,6 @@ document.addEventListener("keydown", async (e) => {
           const parentText = selection.anchorNode.parentElement.innerText;
 
           // Tìm vị trí của từ được chọn trong đoạn văn cha
-          // Lưu ý: indexOf có thể tìm sai nếu từ xuất hiện nhiều lần,
-          // nhưng đây là cách nhẹ nhất cho browser extension.
           const startIdx = parentText.indexOf(selectedText);
           const endIdx = startIdx + selectedText.length;
 
@@ -843,13 +855,11 @@ document.addEventListener("keydown", async (e) => {
             let sliceEnd = Math.min(parentText.length, endIdx + lookAhead);
 
             // 2. Tinh chỉnh: Cố gắng tìm dấu chấm câu (.) để cắt cho đẹp
-            // Tìm dấu chấm gần nhất TRƯỚC vùng cắt (trong phạm vi sliceStart)
             const lastDotBefore = parentText.lastIndexOf(".", startIdx);
             if (lastDotBefore !== -1 && lastDotBefore >= sliceStart) {
               sliceStart = lastDotBefore + 1; // Lấy sau dấu chấm
             }
 
-            // Tìm dấu chấm gần nhất SAU vùng cắt
             const firstDotAfter = parentText.indexOf(".", endIdx);
             if (firstDotAfter !== -1 && firstDotAfter <= sliceEnd) {
               sliceEnd = firstDotAfter + 1; // Lấy cả dấu chấm
@@ -910,7 +920,6 @@ async function handleMicClick(referenceText, btnElement) {
   if (!isRecording) {
     // Bắt đầu ghi âm
     try {
-      // Check xem trình duyệt có hỗ trợ không
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert("Trình duyệt này không hỗ trợ ghi âm!");
         return;
@@ -923,7 +932,6 @@ async function handleMicClick(referenceText, btnElement) {
       mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
 
       mediaRecorder.onstop = async () => {
-        // UI: Đang xử lý
         const resultDiv = document.getElementById("assessment-result");
         if (resultDiv) {
           resultDiv.innerHTML =
@@ -931,33 +939,23 @@ async function handleMicClick(referenceText, btnElement) {
         }
 
         try {
-          // Gom chunk thành blob
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-
-          // [NEW] Lưu vào biến global để replay sau này
           lastRecordedBlob = audioBlob;
 
-          // Debug: Log ra console để check
           console.log("Audio recorded size:", audioBlob.size);
 
           if (audioBlob.size < 1000) {
             throw new Error("File ghi âm quá ngắn hoặc không có tiếng.");
           }
 
-          // Gọi hàm xử lý chính (giữ nguyên logic cũ)
-          // Lưu ý: truyền thêm referenceText vào render để nút Standard hoạt động
           const result = await assessPronunciation(audioBlob, referenceText);
-
-          // Render kết quả (truyền thêm referenceText)
           renderAssessmentResult(result, resultDiv, referenceText);
         } catch (err) {
-          // ... (giữ nguyên code xử lý lỗi cũ)
           console.error("Processing Error:", err);
           if (resultDiv) {
             resultDiv.innerHTML = `<div style="color:#ff5252; font-size:13px; text-align:center; padding:5px;">❌ Lỗi: ${err.message}</div>`;
           }
         } finally {
-          // Luôn luôn tắt stream Mic để giải phóng RAM
           stream.getTracks().forEach((track) => track.stop());
         }
       };
@@ -970,7 +968,6 @@ async function handleMicClick(referenceText, btnElement) {
       alert("Không thể mở Mic. Hãy kiểm tra quyền truy cập!");
     }
   } else {
-    // Stop recording
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.stop();
     }
@@ -979,7 +976,7 @@ async function handleMicClick(referenceText, btnElement) {
   }
 }
 
-// 2. Gọi API Azure Speech (Đã bọc Try-Catch toàn bộ)
+// 2. Gọi API Azure Speech
 async function assessPronunciation(audioBlob, referenceText) {
   try {
     const result = await chrome.storage.sync.get(["azureKey", "azureRegion"]);
@@ -990,8 +987,6 @@ async function assessPronunciation(audioBlob, referenceText) {
       throw new Error("Chưa nhập Azure Key/Region trong cài đặt.");
     }
 
-    // Convert WebM sang WAV 16kHz Mono
-    // Lỗi thường xảy ra ở đây do convert
     const wavBlob = await convertAudioToWav(audioBlob);
     console.log("Converted WAV size:", wavBlob.size);
 
@@ -1017,7 +1012,6 @@ async function assessPronunciation(audioBlob, referenceText) {
     });
 
     if (!response.ok) {
-      // Nếu Azure trả lỗi (400, 401...)
       const errText = await response.text();
       console.error("Azure API Error:", response.status, errText);
 
@@ -1033,20 +1027,16 @@ async function assessPronunciation(audioBlob, referenceText) {
 
     return await response.json();
   } catch (e) {
-    // Ném lỗi ra ngoài để handleMicClick bắt được
     throw e;
   }
 }
-/* ======================================================
-   HÀM HIỂN THỊ KẾT QUẢ CHI TIẾT (ELSA STYLE)
-   ====================================================== */
-// [UPDATE] Thêm tham số referenceText vào cuối
+
+// Hàm hiển thị kết quả (giữ nguyên)
 function renderAssessmentResult(data, container, referenceText) {
   if (!container) return;
 
   console.log("🔍 Azure Response:", data);
 
-  // 1. Check lỗi cơ bản (Giữ nguyên)
   if (!data || data.error) {
     container.innerHTML = `<div style="color:#ff5252; text-align:center;">⚠️ ${
       data?.error || "Lỗi API"
@@ -1059,8 +1049,6 @@ function renderAssessmentResult(data, container, referenceText) {
   }
 
   const result = data.NBest[0];
-
-  // Lấy điểm tổng (Flattened JSON fix) - Giữ nguyên logic cũ
   const totalScore =
     result.AccuracyScore !== undefined
       ? result.AccuracyScore
@@ -1069,17 +1057,12 @@ function renderAssessmentResult(data, container, referenceText) {
       : 0;
 
   const words = result.Words || [];
-
-  // Xác định màu cho vòng tròn điểm tổng - Giữ nguyên
   let scoreColor = "#ff5252";
   if (totalScore >= 80) scoreColor = "#4caf50";
   else if (totalScore >= 60) scoreColor = "#ffeb3b";
 
-  // --- BẮT ĐẦU RENDER HTML ---
-  // Thêm ID để dễ querySelector nút bấm
   let html = `<div class="assessment-box" id="result-box-content" style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px; margin-top:10px;">`;
 
-  // [NEW] 2 Nút Playback: User Voice & Azure Standard
   html += `
     <div class="assessment-actions">
         <button id="btn-play-user" class="action-btn-small btn-user-audio" title="Nghe lại giọng bạn">
@@ -1091,7 +1074,6 @@ function renderAssessmentResult(data, container, referenceText) {
     </div>
   `;
 
-  // 1. Vòng tròn điểm số (Giữ nguyên)
   html += `
     <div class="total-score-circle" style="border-color: ${scoreColor}; color: ${scoreColor}">
       ${Math.round(totalScore)}
@@ -1099,14 +1081,9 @@ function renderAssessmentResult(data, container, referenceText) {
     <div style="text-align:center; color:#ddd; font-size:13px; margin-bottom:15px;">Điểm phát âm tổng quát</div>
   `;
 
-  // 2. Container chứa các từ (Giữ nguyên logic loop words)
   html += `<div class="analyzed-content">`;
 
   words.forEach((word) => {
-    // ... (Giữ nguyên logic render từng từ và phoneme cũ của bạn ở đây) ...
-    // Để tiết kiệm không gian chat, tôi viết tắt đoạn này là "RENDER_WORDS_LOGIC"
-    // Bạn hãy copy paste lại đoạn logic loop words cũ vào đây nhé
-
     const wordText = word.Word;
     const wScore =
       word.AccuracyScore ||
@@ -1147,18 +1124,15 @@ function renderAssessmentResult(data, container, referenceText) {
     `;
   });
 
-  html += `</div>`; // Đóng analyzed-content
-  html += `</div>`; // Đóng assessment-box
+  html += `</div>`;
+  html += `</div>`;
 
   container.innerHTML = html;
 
-  // [NEW] Gán sự kiện Click cho 2 nút vừa tạo
-  // Cần dùng setTimeout hoặc requestAnimationFrame để đảm bảo DOM đã được render
   setTimeout(() => {
     const btnUser = document.getElementById("btn-play-user");
     const btnStandard = document.getElementById("btn-play-standard");
 
-    // Play User Recording
     if (btnUser && lastRecordedBlob) {
       btnUser.onclick = () => {
         const audioUrl = URL.createObjectURL(lastRecordedBlob);
@@ -1167,7 +1141,6 @@ function renderAssessmentResult(data, container, referenceText) {
       };
     }
 
-    // Play Standard (Dùng lại hàm speakWithEdgeTTS có sẵn)
     if (btnStandard && referenceText) {
       btnStandard.onclick = () => {
         speakWithEdgeTTS(referenceText);
@@ -1175,19 +1148,15 @@ function renderAssessmentResult(data, container, referenceText) {
     }
   }, 0);
 }
+
 // 1. Chuyển đổi Blob Audio sang WAV 16kHz Mono
 async function convertAudioToWav(audioBlob) {
-  // Tạo AudioContext với sample rate 16000 (chuẩn Azure Speech)
   const audioContext = new (window.AudioContext || window.webkitAudioContext)({
     sampleRate: 16000,
   });
   const arrayBuffer = await audioBlob.arrayBuffer();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-  // Lấy dữ liệu channel 0 (Mono)
   const pcmData = audioBuffer.getChannelData(0);
-
-  // Encode sang WAV
   const wavBuffer = encodeWAV(pcmData, 16000);
   return new Blob([wavBuffer], { type: "audio/wav" });
 }
@@ -1197,41 +1166,25 @@ function encodeWAV(samples, sampleRate) {
   const buffer = new ArrayBuffer(44 + samples.length * 2);
   const view = new DataView(buffer);
 
-  // Helper viết chuỗi
   const writeString = (view, offset, string) => {
     for (let i = 0; i < string.length; i++) {
       view.setUint8(offset + i, string.charCodeAt(i));
     }
   };
 
-  /* RIFF identifier */
   writeString(view, 0, "RIFF");
-  /* file length */
   view.setUint32(4, 36 + samples.length * 2, true);
-  /* RIFF type */
   writeString(view, 8, "WAVE");
-  /* format chunk identifier */
   writeString(view, 12, "fmt ");
-  /* format chunk length */
   view.setUint32(16, 16, true);
-  /* sample format (raw) */
   view.setUint16(20, 1, true);
-  /* channel count (mono) */
   view.setUint16(22, 1, true);
-  /* sample rate */
   view.setUint32(24, sampleRate, true);
-  /* byte rate (sample rate * block align) */
   view.setUint32(28, sampleRate * 2, true);
-  /* block align (channel count * bytes per sample) */
   view.setUint16(32, 2, true);
-  /* bits per sample */
   view.setUint16(34, 16, true);
-  /* data chunk identifier */
   writeString(view, 36, "data");
-  /* data chunk length */
   view.setUint32(40, samples.length * 2, true);
-
-  // Ghi dữ liệu PCM
   floatTo16BitPCM(view, 44, samples);
 
   return view;
