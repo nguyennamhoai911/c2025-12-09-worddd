@@ -1,0 +1,3 @@
+vocabulary
+├── page.tsx
+└── tree.txt

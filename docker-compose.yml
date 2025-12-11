@@ -1,27 +1,76 @@
-version: '3.8'
+# c2025-12-09-full-app-english\docker-compose.yml
 
+# --- PHẦN 1: GLOBAL SETTINGS (CÀI ĐẶT CHUNG) ---
+
+# Version: Xác định 'grammar' (ngữ pháp) mà file này sử dụng.
+# Version 3.8 là bản stable (ổn định) và phổ biến nhất hiện nay.
+version: "3.8"
+
+# --- PHẦN 2: SERVICES (CÁC ỨNG DỤNG CẦN CHẠY) ---
+# Services là trái tim của file. Nơi bạn list ra các 'app' muốn chạy.
 services:
-  # Database chính (PostgreSQL)
+  # === SERVICE 1: DATABASE (POSTGRESQL) ===
   postgres:
+    # 1. Image (Source Code):
+    # - 'postgres': Tên phần mềm trên Docker Hub.
+    # - ':15-alpine': Tag phiên bản.
+    #   + '15': Version chính.
+    #   + 'alpine': Là hệ điều hành Linux siêu nhỏ (chỉ ~5MB), giúp container nhẹ và bảo mật hơn.
     image: postgres:15-alpine
+
+    # 2. Container Name (Định danh):
+    # - Nếu không đặt, Docker sẽ tự random tên (vd: project_postgres_1).
+    # - Đặt tên cố định 'vocab_db' giúp bạn dễ gõ lệnh (CLI) sau này.
     container_name: vocab_db
+
+    # 3. Environment Variables (Biến môi trường):
+    # - Đây là cách ta 'inject' (tiêm) cấu hình vào trong container lúc nó khởi động (runtime).
+    # - Các biến bắt đầu bằng 'POSTGRES_...' là quy định riêng của image Postgres.
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: vocab_db
+      POSTGRES_USER: myuser # Tạo user mặc định có quyền cao nhất (superuser)
+      POSTGRES_PASSWORD: mypassword # Set mật khẩu cho user đó
+      POSTGRES_DB: vocab_db # Tự động tạo sẵn 1 database rỗng tên là 'vocab_db'
+
+    # 4. Ports Mapping (Ánh xạ cổng - Quan trọng!):
+    # - Cú pháp: "HOST_PORT : CONTAINER_PORT" (Ngoài : Trong).
+    # - "5432" (Trái): Cổng trên máy tính của bạn (Localhost).
+    # - "5432" (Phải): Cổng mặc định mà Postgres lắng nghe bên trong container.
+    # -> Ý nghĩa: Bất cứ ai gõ vào 'localhost:5432' trên máy bạn sẽ được 'tunnel' (đi đường hầm) thẳng vào database.
     ports:
-      - "5432:5432"
+      - "5433:5432"  # 👈 Sửa 5432 thành 5433 (Cổng ngoài máy thật : Cổng trong docker)
+
+    # 5. Volumes (Lưu trữ dữ liệu):
+    # - Cú pháp: "VOLUME_NAME : CONTAINER_PATH"
+    # - 'postgres_data': Tên cái 'két sắt' (volume) do Docker quản lý.
+    # - '/var/lib/postgresql/data': Đường dẫn bắt buộc nơi Postgres lưu file dữ liệu bên trong.
+    # -> Ý nghĩa: Sync (đồng bộ) dữ liệu từ trong ra ngoài. Container chết, data vẫn còn ở 'postgres_data'.
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+    # 6. Restart Policy (Cơ chế tự phục hồi):
+    # - 'always': Nếu container bị crash (lỗi) hoặc máy tính khởi động lại,
+    #   Docker sẽ tự động bật nó dậy. Giữ cho service luôn 'Alive'.
     restart: always
 
-  # Redis (Dùng cho hàng đợi AI Queue sau này)
+  # === SERVICE 2: REDIS (CACHE / QUEUE) ===
   redis:
+    # Dùng image redis bản nhẹ nhất (alpine)
     image: redis:alpine
+
+    # Đặt tên để dễ quản lý
     container_name: vocab_redis
+
+    # Mapping cổng Redis.
+    # Cổng 6379 là cổng chuẩn của Redis.
     ports:
       - "6379:6379"
+
+    # Tự động khởi động lại nếu có sự cố
     restart: always
 
+# --- PHẦN 3: VOLUMES DECLARATION (KHAI BÁO KHO CHỨA) ---
+# Bạn đã dùng 'postgres_data' ở trên, nên bạn phải đăng ký nó ở đây.
 volumes:
   postgres_data:
+    # Mặc định Docker sẽ tạo volume này ở sâu trong hệ thống file của Docker
+    # (thường là /var/lib/docker/volumes/...)

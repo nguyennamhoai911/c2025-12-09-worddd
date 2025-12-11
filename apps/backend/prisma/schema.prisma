@@ -1,5 +1,4 @@
-// apps/backend/prisma/schema.prisma
-
+// c2025-12-09-full-app-english\apps\backend\prisma\schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,42 +10,49 @@ datasource db {
 
 // 1. Bảng User (Người dùng)
 model User {
-  id        String      @id @default(uuid()) // UUID an toàn hơn ID số tự tăng
-  email     String      @unique
-  password  String      // Sẽ lưu Hash password (không lưu plain text)
-  name      String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  
-  // Relation: Một User có nhiều từ vựng
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String? // 👈 Thêm dấu ? để cho phép Null (User Google không có pass)
+  name     String?
+  avatar   String? // 👈 Thêm trường này để lưu ảnh đại diện từ Google
+  provider String  @default("local") // "local" hoặc "google"
+  googleId String? @unique // ID riêng của Google trả về
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   vocabItems VocabItem[]
 
-  @@map("users") // Tên bảng trong DB là 'users'
+  @@map("users")
 }
 
 // 2. Bảng VocabItem (Từ vựng)
+// apps/backend/prisma/schema.prisma
+
 model VocabItem {
-  id            String   @id @default(uuid())
-  word          String
-  meaning       String?  // Nghĩa chính
-  context       String?  // Ngữ cảnh câu văn (lấy từ Extension)
-  example       String?  // Ví dụ (AI generate hoặc lấy từ web)
+  id String @id @default(uuid())
   
-  // Multimedia (Lưu link từ S3 hoặc Google Image)
-  imageUrl      String?  @map("image_url")
-  audioUrl      String?  @map("audio_url")
-  
-  // Tracking học tập
-  masteryLevel  Int      @default(0) @map("mastery_level") // 0-5
-  tags          String[] // Array các tag: ["IELTS", "Noun", "Hard"]
-  
-  // Relation Fields (Kết nối với User)
-  userId        String   @map("user_id")
-  user          User     @relation(fields: [userId], references: [id])
+  // --- CÁC CỘT KHỚP VỚI EXCEL ---
+  topic         String?   // Topic
+  word          String    // Word (Bắt buộc)
+  partOfSpeech  String?   @map("part_of_speech") // Part of speech
+  pronunciation String?   // Pronunciation
+  meaning       String?   // Meaning
+  example       String?   // Example
+  relatedWords  String?   @map("related_words") // Related words
+  occurrence    Int?      @default(1) // Occurrence
 
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt      @map("updated_at")
+  // --- CÁC CỘT HỆ THỐNG (Bắt buộc phải giữ) ---
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
 
-  @@index([userId]) // Index để search theo user nhanh hơn
+  // Map cột "Time" trong Excel vào createdAt
+  createdAt DateTime @default(now()) @map("created_at") 
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Xóa các trường cũ không dùng nữa (imageUrl, audioUrl, tags, masteryLevel...)
+  // Hoặc cứ để đó nếu sau này muốn dùng lại, nhưng ở đây mình xóa cho gọn theo ý bạn.
+
+  @@index([userId])
   @@map("vocab_items")
 }
