@@ -1,0 +1,4982 @@
+Directory structure:
+└── c2025-12-09-full-app-english/
+    ├── AI_CONTEXT.md
+    ├── docker-compose.yml
+    └── apps/
+        ├── extension.crx
+        ├── extension.pem
+        ├── tree.txt
+        ├── backend/
+        │   ├── README.md
+        │   ├── eslint.config.mjs
+        │   ├── nest-cli.json
+        │   ├── package.json
+        │   ├── tree.txt
+        │   ├── tsconfig.build.json
+        │   ├── tsconfig.json
+        │   ├── .prettierrc
+        │   ├── prisma/
+        │   │   └── schema.prisma
+        │   ├── src/
+        │   │   ├── app.controller.spec.ts
+        │   │   ├── app.controller.ts
+        │   │   ├── app.module.ts
+        │   │   ├── app.service.ts
+        │   │   ├── main.ts
+        │   │   ├── modules/
+        │   │   │   ├── auth/
+        │   │   │   │   ├── auth.controller.ts
+        │   │   │   │   ├── auth.module.ts
+        │   │   │   │   ├── auth.service.ts
+        │   │   │   │   ├── dto/
+        │   │   │   │   │   ├── create-auth.dto.ts
+        │   │   │   │   │   └── update-auth.dto.ts
+        │   │   │   │   ├── entities/
+        │   │   │   │   │   └── auth.entity.ts
+        │   │   │   │   ├── guards/
+        │   │   │   │   │   ├── google-auth.guard.ts
+        │   │   │   │   │   ├── jwt-auth.guard.ts
+        │   │   │   │   │   └── local-auth.guard.ts
+        │   │   │   │   └── strategies/
+        │   │   │   │       ├── google.strategy.ts
+        │   │   │   │       ├── jwt.strategy.ts
+        │   │   │   │       └── local.strategy.ts
+        │   │   │   ├── users/
+        │   │   │   │   ├── users.controller.ts
+        │   │   │   │   ├── users.module.ts
+        │   │   │   │   ├── users.service.ts
+        │   │   │   │   ├── dto/
+        │   │   │   │   │   ├── create-user.dto.ts
+        │   │   │   │   │   └── update-user.dto.ts
+        │   │   │   │   └── entities/
+        │   │   │   │       └── user.entity.ts
+        │   │   │   └── vocabulary/
+        │   │   │       ├── vocabulary.controller.ts
+        │   │   │       ├── vocabulary.module.ts
+        │   │   │       ├── vocabulary.service.ts
+        │   │   │       ├── dto/
+        │   │   │       │   ├── create-vocabulary.dto.ts
+        │   │   │       │   └── update-vocabulary.dto.ts
+        │   │   │       └── entities/
+        │   │   │           └── vocabulary.entity.ts
+        │   │   └── prisma/
+        │   │       ├── prisma.module.ts
+        │   │       └── prisma.service.ts
+        │   └── test/
+        │       ├── app.e2e-spec.ts
+        │       └── jest-e2e.json
+        ├── extension/
+        │   ├── background.js
+        │   ├── content.js
+        │   ├── manifest.json
+        │   ├── popup.css
+        │   ├── popup.html
+        │   ├── popup.js
+        │   └── content-scripts/
+        │       ├── main.js
+        │       ├── messager.js
+        │       ├── shortcuts.js
+        │       └── ui.js
+        └── frontend/
+            ├── README.md
+            ├── eslint.config.mjs
+            ├── next.config.ts
+            ├── package.json
+            ├── postcss.config.js
+            ├── postcss.config.mjs
+            ├── tailwind.config.ts
+            ├── tsconfig.json
+            ├── app/
+            │   ├── globals.css
+            │   ├── layout.tsx
+            │   ├── page.module.css
+            │   ├── page.tsx
+            │   ├── admin/
+            │   │   └── users/
+            │   │       └── page.tsx
+            │   ├── app/
+            │   │   └── auth/
+            │   │       └── callback/
+            │   │           └── page.tsx
+            │   ├── login/
+            │   │   └── page.tsx
+            │   ├── register/
+            │   │   └── page.tsx
+            │   └── vocabulary/
+            │       ├── page.tsx
+            │       └── tree.txt
+            ├── components/
+            │   ├── Icons.tsx
+            │   └── vocabulary/
+            │       ├── AssessmentModal.tsx
+            │       ├── QuickSearchModal.tsx
+            │       ├── VocabFormModal.tsx
+            │       └── VocabTable.tsx
+            └── contexts/
+                └── AuthContext.tsx
+
+================================================
+FILE: AI_CONTEXT.md
+================================================
+[Empty file]
+
+
+================================================
+FILE: docker-compose.yml
+================================================
+# c2025-12-09-full-app-english\docker-compose.yml
+
+# --- PHẦN 1: GLOBAL SETTINGS (CÀI ĐẶT CHUNG) ---
+
+# Version: Xác định 'grammar' (ngữ pháp) mà file này sử dụng.
+# Version 3.8 là bản stable (ổn định) và phổ biến nhất hiện nay.
+version: "3.8"
+
+# --- PHẦN 2: SERVICES (CÁC ỨNG DỤNG CẦN CHẠY) ---
+# Services là trái tim của file. Nơi bạn list ra các 'app' muốn chạy.
+services:
+  # === SERVICE 1: DATABASE (POSTGRESQL) ===
+  postgres:
+    # 1. Image (Source Code):
+    # - 'postgres': Tên phần mềm trên Docker Hub.
+    # - ':15-alpine': Tag phiên bản.
+    #   + '15': Version chính.
+    #   + 'alpine': Là hệ điều hành Linux siêu nhỏ (chỉ ~5MB), giúp container nhẹ và bảo mật hơn.
+    image: postgres:15-alpine
+
+    # 2. Container Name (Định danh):
+    # - Nếu không đặt, Docker sẽ tự random tên (vd: project_postgres_1).
+    # - Đặt tên cố định 'vocab_db' giúp bạn dễ gõ lệnh (CLI) sau này.
+    container_name: vocab_db
+
+    # 3. Environment Variables (Biến môi trường):
+    # - Đây là cách ta 'inject' (tiêm) cấu hình vào trong container lúc nó khởi động (runtime).
+    # - Các biến bắt đầu bằng 'POSTGRES_...' là quy định riêng của image Postgres.
+    environment:
+      POSTGRES_USER: myuser # Tạo user mặc định có quyền cao nhất (superuser)
+      POSTGRES_PASSWORD: mypassword # Set mật khẩu cho user đó
+      POSTGRES_DB: vocab_db # Tự động tạo sẵn 1 database rỗng tên là 'vocab_db'
+
+    # 4. Ports Mapping (Ánh xạ cổng - Quan trọng!):
+    # - Cú pháp: "HOST_PORT : CONTAINER_PORT" (Ngoài : Trong).
+    # - "5432" (Trái): Cổng trên máy tính của bạn (Localhost).
+    # - "5432" (Phải): Cổng mặc định mà Postgres lắng nghe bên trong container.
+    # -> Ý nghĩa: Bất cứ ai gõ vào 'localhost:5432' trên máy bạn sẽ được 'tunnel' (đi đường hầm) thẳng vào database.
+    ports:
+      - "5433:5432"  # 👈 Sửa 5432 thành 5433 (Cổng ngoài máy thật : Cổng trong docker)
+
+    # 5. Volumes (Lưu trữ dữ liệu):
+    # - Cú pháp: "VOLUME_NAME : CONTAINER_PATH"
+    # - 'postgres_data': Tên cái 'két sắt' (volume) do Docker quản lý.
+    # - '/var/lib/postgresql/data': Đường dẫn bắt buộc nơi Postgres lưu file dữ liệu bên trong.
+    # -> Ý nghĩa: Sync (đồng bộ) dữ liệu từ trong ra ngoài. Container chết, data vẫn còn ở 'postgres_data'.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # 6. Restart Policy (Cơ chế tự phục hồi):
+    # - 'always': Nếu container bị crash (lỗi) hoặc máy tính khởi động lại,
+    #   Docker sẽ tự động bật nó dậy. Giữ cho service luôn 'Alive'.
+    restart: always
+
+  # === SERVICE 2: REDIS (CACHE / QUEUE) ===
+  redis:
+    # Dùng image redis bản nhẹ nhất (alpine)
+    image: redis:alpine
+
+    # Đặt tên để dễ quản lý
+    container_name: vocab_redis
+
+    # Mapping cổng Redis.
+    # Cổng 6379 là cổng chuẩn của Redis.
+    ports:
+      - "6379:6379"
+
+    # Tự động khởi động lại nếu có sự cố
+    restart: always
+
+# --- PHẦN 3: VOLUMES DECLARATION (KHAI BÁO KHO CHỨA) ---
+# Bạn đã dùng 'postgres_data' ở trên, nên bạn phải đăng ký nó ở đây.
+volumes:
+  postgres_data:
+    # Mặc định Docker sẽ tạo volume này ở sâu trong hệ thống file của Docker
+    # (thường là /var/lib/docker/volumes/...)
+
+
+
+================================================
+FILE: apps/extension.crx
+================================================
+[Binary file]
+
+
+================================================
+FILE: apps/extension.pem
+================================================
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCrbUhiqOJ58LhD
+LHaHpcW8G0IRVgG2xN01/1r72xQzhDxR0zgBDwpOuzSr6Z7ciKAv/6Na0ngp/uLr
+t7MqC+ZFdodkSA/62OsGT0HT2i4fP/Tcq1rO2r7a6AWE0p8PmnsHnjHBkc8iJ/He
+1ERa2ItBC5pforCelahTiQTftFqv3Oi98MjeMZL4neFngqqnfR24Vy+bUibShLjL
+vzDwK65NbPz7FKMdl+8+fcfgpvN0Xh8Bbeq/ZGHNkrcUYYEXIg14JYWctWmeBp5+
+0ZB/cG2tZ6LL0HuJy3SwEEghTHLVVb5Uxfma4S1CfoArsSICCTmvgxs5haH600AF
+y0C67Rg/AgMBAAECggEAFEWaF8Cs94qV36u0YJoj5fi7OV2YWkqxdh86XSotG2J5
+15tItidXKrRMqD+6P44Qk1yBrs3Q0/aGUyWoFELP+krn+93hteJM+LQKrsjQR3XC
+uQ2ycV/AzhY+ANT/ZlL4VZBJhgB+JCXhHl6vrqaI4SpEGSceB8Le4vIDF4k2aDFf
+sLObfrHGdi/NWxsiB7LFSYCdoxmP1mZkx26cdlRP9LU3ot2Za+gc3i9SMrelwsoJ
+VhQyubbl8GNq8IZKROOVscaAhbziqy1PRy/4HviG1OW3m7VJNKYGA3F3KTWdnF0y
+J5VGco0farTDvanRHhY62tlzFRzrfA0MmJacJOYI8QKBgQDnnGklNniD05KoeZaR
+2BMhxpfNtqqvtYX6wJfDHWHmLjYKs44gOsQDs36raNAjNl8xJH51t0pe1HEn0RI/
+ltiCvpd5S7yxjAfGbgMu/Xq+bBYvr48CXOrshrIdDzkqz+uRZgJWxg2LYkBAe81r
+ZXuOgHmjs5TQrgfEbllyIatblQKBgQC9ennTRxg4TdztH5Ys7rO+5EYM4KaTUvZQ
+Lxz+iihgbtmFEm9QKjFgM/u6sP1yBQ4NxLSAQ/fvC5WXUx/cg/3g9cyZ82Cw7up7
+KZrwgZulKpLnI35J4BHLTP5rubiuBoLd0+UQTlViU9meJSsrWciiGOUzILrSuKkb
+nJ+ymoGPgwKBgHuTOYqQWJbFkO9xCERCjFquEhrBRqq/aH/UuGRzTeO5bj4hdUh+
+8kyjPYeJQdw3y2x18z8tj3GvWbyL0Xe6LUT9Geau4Tu94fwegHZW6mGlW+UPf3cc
+Sn/ukiPtFmxgSWjni4Hu5BUlU/DT3VNa7ySmKcCNNW5uHFjTI8hAbKRNAoGBAKYc
+rJcEOgCKioe77F2B+0T8PUlm3cJEtjo/w4yHtLQuGjamnb3K77SmficCqX7/XX3G
+mHPmooMIReH/duxNLxK8it3g10Dmg9zr8bCt/7UCKP3ISRwc+5ye6GGq1XSDstEk
+xinQctycJCmX7ku4D8PETZPQOtkoGOFjI0JiX/lfAoGAMLpVvGf/ncOTVazUAKJU
+ZIGexPhTKLVt9F/G/EkRnIBF/TEPcNOJXbsYA0GgJ0qw652chWs34CCquIhk1U4V
+z3zM/k5PfbZspGpqT5yatnQz/jwLNAhl2SPL4Xezg6Bx8iQbkmuY66+B/xTdmZBv
+sTbdiRavz2sw0XuG5X5CoUQ=
+-----END PRIVATE KEY-----
+
+
+
+================================================
+FILE: apps/tree.txt
+================================================
+[Binary file]
+
+
+================================================
+FILE: apps/backend/README.md
+================================================
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
+
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
+
+  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+    <p align="center">
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
+<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
+<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
+<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
+  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
+    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+</p>
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+
+## Description
+
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+
+## Project setup
+
+```bash
+$ npm install
+```
+
+## Compile and run the project
+
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Run tests
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```
+
+## Deployment
+
+When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+
+If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+
+```bash
+$ npm install -g @nestjs/mau
+$ mau deploy
+```
+
+With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+
+## Resources
+
+Check out a few resources that may come in handy when working with NestJS:
+
+- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
+- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
+- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
+- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
+- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
+- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
+- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
+- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+
+## Support
+
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+
+## Stay in touch
+
+- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
+- Website - [https://nestjs.com](https://nestjs.com/)
+- Twitter - [@nestframework](https://twitter.com/nestframework)
+
+## License
+
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+
+================================================
+FILE: apps/backend/eslint.config.mjs
+================================================
+// @ts-check
+import eslint from '@eslint/js';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  {
+    ignores: ['eslint.config.mjs'],
+  },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  eslintPluginPrettierRecommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+      sourceType: 'commonjs',
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      "prettier/prettier": ["error", { endOfLine: "auto" }],
+    },
+  },
+);
+
+
+
+================================================
+FILE: apps/backend/nest-cli.json
+================================================
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/package.json
+================================================
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/mapped-types": "*",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.0.1",
+    "@prisma/client": "^5.10.2",
+    "@types/passport-local": "^1.0.38",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "csv-parser": "^3.2.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.19.2",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "prisma": "^5.10.2",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/tree.txt
+================================================
+backend
+├── README.md
+├── eslint.config.mjs
+├── nest-cli.json
+├── package-lock.json
+├── package.json
+├── prisma
+│   └── schema.prisma
+├── src
+│   ├── app.controller.spec.ts
+│   ├── app.controller.ts
+│   ├── app.module.ts
+│   ├── app.service.ts
+│   └── main.ts
+├── test
+│   ├── app.e2e-spec.ts
+│   └── jest-e2e.json
+├── tree.txt
+├── tsconfig.build.json
+└── tsconfig.json
+
+
+
+================================================
+FILE: apps/backend/tsconfig.build.json
+================================================
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
+
+
+
+================================================
+FILE: apps/backend/tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/.prettierrc
+================================================
+{
+  "singleQuote": true,
+  "trailingComma": "all"
+}
+
+
+
+================================================
+FILE: apps/backend/prisma/schema.prisma
+================================================
+// c2025-12-09-full-app-english\apps\backend\prisma\schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Bảng User (Người dùng)
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String? // 👈 Thêm dấu ? để cho phép Null (User Google không có pass)
+  name     String?
+  avatar   String? // 👈 Thêm trường này để lưu ảnh đại diện từ Google
+  provider String  @default("local") // "local" hoặc "google"
+  googleId String? @unique // ID riêng của Google trả về
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vocabItems VocabItem[]
+
+  @@map("users")
+}
+
+// 2. Bảng VocabItem (Từ vựng)
+// apps/backend/prisma/schema.prisma
+
+model VocabItem {
+  id                  String  @id @default(uuid())
+  // 👇 THÊM DÒNG NÀY: Lưu lịch sử điểm số (PostgreSQL hỗ trợ mảng Int[])
+  pronunciationScores Int[]   @default([])
+  // --- CÁC CỘT KHỚP VỚI EXCEL ---
+  topic               String? // Topic
+  word                String // Word (Bắt buộc)
+  partOfSpeech        String? @map("part_of_speech") // Part of speech
+  pronunciation       String? // Pronunciation
+  meaning             String? // Meaning
+  example             String? // Example
+  relatedWords        String? @map("related_words") // Related words
+  occurrence          Int?    @default(1)
+  isStarred           Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
+
+  // --- CÁC CỘT HỆ THỐNG (Bắt buộc phải giữ) ---
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Map cột "Time" trong Excel vào createdAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Xóa các trường cũ không dùng nữa (imageUrl, audioUrl, tags, masteryLevel...)
+  // Hoặc cứ để đó nếu sau này muốn dùng lại, nhưng ở đây mình xóa cho gọn theo ý bạn.
+
+  @@index([userId])
+  @@map("vocab_items")
+}
+
+
+
+================================================
+FILE: apps/backend/src/app.controller.spec.ts
+================================================
+import { Test, TestingModule } from '@nestjs/testing';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+describe('AppController', () => {
+  let appController: AppController;
+
+  beforeEach(async () => {
+    const app: TestingModule = await Test.createTestingModule({
+      controllers: [AppController],
+      providers: [AppService],
+    }).compile();
+
+    appController = app.get<AppController>(AppController);
+  });
+
+  describe('root', () => {
+    it('should return "Hello World!"', () => {
+      expect(appController.getHello()).toBe('Hello World!');
+    });
+  });
+});
+
+
+
+================================================
+FILE: apps/backend/src/app.controller.ts
+================================================
+import { Controller, Get } from '@nestjs/common';
+import { AppService } from './app.service';
+
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  getHello(): string {
+    return this.appService.getHello();
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/src/app.module.ts
+================================================
+// apps/backend/src/app.module.ts
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // 👈 Quan trọng!
+    }),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    VocabularyModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
+
+
+
+================================================
+FILE: apps/backend/src/app.service.ts
+================================================
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AppService {
+  getHello(): string {
+    return 'Hello World!';
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/src/main.ts
+================================================
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Enable CORS with credentials
+  app.enableCors({
+    origin: true, // 👈 Thêm cả 2 port
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
+  // Enable validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
+
+  await app.listen(5000);
+  console.log('🚀 Backend running on http://localhost:5000');
+}
+bootstrap();
+
+
+================================================
+FILE: apps/backend/src/modules/auth/auth.controller.ts
+================================================
+import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type { Response } from 'express'; // 👈 Thêm "type"
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  async register(
+    @Body() body: { email: string; password: string; name?: string },
+  ) {
+    return this.authService.register(body.email, body.password, body.name);
+  }
+
+  @Post('login')
+  async login(@Body() body: { email: string; password: string }) {
+    return this.authService.login(body.email, body.password);
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth() {
+    // Redirects to Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user);
+
+    const frontendUrl = `http://localhost:3000/auth/callback?token=${result.token}`;
+    return res.redirect(frontendUrl);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMe(@Req() req) {
+    return this.authService.getUserById(req.user.id);
+  }
+}
+
+
+================================================
+FILE: apps/backend/src/modules/auth/auth.module.ts
+================================================
+// apps/backend/src/modules/auth/auth.module.ts
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { PrismaModule } from '../../prisma/prisma.module';
+import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
+
+@Module({
+  imports: [
+    PrismaModule,
+    PassportModule,
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET') || 'your-secret-key-change-in-production',
+        signOptions: { expiresIn: '7d' },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
+  exports: [AuthService],
+})
+export class AuthModule {}
+
+
+================================================
+FILE: apps/backend/src/modules/auth/auth.service.ts
+================================================
+// apps/backend/src/modules/auth/auth.service.ts
+
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
+
+  // ========== REGISTER WITH EMAIL/PASSWORD ==========
+  async register(email: string, password: string, name?: string) {
+    // Check if user exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: name || email.split('@')[0], // Default name from email
+        provider: 'local',
+      },
+    });
+
+    // Generate token
+    const token = this.generateToken(user.id, user.email);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      },
+      token,
+    };
+  }
+
+  // ========== LOGIN WITH EMAIL/PASSWORD ==========
+  async login(email: string, password: string) {
+    // Find user
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Generate token
+    const token = this.generateToken(user.id, user.email);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      },
+      token,
+    };
+  }
+
+  // ========== GOOGLE OAUTH LOGIN ==========
+  async googleLogin(googleUser: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    picture: string;
+    googleId: string;
+  }) {
+    // Check if user exists
+    let user = await this.prisma.user.findUnique({
+      where: { email: googleUser.email },
+    });
+
+    if (!user) {
+      // Create new user from Google
+      user = await this.prisma.user.create({
+        data: {
+          email: googleUser.email,
+          name: `${googleUser.firstName} ${googleUser.lastName}`,
+          avatar: googleUser.picture,
+          provider: 'google',
+          googleId: googleUser.googleId,
+          password: null, // Google users don't have password
+        },
+      });
+    } else if (user.provider === 'local') {
+      // Link Google to existing local account
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          googleId: googleUser.googleId,
+          avatar: googleUser.picture, // Update avatar
+        },
+      });
+    }
+
+    // Generate token
+    const token = this.generateToken(user.id, user.email);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      },
+      token,
+    };
+  }
+
+  // ========== VALIDATE USER (For Passport) ==========
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (user && user.password) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (isPasswordValid) {
+        const { password, ...result } = user;
+        return result;
+      }
+    }
+    return null;
+  }
+
+  // ========== GET USER BY ID ==========
+  async getUserById(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        provider: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return user;
+  }
+
+  // ========== HELPER: GENERATE JWT TOKEN ==========
+  private generateToken(userId: string, email: string) {
+    return this.jwtService.sign({
+      sub: userId,
+      email,
+    });
+  }
+}
+
+
+================================================
+FILE: apps/backend/src/modules/auth/dto/create-auth.dto.ts
+================================================
+export class CreateAuthDto {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/auth/dto/update-auth.dto.ts
+================================================
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateAuthDto } from './create-auth.dto';
+
+export class UpdateAuthDto extends PartialType(CreateAuthDto) {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/auth/entities/auth.entity.ts
+================================================
+export class Auth {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/auth/guards/google-auth.guard.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class GoogleAuthGuard extends AuthGuard('google') {}
+
+
+================================================
+FILE: apps/backend/src/modules/auth/guards/jwt-auth.guard.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/auth/guards/local-auth.guard.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class LocalAuthGuard extends AuthGuard('local') {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/auth/strategies/google.strategy.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy, VerifyCallback, Profile, StrategyOptions } from 'passport-google-oauth20';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  constructor(private configService: ConfigService) {
+    super({
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
+      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
+      callbackURL: 'http://localhost:5000/auth/google/callback',
+      scope: ['email', 'profile'],
+    } as StrategyOptions); // 👈 Thêm "as StrategyOptions"
+  }
+
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: Profile,
+    done: VerifyCallback,
+  ): Promise<any> {
+    const { name, emails, photos, id } = profile;
+    
+    const user = {
+      email: emails?.[0]?.value || '',
+      firstName: name?.givenName || '',
+      lastName: name?.familyName || '',
+      picture: photos?.[0]?.value || '',
+      googleId: id,
+    };
+
+    done(null, user);
+  }
+}
+
+
+================================================
+FILE: apps/backend/src/modules/auth/strategies/jwt.strategy.ts
+================================================
+// apps/backend/src/modules/auth/strategies/jwt.strategy.ts
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PassportStrategy } from '@nestjs/passport';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(private configService: ConfigService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: configService.get('JWT_SECRET') || 'your-secret-key-change-in-production',
+    });
+  }
+
+  async validate(payload: any) {
+    return { 
+      id: payload.sub, 
+      email: payload.email 
+    };
+  }
+}
+
+
+================================================
+FILE: apps/backend/src/modules/auth/strategies/local.strategy.ts
+================================================
+// apps/backend/src/modules/auth/strategies/local.strategy.ts
+import { Strategy } from 'passport-local';
+import { PassportStrategy } from '@nestjs/passport';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthService } from '../auth.service';
+
+@Injectable()
+export class LocalStrategy extends PassportStrategy(Strategy) {
+  constructor(private authService: AuthService) {
+    super({
+      usernameField: 'email', // Mặc định là 'username', mình đổi thành 'email' cho đúng project
+    });
+  }
+
+  // Hàm này sẽ tự động chạy khi user login
+  async validate(email: string, pass: string): Promise<any> {
+    const user = await this.authService.validateUser(email, pass);
+    if (!user) {
+      throw new UnauthorizedException('Sai email hoặc mật khẩu');
+    }
+    return user;
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/src/modules/users/users.controller.ts
+================================================
+import { Controller, Post, Body } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+
+  // Tạm thời bỏ các route findAll, findOne, update, remove 
+  // vì Service chưa implement logic đó.
+}
+
+
+================================================
+FILE: apps/backend/src/modules/users/users.module.ts
+================================================
+import { Module } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { UsersController } from './users.controller';
+
+@Module({
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
+})
+export class UsersModule {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/users/users.service.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { PrismaService } from '../../prisma/prisma.service'; // Import global service
+import * as bcrypt from 'bcrypt';
+
+@Injectable()
+export class UsersService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(createUserDto: CreateUserDto) {
+    const { email, password, name } = createUserDto;
+    // Hash password logic
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+
+    return this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+      },
+    });
+  }
+
+  // Find user for Auth logic
+  async findOneByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/src/modules/users/dto/create-user.dto.ts
+================================================
+export class CreateUserDto {
+  email: string;
+  password?: string; // Optional vì sau này có thể login bằng Google
+  name?: string;
+}
+
+
+
+================================================
+FILE: apps/backend/src/modules/users/dto/update-user.dto.ts
+================================================
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateUserDto } from './create-user.dto';
+
+export class UpdateUserDto extends PartialType(CreateUserDto) {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/users/entities/user.entity.ts
+================================================
+export class User {}
+
+
+
+================================================
+FILE: apps/backend/src/modules/vocabulary/vocabulary.controller.ts
+================================================
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  Query,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { VocabularyService } from './vocabulary.service';
+import { CreateVocabularyDto } from './dto/create-vocabulary.dto';
+import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+@Controller('vocabulary')
+@UseGuards(JwtAuthGuard)
+export class VocabularyController {
+  constructor(private readonly vocabularyService: VocabularyService) {}
+
+  // 👇 THÊM ROUTE NÀY: Lưu điểm phát âm
+  @Patch(':id/score')
+  async addScore(
+    @Request() req,
+    @Param('id') id: string,
+    @Body('score') score: number,
+  ) {
+    return this.vocabularyService.addScore(id, req.user.id, score);
+  }
+  @Post()
+  create(@Request() req, @Body() createDto: CreateVocabularyDto) {
+    // 👇 UPDATE: Sử dụng upsertVocab để handle logic create hoặc update nếu đã tồn tại
+    return this.vocabularyService.upsertVocab(req.user.id, createDto);
+  }
+
+  @Post('import/csv')
+  @UseInterceptors(FileInterceptor('file'))
+  async importCsv(@Request() req, @UploadedFile() file: Express.Multer.File) {
+    return this.vocabularyService.importFromCsv(req.user.id, file);
+  }
+
+  @Get()
+  findAll(
+    @Request() req,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    @Query('search') search: string, // Quick search (tìm chung)
+    // Filter Params
+    @Query('word') word: string,
+    @Query('topic') topic: string,
+    @Query('partOfSpeech') partOfSpeech: string,
+    @Query('meaning') meaning: string,
+    @Query('isStarred') isStarred: string, // Filter từ yêu thích
+    // Sort Params
+    @Query('sortBy') sortBy: string,
+    @Query('sortOrder') sortOrder: string,
+  ) {
+    const pageNumber = page ? parseInt(page) : 1;
+    const limitNumber = limit ? parseInt(limit) : 20;
+
+    // Gom các filter criteria vào một object
+    const filters = {
+      word,
+      topic,
+      partOfSpeech,
+      meaning,
+      // Convert string 'true' thành boolean true, ngược lại là false/undefined
+      isStarred: isStarred === 'true',
+    };
+
+    // Config sort option
+    const sort = {
+      field: sortBy || 'createdAt',
+      order: (sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc',
+    };
+
+    // Call service với full arguments
+    return this.vocabularyService.findAll(
+      req.user.id,
+      pageNumber,
+      limitNumber,
+      filters,
+      sort,
+      search,
+    );
+  }
+
+  @Get(':id')
+  findOne(@Request() req, @Param('id') id: string) {
+    return this.vocabularyService.findOne(id, req.user.id);
+  }
+
+  @Patch(':id')
+  update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateVocabularyDto,
+  ) {
+    return this.vocabularyService.update(id, req.user.id, updateDto);
+  }
+
+  @Delete(':id')
+  remove(@Request() req, @Param('id') id: string) {
+    return this.vocabularyService.remove(id, req.user.id);
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/src/modules/vocabulary/vocabulary.module.ts
+================================================
+// apps/backend/src/modules/vocabulary/vocabulary.module.ts
+import { Module } from '@nestjs/common';
+import { VocabularyService } from './vocabulary.service';
+import { VocabularyController } from './vocabulary.controller';
+import { PrismaModule } from '../../prisma/prisma.module';
+
+@Module({
+  imports: [PrismaModule],
+  controllers: [VocabularyController],
+  providers: [VocabularyService],
+})
+export class VocabularyModule {}
+
+
+================================================
+FILE: apps/backend/src/modules/vocabulary/vocabulary.service.ts
+================================================
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { CreateVocabularyDto } from './dto/create-vocabulary.dto';
+import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
+import csv from 'csv-parser';
+import { Readable } from 'stream';
+
+interface VocabFilters {
+  word?: string;
+  topic?: string;
+  partOfSpeech?: string;
+  meaning?: string;
+  isStarred?: boolean;
+}
+
+@Injectable()
+export class VocabularyService {
+  constructor(private prisma: PrismaService) {}
+  // 👇 THÊM METHOD NÀY
+  async addScore(id: string, userId: string, score: number) {
+    // 1. Lấy từ vựng hiện tại để lấy mảng điểm cũ
+    const vocab = await this.findOne(id, userId);
+
+    // 2. Push điểm mới vào mảng
+    // (PostgreSQL Prisma hỗ trợ push trực tiếp, nhưng để an toàn logic ta làm thủ công)
+    const currentScores = vocab.pronunciationScores || [];
+    const newScores = [...currentScores, score];
+
+    // Optional: Giới hạn chỉ lưu 10 lần gần nhất để nhẹ DB
+    if (newScores.length > 10) newScores.shift();
+
+    return this.prisma.vocabItem.update({
+      where: { id },
+      data: {
+        pronunciationScores: newScores,
+      },
+    });
+  }
+
+  // --- 1. SMART UPSERT (LOGIC TRÁNH TRÙNG LẶP) ---
+  async upsertVocab(userId: string, createDto: CreateVocabularyDto) {
+    const cleanWord = createDto.word.trim();
+    console.log(
+      `🔍 Checking existence for word: "${cleanWord}" (User: ${userId})`,
+    );
+
+    // 1. Tìm xem từ đã có chưa (Không phân biệt hoa thường)
+    const existing = await this.prisma.vocabItem.findFirst({
+      where: {
+        userId,
+        word: {
+          equals: cleanWord,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (existing) {
+      console.log(
+        `✅ Word exists (ID: ${existing.id}). Updating count only...`,
+      );
+      // 2a. Nếu có rồi -> Chỉ tăng count & cập nhật time (BỎ TỰ ĐỘNG STAR)
+      return this.prisma.vocabItem.update({
+        where: { id: existing.id },
+        data: {
+          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Không ép star nữa)
+          occurrence: (existing.occurrence || 0) + 1,
+          // Nếu muốn update thêm thông tin thì uncomment dòng dưới:
+          // ...createDto
+        },
+      });
+    } else {
+      console.log(`🆕 Word not found. Creating new entry...`);
+      // 2b. Nếu chưa có -> Tạo mới
+      return this.prisma.vocabItem.create({
+        data: {
+          ...createDto, // 👈 Backend sẽ dùng giá trị isStarred từ Frontend gửi lên (false)
+          word: cleanWord,
+          userId,
+          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Để không bị override)
+        },
+      });
+    }
+  }
+
+  // --- GIỮ LẠI HÀM CREATE GỐC ---
+  async create(userId: string, createDto: CreateVocabularyDto) {
+    return this.prisma.vocabItem.create({
+      data: { ...createDto, userId },
+    });
+  }
+
+  // --- 2. FIND ALL ---
+  async findAll(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+    filters: VocabFilters = {},
+    sort: { field: string; order: 'asc' | 'desc' } = {
+      field: 'createdAt',
+      order: 'desc',
+    },
+    search?: string,
+  ) {
+    const skip = (page - 1) * limit;
+    const clean = (text?: string) => text?.trim();
+
+    const whereCondition: Prisma.VocabItemWhereInput = {
+      userId,
+
+      word: filters.word
+        ? { contains: clean(filters.word), mode: 'insensitive' }
+        : undefined,
+      topic: filters.topic
+        ? { contains: clean(filters.topic), mode: 'insensitive' }
+        : undefined,
+      partOfSpeech: filters.partOfSpeech
+        ? { contains: clean(filters.partOfSpeech), mode: 'insensitive' }
+        : undefined,
+      meaning: filters.meaning
+        ? { contains: clean(filters.meaning), mode: 'insensitive' }
+        : undefined,
+      isStarred: filters.isStarred === true ? true : undefined,
+
+      ...(search
+        ? {
+            OR: [
+              { word: { contains: clean(search), mode: 'insensitive' } },
+              { meaning: { contains: clean(search), mode: 'insensitive' } },
+              { topic: { contains: clean(search), mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const orderByInput: Prisma.VocabItemOrderByWithRelationInput[] = [];
+    if (sort.field) orderByInput.push({ [sort.field]: sort.order });
+    orderByInput.push({ id: 'asc' });
+
+    const [items, total] = await Promise.all([
+      this.prisma.vocabItem.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy: orderByInput,
+      }),
+      this.prisma.vocabItem.count({ where: whereCondition }),
+    ]);
+
+    // 👇 LOGIC MỚI: SẮP XẾP LẠI KẾT QUẢ NẾU CÓ TỪ KHÓA TÌM KIẾM
+    if (search) {
+      const searchLower = search.trim().toLowerCase();
+
+      items.sort((a, b) => {
+        const wordA = a.word.toLowerCase();
+        const wordB = b.word.toLowerCase();
+
+        // 1. Ưu tiên khớp tuyệt đối (Exact match)
+        if (wordA === searchLower && wordB !== searchLower) return -1;
+        if (wordB === searchLower && wordA !== searchLower) return 1;
+
+        // 2. Ưu tiên bắt đầu bằng (Starts with)
+        const aStarts = wordA.startsWith(searchLower);
+        const bStarts = wordB.startsWith(searchLower);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+
+        // 3. Nếu cùng loại thì sắp theo độ ngắn (từ ngắn hơn thường sát nghĩa hơn)
+        return wordA.length - wordB.length;
+      });
+    }
+
+    return {
+      data: items,
+      meta: { total, page, lastPage: Math.ceil(total / limit) },
+    };
+  }
+
+  // --- 3. FIND ONE ---
+  async findOne(id: string, userId: string) {
+    const vocab = await this.prisma.vocabItem.findFirst({
+      where: { id, userId },
+    });
+    if (!vocab) throw new NotFoundException('Vocabulary not found');
+    return vocab;
+  }
+
+  // --- 4. UPDATE ---
+  async update(id: string, userId: string, updateDto: UpdateVocabularyDto) {
+    await this.findOne(id, userId);
+    return this.prisma.vocabItem.update({ where: { id }, data: updateDto });
+  }
+
+  // --- 5. REMOVE ---
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
+    return this.prisma.vocabItem.delete({ where: { id } });
+  }
+
+  // --- 6. IMPORT CSV ---
+  async importFromCsv(userId: string, file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('File is required');
+    const results: any[] = [];
+    const stream = Readable.from(file.buffer.toString());
+
+    return new Promise((resolve, reject) => {
+      stream
+        .pipe(csv())
+        .on('data', (data) => results.push(data))
+        .on('end', async () => {
+          let successCount = 0;
+          let errorCount = 0;
+          for (const row of results) {
+            try {
+              await this.upsertVocab(userId, {
+                word: row['Word']?.trim(),
+                topic: row['Topic']?.trim(),
+                partOfSpeech: row['Part of speech']?.trim(),
+                pronunciation: row['Pronunciation']?.trim(),
+                meaning: row['Meaning']?.trim(),
+                example: row['Example']?.trim(),
+                relatedWords: row['Related words']?.trim(),
+                occurrence: row['Occurrence'] ? parseInt(row['Occurrence']) : 1,
+                isStarred: false, // Import CSV cũng mặc định không Star
+              });
+              successCount++;
+            } catch (error) {
+              errorCount++;
+            }
+          }
+          resolve({
+            message: 'Import finished',
+            total: results.length,
+            success: successCount,
+            failed: errorCount,
+          });
+        })
+        .on('error', () => reject(new BadRequestException('Invalid CSV file')));
+    });
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/src/modules/vocabulary/dto/create-vocabulary.dto.ts
+================================================
+import {
+  IsBoolean,
+  IsString,
+  IsOptional,
+  IsInt,
+  Min, // Minimum value
+} from 'class-validator';
+
+export class CreateVocabularyDto {
+  // Field này bắt buộc (Required), phải là String
+  @IsString()
+  word: string;
+
+  // Mấy cái dưới này là Optional (có cũng được, không có cũng không sao)
+  @IsOptional()
+  @IsString()
+  topic?: string;
+
+  @IsOptional()
+  @IsString()
+  partOfSpeech?: string; // Loại từ (noun, verb...)
+
+  @IsOptional()
+  @IsString()
+  pronunciation?: string;
+
+  @IsOptional()
+  @IsString()
+  meaning?: string;
+
+  @IsOptional()
+  @IsString()
+  example?: string;
+
+  @IsOptional()
+  @IsString()
+  relatedWords?: string;
+
+  @IsOptional()
+  @IsInt() // Phải là số nguyên (Integer)
+  @Min(0) // Giá trị nhỏ nhất là 0
+  occurrence?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isStarred?: boolean; // 👈 Add this property
+}
+
+
+
+================================================
+FILE: apps/backend/src/modules/vocabulary/dto/update-vocabulary.dto.ts
+================================================
+// apps\backend\src\modules\vocabulary\dto\update-vocabulary.dto.ts
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateVocabularyDto } from './create-vocabulary.dto';
+
+export class UpdateVocabularyDto extends PartialType(CreateVocabularyDto) {}
+
+
+================================================
+FILE: apps/backend/src/modules/vocabulary/entities/vocabulary.entity.ts
+================================================
+export class Vocabulary {}
+
+
+
+================================================
+FILE: apps/backend/src/prisma/prisma.module.ts
+================================================
+import { Global, Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Global() // Key concept: Make it global!
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService], // Export to use in other modules
+})
+export class PrismaModule {}
+
+
+
+================================================
+FILE: apps/backend/src/prisma/prisma.service.ts
+================================================
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  async onModuleInit() {
+    await this.$connect();
+    console.log('✅ DB Connected via Prisma');
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+}
+
+
+
+================================================
+FILE: apps/backend/test/app.e2e-spec.ts
+================================================
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { AppModule } from './../src/app.module';
+
+describe('AppController (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  it('/ (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect('Hello World!');
+  });
+});
+
+
+
+================================================
+FILE: apps/backend/test/jest-e2e.json
+================================================
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  }
+}
+
+
+
+================================================
+FILE: apps/extension/background.js
+================================================
+// Setup Alarm khi Extension được Installed
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("Extension Installed. Setting up alarms...");
+  // Tạo alarm tên 'vocab_review' chạy mỗi 15 phút
+  chrome.alarms.create("vocab_review", {
+    periodInMinutes: 5,
+  });
+});
+
+// Lắng nghe Alarm trigger
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "vocab_review") {
+    // Tìm tab đang active để gửi message hiển thị Flashcard
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "SHOW_FLASHCARD",
+        });
+      }
+    });
+  }
+});
+
+
+
+================================================
+FILE: apps/extension/content.js
+================================================
+[Binary file]
+
+
+================================================
+FILE: apps/extension/manifest.json
+================================================
+{
+  "manifest_version": 3,
+  "name": "Edge TTS Reader & Vocabulary Coach",
+  "version": "1.3",
+  "description": "Đọc văn bản, Check phát âm Azure, Dịch ngữ cảnh & Ôn tập từ vựng",
+  "permissions": [
+    "storage", 
+    "microphone", 
+    "alarms"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-scripts/main.js"], 
+      "css": ["popup.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "popup.css",
+        "assets/*" 
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "http://localhost:5000/*",
+    "https://translate.google.com/*",
+    "https://translate.googleapis.com/*",
+    "https://commons.wikimedia.org/*",
+    "https://api.duckduckgo.com/*",
+    "https://www.googleapis.com/*",
+    "https://api.unsplash.com/*",
+    "https://*.cognitiveservices.azure.com/*",
+    "https://*/*"
+  ]
+}
+
+
+================================================
+FILE: apps/extension/popup.css
+================================================
+:root {
+  --primary-color: #58cc02; /* Xanh lá kiểu Duolingo/Elsa */
+  --primary-dark: #46a302;
+  --accent-color: #1cb0f6; /* Xanh dương */
+  --text-primary: #3c3c3c;
+  --text-secondary: #777777;
+  --bg-color: #ffffff;
+  --card-bg: #f7f7f7;
+  --danger-color: #ff4b4b;
+  --warning-color: #ffc800;
+  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  --border-radius: 16px;
+}
+
+/* Reset & Base */
+* {
+  box-sizing: border-box;
+}
+
+#tts-popup {
+  position: absolute;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  padding: 0;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  z-index: 999999;
+  min-width: 320px;
+  max-width: 400px;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif; /* Font tròn trịa hiện đại */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- Header --- */
+.tts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: move;
+  user-select: none;
+}
+
+.sound-btn,
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #bbbbbb;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.sound-btn:hover {
+  background: #f0f8ff;
+  color: var(--accent-color);
+}
+
+.close-btn:hover {
+  background: #fff0f0;
+  color: var(--danger-color);
+}
+
+/* --- Content Area --- */
+.tts-content {
+  padding: 0 20px 20px 20px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* --- Images Grid --- */
+.tts-images-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.tts-image {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.tts-image:hover {
+  transform: scale(1.05);
+}
+
+.tts-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- Phonetic & Meaning --- */
+.tts-phonetic {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.phonetic-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.phonetic-item .flag {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+.phonetic-text {
+  font-family: "Lucida Console", monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tts-meaning {
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* --- Actions (Mic Button) --- */
+.tts-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 20px 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 20%);
+}
+
+.mic-btn {
+  background: var(--accent-color); /* Màu xanh chủ đạo */
+  border: none;
+  box-shadow: 0 4px 0 #118ec7; /* Hiệu ứng nút bấm 3D */
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  margin-bottom: 10px;
+}
+
+.mic-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #118ec7;
+}
+
+.mic-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #118ec7;
+}
+
+.mic-btn.recording {
+  background: var(--danger-color);
+  box-shadow: 0 4px 0 #d63e3e;
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 75, 75, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
+  }
+}
+
+/* --- Assessment Result (ELSA Style) --- */
+#assessment-result {
+  width: 100%;
+}
+
+.assessment-box {
+  background: #ffffff;
+  padding: 15px;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Vòng tròn điểm số */
+.total-score-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 5px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 auto 5px auto;
+  background: #fff;
+  color: var(--text-primary);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Text Word chính */
+.word-text {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 10px 0 5px 0;
+  color: #2b3b4e; /* Màu xanh đậm sang trọng */
+  letter-spacing: -0.5px;
+}
+
+/* Container Phonemes */
+.analyzed-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.word-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phoneme-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.phoneme-char {
+  font-family: "Roboto Mono", monospace;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Màu sắc điểm số (Color Grading) */
+/* Xanh (Excellent) */
+.p-perfect {
+  background-color: #dff6dd;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* Xanh nhạt (Good) */
+.p-good {
+  background-color: #f1f8e9;
+  color: #558b2f;
+  border: 1px solid #dcedc8;
+}
+
+/* Vàng (Fair) */
+.p-fair {
+  background-color: #fff8e1;
+  color: #fbc02d;
+  border: 1px solid #ffecb3;
+}
+
+/* Đỏ (Bad) */
+.p-bad {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  position: relative;
+}
+
+/* Loading & Info */
+.tts-loading,
+.tts-info {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  padding: 10px;
+}
+/* --- Flashcard Passive Learning --- */
+#vocab-flashcard {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 280px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 2147483647; /* Max z-index */
+  font-family: "Nunito", sans-serif;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.flashcard-slide-in {
+  animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.flashcard-slide-out {
+  animation: slideOutRight 0.5s forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* Style cho Context Box trong Popup chính */
+.context-box {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-left: 3px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  line-height: 1.4;
+}
+/* --- Dictionary Styles --- */
+.dict-container {
+  text-align: left;
+  margin: 10px 0;
+  padding: 0 10px;
+}
+
+.dict-row {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
+}
+
+.dict-pos {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-weight: 700;
+  min-width: 45px;
+  text
+
+
+================================================
+FILE: apps/extension/popup.html
+================================================
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edge TTS Reader - Cài đặt</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      /* Thêm style riêng cho status bar */
+      .connection-status {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+      }
+      body {
+        width: 450px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+
+      .guide-section {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        line-height: 1.6;
+        backdrop-filter: blur(10px);
+      }
+
+      .guide-section h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+
+      .guide-section ol {
+        padding-left: 20px;
+      }
+
+      .guide-section li {
+        margin-bottom: 6px;
+      }
+
+      .guide-section a {
+        color: #fff;
+        text-decoration: underline;
+      }
+
+      .guide-section a:hover {
+        opacity: 0.8;
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+        position: relative;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-group input {
+        flex: 1;
+        padding: 10px 40px 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: monospace;
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        transition: all 0.2s;
+      }
+
+      .input-group input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.8);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+      }
+
+      .toggle-visibility {
+        position: absolute;
+        right: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px;
+        z-index: 10;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+
+      .toggle-visibility:hover {
+        opacity: 1;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .save-btn {
+        background: white;
+        color: #667eea;
+      }
+
+      .save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .test-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .test-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .status-message {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        text-align: center;
+        display: none;
+      }
+
+      .status-message.show {
+        display: block;
+      }
+
+      .status-message.success {
+        background: rgba(76, 175, 80, 0.9);
+        color: white;
+      }
+
+      .status-message.error {
+        background: rgba(244, 67, 54, 0.9);
+        color: white;
+      }
+
+      .status-message.warning {
+        background: rgba(255, 152, 0, 0.9);
+        color: white;
+      }
+
+      .status-message.loading {
+        background: rgba(33, 150, 243, 0.9);
+        color: white;
+      }
+
+      .info-note {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-top: 15px;
+        border-left: 3px solid rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>⚙️ Cài đặt Google Search API</h2>
+      <div class="connection-status">
+        <div>
+          <span id="conn-dot" class="status-dot status-disconnected"></span>
+          <span id="conn-text">Chưa kết nối Web App</span>
+        </div>
+        <div style="font-size: 11px; opacity: 0.8">
+          *Auto-sync khi vào localhost:3000
+        </div>
+      </div>
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy API Key:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a href="https://console.cloud.google.com/" target="_blank"
+              >Google Cloud Console</a
+            >
+          </li>
+          <li>Tạo dự án mới hoặc chọn dự án hiện có</li>
+          <li>Bật Custom Search API</li>
+          <li>Tạo API Key từ phần "Credentials"</li>
+          <li>Dán API Key vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy Search Engine ID:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a
+              href="https://programmablesearchengine.google.com/"
+              target="_blank"
+              >Google Programmable Search Engine</a
+            >
+          </li>
+          <li>Tạo search engine mới</li>
+          <li>Sao chép Search Engine ID (cx)</li>
+          <li>Dán vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label>🔑 Main Google API Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="api-key-0"
+            class="api-key-input"
+            placeholder="Key chính (bắt buộc)"
+          />
+          <button type="button" class="toggle-visibility">👁️</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>🔍 Main Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="cx-0"
+            class="cx-input"
+            placeholder="CX chính (bắt buộc)"
+          />
+        </div>
+      </div>
+
+      <details
+        style="
+          margin-bottom: 15px;
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 6px;
+          padding: 10px;
+        "
+      >
+        <summary style="cursor: pointer; font-weight: 600; font-size: 13px">
+          ➕ Mở rộng: 4 Backup Keys (Dự phòng)
+        </summary>
+
+        <div
+          style="
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 2px solid rgba(255, 255, 255, 0.3);
+          "
+        >
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #1:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-1"
+              class="api-key-input"
+              placeholder="API Key dự phòng 1"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-1"
+              class="cx-input"
+              placeholder="CX ID dự phòng 1"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #2:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-2"
+              class="api-key-input"
+              placeholder="API Key dự phòng 2"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-2"
+              class="cx-input"
+              placeholder="CX ID dự phòng 2"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #3:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-3"
+              class="api-key-input"
+              placeholder="API Key dự phòng 3"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-3"
+              class="cx-input"
+              placeholder="CX ID dự phòng 3"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #4:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-4"
+              class="api-key-input"
+              placeholder="API Key dự phòng 4"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-4"
+              class="cx-input"
+              placeholder="CX ID dự phòng 4"
+            />
+          </div>
+        </div>
+      </details>
+
+      <div class="input-group">
+        <label for="search-engine-input">Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="search-engine-input"
+            placeholder="Nhập Search Engine ID"
+          />
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="save-btn" id="save-btn">💾 Lưu</button>
+        <button class="test-btn" id="test-btn">🧪 Kiểm tra</button>
+      </div>
+      <div
+        class="guide-section"
+        style="
+          margin-top: 20px;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          padding-top: 15px;
+        "
+      >
+        <h3>🎙️ Cài đặt Azure Speech (Pronunciation):</h3>
+        <ol>
+          <li>
+            Tạo resource <strong>Speech Services</strong> trên Azure Portal
+          </li>
+          <li>Lấy Key và Region (ví dụ: eastus, southeastasia)</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-key-input">Azure Speech Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="azure-key-input"
+            placeholder="Nhập Azure Subscription Key"
+          />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-region-input">Azure Region:</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="azure-region-input"
+            placeholder="Ví dụ: eastus"
+          />
+        </div>
+      </div>
+      <div class="status-message" id="status-message"></div>
+
+      <div class="info-note">
+        💡 <strong>Lưu ý:</strong> Nếu không cấu hình Google API, extension sẽ
+        tự động sử dụng Unsplash để lấy hình ảnh.
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
+
+
+
+================================================
+FILE: apps/extension/popup.js
+================================================
+document.addEventListener("DOMContentLoaded", async () => {
+  // Elements
+  const azureKeyInput = document.getElementById("azure-key-input");
+  const azureRegionInput = document.getElementById("azure-region-input");
+  const saveBtn = document.getElementById("save-btn");
+  const testBtn = document.getElementById("test-btn");
+
+  // Status Elements
+  const connDot = document.getElementById("conn-dot");
+  const connText = document.getElementById("conn-text");
+
+  // Toggle Visibility
+  document.querySelectorAll(".toggle-visibility").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const input = e.target.parentElement.querySelector("input");
+      if (input) {
+        input.type = input.type === "password" ? "text" : "password";
+      }
+    });
+  });
+
+  // --- 1. LOAD DATA ---
+  chrome.storage.sync.get(
+    ["googleApiKeys", "azureKey", "azureRegion", "authToken"],
+    (result) => {
+      // 1.1 Check Auth Token (Auto-sync Status)
+      if (result.authToken) {
+        connDot.className = "status-dot status-connected";
+        connText.textContent = "Đã kết nối Web App (Ready to Save)";
+      } else {
+        connDot.className = "status-dot status-disconnected";
+        connText.textContent = "Chưa có Token (Hãy F5 trang Web App)";
+      }
+
+      // 1.2 Load Azure
+      if (result.azureKey) azureKeyInput.value = result.azureKey;
+      if (result.azureRegion) azureRegionInput.value = result.azureRegion;
+
+      // 1.3 Load Google Keys (List)
+      const keys = result.googleApiKeys || [];
+      for (let i = 0; i < 5; i++) {
+        const keyInput = document.getElementById(`api-key-${i}`);
+        const cxInput = document.getElementById(`cx-${i}`);
+        if (keys[i]) {
+          if (keyInput) keyInput.value = keys[i].key || "";
+          if (cxInput) cxInput.value = keys[i].cx || "";
+        }
+      }
+    }
+  );
+
+  // --- 2. SAVE DATA ---
+  saveBtn.addEventListener("click", () => {
+    const azureKey = azureKeyInput.value.trim();
+    const azureRegion = azureRegionInput.value.trim();
+
+    let googleKeysList = [];
+    for (let i = 0; i < 5; i++) {
+      const keyVal = document.getElementById(`api-key-${i}`).value.trim();
+      const cxVal = document.getElementById(`cx-${i}`).value.trim();
+      if (keyVal) {
+        googleKeysList.push({ key: keyVal, cx: cxVal });
+      }
+    }
+
+    if (googleKeysList.length === 0) {
+      showStatusMessage("⚠️ Cần ít nhất 1 Google API Key chính!", "warning");
+      return;
+    }
+
+    // Save
+    chrome.storage.sync.set(
+      {
+        googleApiKeys: googleKeysList,
+        azureKey: azureKey,
+        azureRegion: azureRegion,
+      },
+      () => {
+        showStatusMessage(`✅ Đã lưu cài đặt thành công!`, "success");
+        setTimeout(hideStatusMessage, 3000);
+      }
+    );
+  });
+
+  // --- 3. TEST API ---
+  testBtn.addEventListener("click", async () => {
+    const key0 = document.getElementById("api-key-0").value.trim();
+    const cx0 = document.getElementById("cx-0").value.trim();
+
+    if (!key0 || !cx0) {
+      showStatusMessage("⚠️ Cần nhập Key & CX ở ô đầu tiên để test", "warning");
+      return;
+    }
+
+    showStatusMessage("⏳ Đang test Key chính...", "loading");
+
+    try {
+      const url = `https://www.googleapis.com/customsearch/v1?q=test&cx=${cx0}&searchType=image&key=${key0}&num=1`;
+      const response = await fetch(url);
+
+      if (response.ok) {
+        showStatusMessage("✅ Key chính hoạt động ngon lành!", "success");
+        setTimeout(hideStatusMessage, 3000);
+      } else {
+        const errorData = await response.json();
+        showStatusMessage(
+          `❌ Lỗi: ${errorData.error?.message || "Check lại Key/CX"}`,
+          "error"
+        );
+      }
+    } catch (error) {
+      showStatusMessage(`❌ Lỗi mạng: ${error.message}`, "error");
+    }
+  });
+});
+
+function showStatusMessage(message, type) {
+  const statusDiv = document.getElementById("status-message");
+  statusDiv.textContent = message;
+  statusDiv.className = `status-message show ${type}`;
+  statusDiv.style.display = "block";
+  if (type === "success") statusDiv.style.backgroundColor = "#4caf50";
+  if (type === "error") statusDiv.style.backgroundColor = "#f44336";
+  if (type === "warning") statusDiv.style.backgroundColor = "#ff9800";
+  if (type === "loading") statusDiv.style.backgroundColor = "#2196f3";
+}
+
+function hideStatusMessage() {
+  const statusDiv = document.getElementById("status-message");
+  statusDiv.style.display = "none";
+}
+
+
+
+================================================
+FILE: apps/extension/content-scripts/main.js
+================================================
+// ==========================================
+// MODULE: UI MANAGER
+// ==========================================
+const UI = (() => {
+  let iframe = null;
+
+  function create() {
+    if (iframe) return;
+
+    iframe = document.createElement("iframe");
+    iframe.id = "vocab-extension-overlay";
+
+    // Style đè full màn hình
+    Object.assign(iframe.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+      border: "none",
+      zIndex: "2147483647",
+      backgroundColor: "transparent", // Để React tự lo phần nền đen mờ
+    });
+
+    // Gọi về Frontend (Localhost)
+    // iframeMode=true: để Frontend biết đường ẩn Header/Sidebar nếu cần
+    iframe.src =
+      "http://localhost:3000/vocabulary?openSearch=true&iframeMode=true";
+    iframe.allow = "microphone *; camera *; clipboard-write"; // Cấp quyền Mic
+
+    document.body.appendChild(iframe);
+
+    // Focus vào iframe
+    iframe.onload = () => iframe.contentWindow.focus();
+  }
+
+  function remove() {
+    if (iframe) {
+      iframe.remove();
+      iframe = null;
+    }
+  }
+
+  function toggle() {
+    iframe ? remove() : create();
+  }
+
+  return { create, remove, toggle };
+})();
+
+// ==========================================
+// MODULE: SHORTCUT LISTENER
+// ==========================================
+window.addEventListener("keydown", (e) => {
+  // Bắt sự kiện Shift + Q
+  if (e.shiftKey && e.code === "KeyQ") {
+    e.preventDefault();
+    UI.toggle();
+  }
+});
+
+// ==========================================
+// MODULE: MESSAGE LISTENER (From Iframe)
+// ==========================================
+// Lắng nghe lệnh đóng từ bên trong Iframe (Frontend gửi ra)
+window.addEventListener("message", (event) => {
+  // Check origin để bảo mật
+  if (event.origin !== "http://localhost:3000") return;
+
+  if (event.data === "CLOSE_EXTENSION_IFRAME") {
+    UI.remove();
+  }
+});
+
+console.log("✅ Vocab Extension Loaded: Press Shift+Q to open!");
+
+
+
+================================================
+FILE: apps/extension/content-scripts/messager.js
+================================================
+[Empty file]
+
+
+================================================
+FILE: apps/extension/content-scripts/shortcuts.js
+================================================
+// shortcuts.js
+import { toggleOverlay } from "./ui.js";
+
+export const initShortcuts = () => {
+  window.addEventListener("keydown", (e) => {
+    // Logic: Shift + Q
+    if (e.shiftKey && (e.key === "Q" || e.key === "q")) {
+      e.preventDefault();
+      console.log("🚀 Shortcut detected: Shift + Q");
+      toggleOverlay();
+    }
+  });
+};
+
+
+
+================================================
+FILE: apps/extension/content-scripts/ui.js
+================================================
+// ui.js
+let iframeElement = null;
+
+export const createOverlay = () => {
+  if (iframeElement) return; // Đã tồn tại thì thôi
+
+  // 1. Tạo Iframe
+  iframeElement = document.createElement("iframe");
+
+  // 2. Style cho Iframe (Full màn hình, đè lên tất cả)
+  Object.assign(iframeElement.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100vw",
+    height: "100vh",
+    border: "none",
+    zIndex: "2147483647", // Max z-index
+    backgroundColor: "rgba(0,0,0,0.5)", // Màu nền tối mờ
+    display: "block",
+  });
+
+  // 3. Load trang Vocabulary của Frontend vào
+  // Thêm param ?openSearch=true để React biết đường mở Popup ngay lập tức
+  iframeElement.src =
+    "http://localhost:3000/vocabulary?openSearch=true&iframeMode=true";
+  iframeElement.allow = "microphone; camera"; // Quan trọng: Cho phép dùng Mic trong Iframe
+
+  document.body.appendChild(iframeElement);
+
+  // 4. Focus vào iframe để gõ phím được ngay
+  iframeElement.onload = () => {
+    iframeElement.contentWindow.focus();
+  };
+};
+
+export const removeOverlay = () => {
+  if (iframeElement) {
+    iframeElement.remove();
+    iframeElement = null;
+  }
+};
+
+export const toggleOverlay = () => {
+  if (iframeElement) {
+    removeOverlay();
+  } else {
+    createOverlay();
+  }
+};
+
+
+
+================================================
+FILE: apps/frontend/README.md
+================================================
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+================================================
+FILE: apps/frontend/eslint.config.mjs
+================================================
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+
+
+
+================================================
+FILE: apps/frontend/next.config.ts
+================================================
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  reactCompiler: true,
+  async rewrites() {
+    return [
+      {
+        source: '/vocabulary/search',
+        destination: '/vocabulary?openSearch=true',
+      },
+    ];
+  },
+};
+
+export default nextConfig;
+
+
+
+================================================
+FILE: apps/frontend/package.json
+================================================
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "next": "16.0.8",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.17",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.22",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.8",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5"
+  }
+}
+
+
+
+================================================
+FILE: apps/frontend/postcss.config.js
+================================================
+module.exports = {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+}
+
+
+================================================
+FILE: apps/frontend/postcss.config.mjs
+================================================
+/** @type {import('postcss-load-config').Config} */
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {}, // 👈 Đổi dòng này
+    autoprefixer: {},
+  },
+};
+
+export default config;
+
+
+
+================================================
+FILE: apps/frontend/tailwind.config.ts
+================================================
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+
+================================================
+FILE: apps/frontend/tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+
+
+================================================
+FILE: apps/frontend/app/globals.css
+================================================
+@import "tailwindcss";
+
+
+
+================================================
+FILE: apps/frontend/app/layout.tsx
+================================================
+import type { Metadata } from "next";
+import './globals.css'
+import { AuthProvider } from "../contexts/AuthContext";
+
+export const metadata: Metadata = {
+  title: "Vocabulary App",
+  description: "Learn English vocabulary",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/app/page.module.css
+================================================
+.page {
+  --background: #fafafa;
+  --foreground: #fff;
+
+  --text-primary: #000;
+  --text-secondary: #666;
+
+  --button-primary-hover: #383838;
+  --button-secondary-hover: #f2f2f2;
+  --button-secondary-border: #ebebeb;
+
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-geist-sans);
+  background-color: var(--background);
+}
+
+.main {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 800px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  background-color: var(--foreground);
+  padding: 120px 60px;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 24px;
+}
+
+.intro h1 {
+  max-width: 320px;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 48px;
+  letter-spacing: -2.4px;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.intro p {
+  max-width: 440px;
+  font-size: 18px;
+  line-height: 32px;
+  text-wrap: balance;
+  color: var(--text-secondary);
+}
+
+.intro a {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.ctas {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 440px;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.ctas a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 128px;
+  border: 1px solid transparent;
+  transition: 0.2s;
+  cursor: pointer;
+  width: fit-content;
+  font-weight: 500;
+}
+
+a.primary {
+  background: var(--text-primary);
+  color: var(--background);
+  gap: 8px;
+}
+
+a.secondary {
+  border-color: var(--button-secondary-border);
+}
+
+/* Enable hover only on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  a.primary:hover {
+    background: var(--button-primary-hover);
+    border-color: transparent;
+  }
+
+  a.secondary:hover {
+    background: var(--button-secondary-hover);
+    border-color: transparent;
+  }
+}
+
+@media (max-width: 600px) {
+  .main {
+    padding: 48px 24px;
+  }
+
+  .intro {
+    gap: 16px;
+  }
+
+  .intro h1 {
+    font-size: 32px;
+    line-height: 40px;
+    letter-spacing: -1.92px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .logo {
+    filter: invert();
+  }
+
+  .page {
+    --background: #000;
+    --foreground: #000;
+
+    --text-primary: #ededed;
+    --text-secondary: #999;
+
+    --button-primary-hover: #ccc;
+    --button-secondary-hover: #1a1a1a;
+    --button-secondary-border: #1a1a1a;
+  }
+}
+
+
+
+================================================
+FILE: apps/frontend/app/page.tsx
+================================================
+import Image from "next/image";
+import styles from "./page.module.css";
+
+export default function Home() {
+  return (
+    <div className={styles.page}>
+      <main className={styles.main}>
+        <Image
+          className={styles.logo}
+          src="/next.svg"
+          alt="Next.js logo"
+          width={100}
+          height={20}
+          priority
+        />
+        <div className={styles.intro}>
+          <h1>To get started, edit the page.tsx file.</h1>
+          <p>
+            Looking for a starting point or more instructions? Head over to{" "}
+            <a
+              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Templates
+            </a>{" "}
+            or the{" "}
+            <a
+              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Learning
+            </a>{" "}
+            center.
+          </p>
+        </div>
+        <div className={styles.ctas}>
+          <a
+            className={styles.primary}
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className={styles.logo}
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={16}
+              height={16}
+            />
+            Deploy Now
+          </a>
+          <a
+            className={styles.secondary}
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Documentation
+          </a>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+
+
+================================================
+FILE: apps/frontend/app/admin/users/page.tsx
+================================================
+[Empty file]
+
+
+================================================
+FILE: apps/frontend/app/app/auth/callback/page.tsx
+================================================
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+export default function GoogleCallbackPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+
+    if (token) {
+      // Save token
+      localStorage.setItem('token', token);
+      
+      // Redirect to vocabulary page
+      router.push('/vocabulary');
+    } else {
+      // If no token, redirect to login
+      router.push('/login');
+    }
+  }, [searchParams, router]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p>Processing login...</p>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/app/login/page.tsx
+================================================
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await login(email, password);
+      router.push('/vocabulary');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    // Redirect to backend Google OAuth
+    window.location.href = 'http://localhost:5000/auth/google';
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-center mb-8">🔐 Login</h1>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          >
+            {isLoading ? 'Loading...' : 'Login'}
+          </button>
+        </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleGoogleLogin}
+            className="mt-4 w-full flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 rounded hover:bg-gray-50"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link href="/register" className="text-blue-500 hover:underline">
+            Register
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/app/register/page.tsx
+================================================
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+export default function RegisterPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { register } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await register(email, password, name);
+      router.push('/vocabulary');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-center mb-8">📝 Register</h1>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Your name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          >
+            {isLoading ? 'Loading...' : 'Register'}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link href="/login" className="text-blue-500 hover:underline">
+            Login
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/app/vocabulary/page.tsx
+================================================
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSearchParams } from "next/navigation";
+import axios from "axios";
+import { StarIcon } from "@/components/Icons";
+
+import QuickSearchModal from "@/components/vocabulary/QuickSearchModal";
+import VocabTable from "@/components/vocabulary/VocabTable";
+import VocabFormModal from "@/components/vocabulary/VocabFormModal";
+import AssessmentModal from "@/components/vocabulary/AssessmentModal";
+
+// --- AUDIO HELPERS ---
+async function convertAudioToWav(audioBlob: Blob): Promise<Blob> {
+  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  const pcmData = audioBuffer.getChannelData(0);
+  const wavBuffer = encodeWAV(pcmData, 16000);
+  return new Blob([wavBuffer], { type: "audio/wav" });
+}
+
+function encodeWAV(samples: Float32Array, sampleRate: number) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const writeString = (view: DataView, offset: number, string: string) => {
+    for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+  };
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, "data");
+  view.setUint32(40, samples.length * 2, true);
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++, offset += 2) {
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return view;
+}
+
+export default function VocabularyPage() {
+  const { token } = useAuth();
+  const searchParams = useSearchParams();
+  const isIframeMode = searchParams.get('iframeMode') === 'true';
+
+  // State Data
+  const [vocabs, setVocabs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
+  const [filters, setFilters] = useState({ word: "", topic: "", partOfSpeech: "", meaning: "" });
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "updatedAt", direction: "desc" });
+
+  // State Modals
+  const [showSearch, setShowSearch] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+  
+  // State Search & Selection
+  const [quickSearchText, setQuickSearchText] = useState("");
+  const [quickSearchResults, setQuickSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const quickSearchDebounce = useRef<NodeJS.Timeout | null>(null);
+  const [selectedVocab, setSelectedVocab] = useState<any | null>(null);
+
+  // State Recording
+  const [recordingVocabItem, setRecordingVocabItem] = useState<any | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [assessmentResult, setAssessmentResult] = useState<any | null>(null);
+  const [assessmentError, setAssessmentError] = useState("");
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [userAudioUrl, setUserAudioUrl] = useState<string | null>(null);
+
+  // State Drag Drop
+  const [columnOrder, setColumnOrder] = useState<string[]>(["star", "updatedAt", "topic", "word", "pronunciation", "meaning", "example", "relatedWords", "occurrence", "score", "actions"]);
+  const [draggedCol, setDraggedCol] = useState<string | null>(null);
+
+  // --- ACTIONS ---
+
+  const handleCloseAll = useCallback(() => {
+    setShowSearch(false);
+    setIsModalOpen(false);
+    setIsAssessmentModalOpen(false);
+    setRecordingVocabItem(null);
+    if (isIframeMode) window.parent.postMessage('CLOSE_EXTENSION_IFRAME', '*');
+  }, [isIframeMode]);
+
+  const fetchVocabs = useCallback(async (pageNum = 1, currentFilters = filters, currentSort = sortConfig, starred = showStarredOnly) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const params: any = { page: pageNum, limit: 20, ...currentFilters, sortBy: currentSort.key, sortOrder: currentSort.direction };
+      if (starred) params.isStarred = "true";
+      const res = await axios.get("http://localhost:5000/vocabulary", { headers: { Authorization: `Bearer ${token}` }, params });
+      setVocabs(res.data.data);
+      setTotalPages(res.data.meta.lastPage);
+      setPage(res.data.meta.page);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
+  }, [token, filters, sortConfig, showStarredOnly]);
+
+  useEffect(() => { fetchVocabs(); }, [fetchVocabs]);
+  
+  // URL Params Check
+  useEffect(() => {
+    if (searchParams.get('openSearch') === 'true') { setShowSearch(true); setQuickSearchText(""); }
+  }, [searchParams]);
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    let lastKeyPressTime = 0;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === "INPUT" && !showSearch) return;
+      if ((e.target as HTMLElement).tagName === "TEXTAREA") return;
+      if (e.code === "Space") {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastKeyPressTime < 300) { e.preventDefault(); setShowSearch(true); setQuickSearchText(""); setQuickSearchResults([]); }
+        lastKeyPressTime = currentTime;
+      }
+      if (e.code === "Escape") handleCloseAll();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showSearch, handleCloseAll]);
+
+  // --- HANDLERS ---
+  
+  // 👇 RESTORED: Logic chọn giọng đọc Google/Aria
+  const handleSpeak = (text: string, e?: any) => {
+    if (e) e.stopPropagation();
+    if (!text) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+    
+    // Tìm giọng đọc hay
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(
+      (v) => v.name.includes("Google US") || v.name.includes("Aria") || v.name.includes("United States")
+    );
+    if (preferredVoice) utterance.voice = preferredVoice;
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const triggerInteraction = async (vocab: any) => {
+    const newTime = new Date().toISOString();
+    const newCount = (vocab.occurrence || 0) + 1;
+    // Optimistic UI update
+    setVocabs(prev => prev.map(v => v.id === vocab.id ? { ...v, occurrence: newCount, updatedAt: newTime } : v));
+    try {
+        await axios.patch(`http://localhost:5000/vocabulary/${vocab.id}`, { occurrence: newCount }, { headers: { Authorization: `Bearer ${token}` } });
+    } catch(e) { console.error("Failed to update interaction", e); }
+  };
+
+  const handleOpenCreateModal = (initialWord = "") => {
+    setSelectedVocab(null);
+    setQuickSearchText(initialWord);
+    setIsModalOpen(true);
+    setShowSearch(false);
+  };
+
+  const handleRowClick = (vocab: any) => {
+    setSelectedVocab(vocab);
+    setIsModalOpen(true);
+    triggerInteraction(vocab);
+  };
+
+  const handleSaveVocab = async (formData: any) => {
+    if (!token || !formData.word) return alert("Word is required");
+    try {
+      const payload = { ...formData, isStarred: false };
+      if (selectedVocab) await axios.patch(`http://localhost:5000/vocabulary/${selectedVocab.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      else await axios.post("http://localhost:5000/vocabulary", payload, { headers: { Authorization: `Bearer ${token}` } });
+      setIsModalOpen(false);
+      setQuickSearchText(""); 
+      fetchVocabs(page); 
+    } catch (error) { alert("Failed to save"); }
+  };
+
+  const handleDeleteVocab = async () => {
+    if (!token || !selectedVocab) return;
+    try {
+      await axios.delete(`http://localhost:5000/vocabulary/${selectedVocab.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      setIsModalOpen(false);
+      fetchVocabs(page);
+    } catch (e) { alert("Failed to delete"); }
+  };
+
+  const handleToggleStar = async (id: string, currentStatus: boolean, e: any) => {
+    if (e) e.stopPropagation();
+    setVocabs(prev => prev.map(item => item.id === id ? { ...item, isStarred: !currentStatus } : item));
+    try { await axios.patch(`http://localhost:5000/vocabulary/${id}`, { isStarred: !currentStatus }, { headers: { Authorization: `Bearer ${token}` } }); } catch (error) { console.error(error); }
+  };
+
+  // Assessment Handlers
+  const handleOpenAssessment = (item: any, e?: any) => {
+    if (e) e.stopPropagation();
+    const vocabItem = item.id ? item : { ...item, id: "temp", occurrence: 0, isStarred: false, pronunciationScores: [] };
+    setRecordingVocabItem(vocabItem);
+    setAssessmentResult(null);
+    setAssessmentError("");
+    setUserAudioUrl(null);
+    setIsAssessmentModalOpen(true);
+    // Tính là 1 lần học khi mở chấm điểm
+    if (item.id) triggerInteraction(item); 
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunksRef.current.push(event.data); };
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        setUserAudioUrl(URL.createObjectURL(audioBlob));
+        await processAudio(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      mediaRecorder.start();
+      setIsRecording(true);
+      setAssessmentError("");
+    } catch (err) { setAssessmentError("Microphone denied"); }
+  };
+
+  const stopRecording = () => { if (mediaRecorderRef.current && isRecording) { mediaRecorderRef.current.stop(); setIsRecording(false); } };
+
+  const processAudio = async (audioBlob: Blob) => {
+    if (!recordingVocabItem) return;
+    setIsProcessingAudio(true);
+    try {
+      const azureKey = localStorage.getItem("azureKey");
+      const azureRegion = localStorage.getItem("azureRegion");
+      if (!azureKey || !azureRegion) throw new Error("Missing Azure Keys");
+      const wavBlob = await convertAudioToWav(audioBlob);
+      const paramsHeader = btoa(JSON.stringify({ ReferenceText: recordingVocabItem.word, GradingSystem: "HundredMark", Granularity: "Phoneme", Dimension: "Comprehensive" }));
+      const response = await axios.post(`https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`, wavBlob, {
+        headers: { "Ocp-Apim-Subscription-Key": azureKey, "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000", Accept: "application/json", "Pronunciation-Assessment": paramsHeader },
+      });
+      const data = response.data;
+      if (data.NBest && data.NBest[0]) {
+        const result = data.NBest[0];
+        setAssessmentResult({ AccuracyScore: result.PronunciationAssessment?.AccuracyScore || result.AccuracyScore, Words: result.Words });
+        if (recordingVocabItem.id !== "temp") {
+          await axios.patch(`http://localhost:5000/vocabulary/${recordingVocabItem.id}/score`, { score: Math.round(result.PronunciationAssessment?.AccuracyScore) }, { headers: { Authorization: `Bearer ${token}` } });
+          fetchVocabs(page);
+        }
+      } else { setAssessmentError("Could not recognize"); }
+    } catch (err: any) { setAssessmentError(err.message); } finally { setIsProcessingAudio(false); }
+  };
+
+  // Quick Search Handlers
+  const handleQuickSearchChange = (text: string) => {
+    setQuickSearchText(text);
+    if (quickSearchDebounce.current) clearTimeout(quickSearchDebounce.current);
+    quickSearchDebounce.current = setTimeout(async () => {
+      if (!text.trim()) { setQuickSearchResults([]); return; }
+      setIsSearching(true);
+      try {
+        const res = await axios.get("http://localhost:5000/vocabulary", { headers: { Authorization: `Bearer ${token}` }, params: { page: 1, limit: 5, search: text, sortBy: "word", sortOrder: "asc" } });
+        setQuickSearchResults(res.data.data);
+      } catch (e) { console.error(e); } finally { setIsSearching(false); }
+    }, 300);
+  };
+
+  // Render
+  return (
+    <div className={`min-h-screen p-6 text-black relative ${isIframeMode ? 'bg-transparent' : 'bg-gray-50'}`}>
+      
+      {/* 1. Modal Quick Search */}
+      <QuickSearchModal 
+        isOpen={showSearch} onClose={handleCloseAll}
+        searchText={quickSearchText} onSearchChange={handleQuickSearchChange}
+        results={quickSearchResults} isSearching={isSearching} isIframeMode={isIframeMode}
+        onSelect={(item) => { setShowSearch(false); handleRowClick(item); }}
+        onCreate={handleOpenCreateModal}
+        onSpeak={(text, e) => handleSpeak(text, e)} 
+        onOpenAssessment={handleOpenAssessment}
+      />
+
+      {/* 2. Modal Assessment */}
+      <AssessmentModal 
+        isOpen={isAssessmentModalOpen} onClose={handleCloseAll}
+        vocabWord={recordingVocabItem?.word || ""}
+        pronunciation={recordingVocabItem?.pronunciation} meaning={recordingVocabItem?.meaning}
+        isRecording={isRecording} onStartRecording={startRecording} onStopRecording={stopRecording}
+        userAudioUrl={userAudioUrl} isProcessing={isProcessingAudio} error={assessmentError} result={assessmentResult}
+      />
+
+      {/* 3. Modal Form (Edit/Create) */}
+      <VocabFormModal 
+        isOpen={isModalOpen} onClose={handleCloseAll}
+        initialData={selectedVocab || { word: quickSearchText || "", meaning: "", example: "", topic: "", partOfSpeech: "", relatedWords: "", pronunciation: "" }}
+        isEditMode={!!selectedVocab}
+        onSave={handleSaveVocab}
+        onDelete={handleDeleteVocab} // 👇 Action Delete
+        onSpeak={(text) => handleSpeak(text)}
+        onRecord={(data) => handleOpenAssessment(data)}
+      />
+
+      {/* 4. Main Table (Hide if Iframe) */}
+      {!isIframeMode && (
+        <>
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">My Vocabulary</h1>
+              <p className="text-gray-500 text-sm mt-1">Double-tap <kbd className="bg-gray-200 px-1 font-mono">Space</kbd> to Search</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => handleOpenCreateModal("")} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow font-medium transition-transform active:scale-95">+ New Word</button>
+              <button onClick={() => { const s = !showStarredOnly; setShowStarredOnly(s); fetchVocabs(1, filters, sortConfig, s); }} className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${showStarredOnly ? "bg-yellow-50 border-yellow-400 text-yellow-700" : "bg-white hover:bg-gray-50"}`}>
+                <StarIcon filled={showStarredOnly} className={showStarredOnly ? "text-yellow-500" : "text-gray-400"} /> <span>{showStarredOnly ? "Starred" : "All"}</span>
+              </button>
+            </div>
+          </div>
+
+          <VocabTable 
+            vocabs={vocabs} loading={loading} page={page} totalPages={totalPages} onPageChange={(p) => { setPage(p); fetchVocabs(p, filters, sortConfig); }}
+            filters={filters} onFilterChange={(k, v) => { const nf = {...filters, [k]: v}; setFilters(nf); setTimeout(() => fetchVocabs(1, nf, sortConfig), 500); }}
+            onSort={(k) => { const d = sortConfig.key === k && sortConfig.direction === "asc" ? "desc" : "asc"; setSortConfig({key: k, direction: d}); fetchVocabs(1, filters, {key: k, direction: d}); }}
+            sortConfig={sortConfig}
+            columnOrder={columnOrder} onDragStart={(e, col) => { setDraggedCol(col); e.dataTransfer.effectAllowed = "move"; }} 
+            onDragOver={(e, col) => { e.preventDefault(); if(!draggedCol || draggedCol === col) return; const n = [...columnOrder]; const dIdx = n.indexOf(draggedCol); const tIdx = n.indexOf(col); if (dIdx!==-1 && tIdx!==-1) { n.splice(dIdx,1); n.splice(tIdx,0,draggedCol); setColumnOrder(n); } }} 
+            onDragEnd={() => setDraggedCol(null)} draggedCol={draggedCol}
+            onRowClick={handleRowClick} onToggleStar={handleToggleStar} 
+            // 👇 Xử lý Click Loa: Vừa đọc, Vừa tăng count
+            onSpeak={(item, e) => {
+               handleSpeak(item.word, e);
+               triggerInteraction(item);
+            }} 
+            onOpenAssessment={handleOpenAssessment}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/app/vocabulary/tree.txt
+================================================
+vocabulary
+├── page.tsx
+└── tree.txt
+
+
+
+================================================
+FILE: apps/frontend/components/Icons.tsx
+================================================
+import React from "react";
+
+export const StarIcon = ({ filled, className }: { filled: boolean; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? "0" : "2"} strokeLinecap="round" strokeLinejoin="round" className={className} width="24" height="24">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+);
+
+export const SpeakerIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+  </svg>
+);
+
+export const MicrophoneIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+    <line x1="12" y1="19" x2="12" y2="23"></line>
+    <line x1="8" y1="23" x2="16" y2="23"></line>
+  </svg>
+);
+
+
+================================================
+FILE: apps/frontend/components/vocabulary/AssessmentModal.tsx
+================================================
+import React from "react";
+import { MicrophoneIcon, SpeakerIcon } from "@/components/Icons";
+
+// Define Interfaces nội bộ hoặc import từ types chung
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  vocabWord: string;
+  pronunciation?: string | null;
+  meaning?: string | null;
+  
+  // Recording State
+  isRecording: boolean;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  userAudioUrl: string | null;
+  
+  // Processing State
+  isProcessing: boolean;
+  error: string;
+  
+  // Result
+  result: any; // Có thể define strict type AssessmentResult nếu muốn
+}
+
+export default function AssessmentModal({
+  isOpen, onClose, vocabWord, pronunciation, meaning,
+  isRecording, onStartRecording, onStopRecording, userAudioUrl,
+  isProcessing, error, result
+}: Props) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+      <div 
+        className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center p-8 relative animate-in fade-in zoom-in duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
+        
+        <h3 className="text-3xl font-bold text-gray-800 mb-1">{vocabWord}</h3>
+        
+        <div className="flex flex-col items-center gap-1 mb-6">
+          {pronunciation && <span className="font-mono text-gray-500 text-lg">/{pronunciation}/</span>}
+          {meaning && <span className="text-gray-600 text-center font-medium px-4 line-clamp-2">{meaning}</span>}
+        </div>
+
+        {/* Score Circle */}
+        {result ? (
+          <div className="relative w-32 h-32 mb-6 flex items-center justify-center rounded-full border-8 transition-all duration-500 ease-out"
+            style={{ borderColor: result.AccuracyScore >= 80 ? "#4caf50" : result.AccuracyScore >= 60 ? "#ffeb3b" : "#ff5252" }}>
+            <span className="text-4xl font-bold"
+              style={{ color: result.AccuracyScore >= 80 ? "#4caf50" : result.AccuracyScore >= 60 ? "#fbc02d" : "#ff5252" }}>
+              {Math.round(result.AccuracyScore)}
+            </span>
+          </div>
+        ) : (
+          <div className="w-32 h-32 mb-6 rounded-full border-4 border-gray-100 flex items-center justify-center bg-gray-50">
+            <span className="text-4xl text-gray-300">?</span>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mb-6 flex gap-6 items-center">
+          <button onClick={() => { /* Handle Speak in parent if needed, or pass prop */ }} className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-indigo-600 flex items-center justify-center transition-transform hover:scale-105 shadow-sm">
+             <SpeakerIcon className="w-6 h-6" />
+          </button>
+          
+          <button
+            onClick={isRecording ? onStopRecording : onStartRecording}
+            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-105 ${
+              isRecording ? "bg-red-500 animate-pulse ring-4 ring-red-200" : "bg-indigo-600 hover:bg-indigo-700 ring-4 ring-indigo-100"
+            }`}
+          >
+            {isRecording ? <div className="w-6 h-6 bg-white rounded-sm" /> : <MicrophoneIcon className="w-8 h-8 text-white" />}
+          </button>
+
+          <button
+            disabled={!userAudioUrl}
+            onClick={() => { const audio = new Audio(userAudioUrl!); audio.play(); }}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-105 shadow-sm ${
+              userAudioUrl ? "bg-green-100 hover:bg-green-200 text-green-700 cursor-pointer" : "bg-gray-100 text-gray-300 cursor-not-allowed"
+            }`}
+          >
+             <span className="text-xl">▶</span>
+          </button>
+        </div>
+
+        {isProcessing && <p className="text-indigo-500 font-medium animate-pulse">Analyzing...</p>}
+        {error && <p className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">{error}</p>}
+
+        {/* Detailed Result */}
+        {result && (
+          <div className="w-full bg-gray-50 rounded-xl p-4 mt-2 border border-gray-100">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+              {result.Words.map((word: any, idx: number) => (
+                <div key={idx} className="flex flex-col items-center">
+                  <span className={`text-lg font-bold ${word.AccuracyScore >= 80 ? "text-green-700" : word.AccuracyScore >= 60 ? "text-yellow-600" : "text-red-600"}`}>
+                    {word.Word}
+                  </span>
+                  <div className="flex gap-0.5 mt-1">
+                    {word.Phonemes?.map((p: any, pIdx: number) => (
+                      <span key={pIdx}
+                        className={`text-xs px-1 rounded min-w-[20px] text-center ${
+                          p.AccuracyScore >= 80 ? "bg-green-100 text-green-800" : p.AccuracyScore >= 60 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
+                        }`}
+                        title={`/${p.Phoneme}/: ${p.AccuracyScore}`}
+                      >
+                        {p.Phoneme}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/components/vocabulary/QuickSearchModal.tsx
+================================================
+// apps/frontend/components/vocabulary/QuickSearchModal.tsx
+import React, { useEffect, useRef } from "react";
+
+// Định nghĩa lại interface VocabItem ở đây (hoặc import nếu bạn có file types chung)
+interface VocabItem {
+  id: string;
+  word: string;
+  meaning?: string | null;
+  partOfSpeech?: string | null;
+  topic?: string | null;
+  isStarred?: boolean;
+  occurrence?: number;
+}
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  searchText: string;
+  onSearchChange: (text: string) => void;
+  results: VocabItem[];
+  isSearching: boolean;
+  isIframeMode: boolean; // 👇 Quan trọng để chỉnh độ mờ
+  
+  // Các Actions
+  onSelect: (item: VocabItem) => void;
+  onCreate: (text: string) => void;
+  onSpeak: (text: string, e: React.MouseEvent) => void;
+  onOpenAssessment: (item: VocabItem, e: React.MouseEvent) => void;
+}
+
+export default function QuickSearchModal({
+  isOpen,
+  onClose,
+  searchText,
+  onSearchChange,
+  results,
+  isSearching,
+  isIframeMode,
+  onSelect,
+  onCreate,
+  onSpeak,
+  onOpenAssessment
+}: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  // 👇 LOGIC FIX BLUR: 
+  // Nếu là Iframe (Extension): Nền trong suốt hoặc rất mờ để nhìn thấy web dưới
+  // Nếu là Web thường: Nền đen mờ 60%
+  const overlayClass = isIframeMode
+    ? "fixed inset-0 bg-black/5 z-[100] flex items-start justify-center pt-20"
+    : "fixed inset-0 bg-black/60 z-[100] flex items-start justify-center pt-32 backdrop-blur-sm";
+
+  const hasExactMatch = results.some(
+    (item) => item.word.toLowerCase() === searchText.trim().toLowerCase()
+  );
+
+  return (
+    <div className={overlayClass} onClick={onClose}>
+      <div
+        className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col mx-4 border border-gray-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+          <span className="text-xl">🔍</span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchText}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" &&
+              results.length === 0 &&
+              onCreate(searchText)
+            }
+            placeholder="Type to search or create..."
+            className="flex-1 text-xl font-light outline-none bg-transparent h-10"
+          />
+          <div className="text-xs text-gray-400 border border-gray-200 px-2 py-1 rounded">
+            ESC to close
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 max-h-[60vh] overflow-y-auto">
+          {isSearching ? (
+            <div className="p-8 text-center text-gray-400">Searching...</div>
+          ) : (
+            <>
+              {/* Create New Button */}
+              {searchText && !hasExactMatch && (
+                <div
+                  className="p-4 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center group cursor-pointer hover:bg-indigo-100 transition-colors"
+                  onClick={() => onCreate(searchText)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center font-bold text-xl">
+                      +
+                    </div>
+                    <div>
+                      <div className="font-bold text-indigo-800">
+                        Create "{searchText}"
+                      </div>
+                      <div className="text-xs text-indigo-500">
+                        Auto-fill meaning & pronunciation
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-indigo-600 bg-white px-3 py-1 rounded-full shadow-sm">
+                    Enter ↵
+                  </span>
+                </div>
+              )}
+
+              {/* Results List */}
+              {results.length > 0 ? (
+                <ul className="divide-y divide-gray-100">
+                  {results.map((item) => (
+                    <li
+                      key={item.id}
+                      onClick={() => onSelect(item)}
+                      className="p-3 hover:bg-indigo-50 cursor-pointer transition-colors group"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-lg text-indigo-700">
+                              {item.word}
+                            </span>
+                            
+                            {/* Actions nhỏ trong list */}
+                            <button
+                              onClick={(e) => onOpenAssessment(item, e)}
+                              className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-green-100"
+                            >
+                              🎤
+                            </button>
+                            <button
+                              onClick={(e) => onSpeak(item.word, e)}
+                              className="text-gray-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-100"
+                            >
+                              🔊
+                            </button>
+                            
+                            {item.partOfSpeech && (
+                              <span className="text-[10px] uppercase font-bold text-indigo-500 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
+                                {item.partOfSpeech}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-800 line-clamp-2">
+                            {item.meaning || <span className="italic text-gray-400">No meaning</span>}
+                          </div>
+                        </div>
+                        
+                        {/* Meta info bên phải */}
+                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                          {item.topic && (
+                            <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              {item.topic}
+                            </span>
+                          )}
+                          {item.isStarred && <span className="text-yellow-400 text-xs">★</span>}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                !hasExactMatch &&
+                searchText && (
+                  <div className="p-4 text-center text-gray-400 text-sm">
+                    No existing words match.
+                  </div>
+                )
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/components/vocabulary/VocabFormModal.tsx
+================================================
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { MicrophoneIcon, SpeakerIcon } from "@/components/Icons";
+
+interface VocabFormData {
+  word: string;
+  meaning: string;
+  example: string;
+  topic: string;
+  partOfSpeech: string;
+  relatedWords: string;
+  pronunciation: string;
+}
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: VocabFormData;
+  isEditMode: boolean;
+  onSave: (data: VocabFormData) => void;
+  onDelete: () => void; // 👇 Thêm action xóa
+  onSpeak: (text: string) => void;
+  onRecord: (tempData: VocabFormData) => void;
+}
+
+export default function VocabFormModal({
+  isOpen, onClose, initialData, isEditMode, onSave, onDelete, onSpeak, onRecord
+}: Props) {
+  const [formData, setFormData] = useState<VocabFormData>(initialData);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+
+  // Quan trọng: Reset form khi mở modal hoặc đổi item
+  useEffect(() => {
+    setFormData(initialData);
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const fetchAutoFillData = async (word: string) => {
+    if (!word) return;
+    setIsAutoFilling(true);
+    try {
+      const [dictRes, transRes] = await Promise.all([
+        axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).catch(() => null),
+        axios.get(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(word)}`).catch(() => null),
+      ]);
+
+      let newData: Partial<VocabFormData> = {};
+      if (dictRes?.data?.[0]) {
+        const entry = dictRes.data[0];
+        newData.pronunciation = entry.phonetic || entry.phonetics?.find((x: any) => x.text && x.audio)?.text;
+        if (entry.meanings?.[0]) {
+          newData.partOfSpeech = entry.meanings[0].partOfSpeech;
+          newData.example = entry.meanings[0].definitions?.find((d: any) => d.example)?.example;
+        }
+      }
+      if (transRes?.data?.[0]) {
+        newData.meaning = transRes.data[0].map((item: any) => item[0]).join("");
+      }
+      setFormData((prev) => ({ ...prev, ...newData }));
+    } catch (e) { console.error(e); } finally { setIsAutoFilling(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="bg-indigo-600 p-6 text-white flex justify-between items-start shrink-0">
+          <div className="w-full">
+            <div className="text-xs uppercase tracking-wider opacity-80 mb-2 font-semibold">
+              {isEditMode ? "Editing Vocabulary" : "Create New Vocabulary"}
+            </div>
+            <div className="flex items-center gap-3 w-full">
+              <input
+                value={formData.word}
+                onChange={(e) => setFormData({ ...formData, word: e.target.value })}
+                onBlur={() => !isEditMode && fetchAutoFillData(formData.word)}
+                className="bg-transparent text-4xl font-bold text-white placeholder-white/50 outline-none w-full border-b border-white/20 pb-1 focus:border-white transition-colors"
+                placeholder="Word..."
+                autoFocus={!isEditMode}
+              />
+              {isAutoFilling && <div className="text-xs text-indigo-200 animate-pulse ml-2 whitespace-nowrap">✨ Filling...</div>}
+              {formData.word && (
+                <div className="flex gap-2 ml-2">
+                  <button onClick={() => onRecord(formData)} className="p-2 bg-white/20 rounded-full hover:bg-green-500 text-white transition-colors" title="Check Pronunciation"><MicrophoneIcon className="w-5 h-5" /></button>
+                  <button onClick={() => onSpeak(formData.word)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 text-white" title="Listen"><SpeakerIcon className="w-5 h-5" /></button>
+                </div>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white text-2xl font-bold ml-4 leading-none">×</button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-5 overflow-y-auto relative bg-white">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Pronunciation</label>
+              <input value={formData.pronunciation || ''} onChange={(e) => setFormData({ ...formData, pronunciation: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm" placeholder="/.../" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Part Of Speech</label>
+              <select value={formData.partOfSpeech || ''} onChange={(e) => setFormData({ ...formData, partOfSpeech: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="">-- Select --</option>
+                <option value="noun">Noun</option>
+                <option value="verb">Verb</option>
+                <option value="adjective">Adjective</option>
+                <option value="adverb">Adverb</option>
+                <option value="phrase">Phrase</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Meaning</label>
+            <textarea value={formData.meaning || ''} onChange={(e) => setFormData({ ...formData, meaning: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[80px] text-lg font-medium text-gray-800" placeholder="Nghĩa của từ..." />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Example</label>
+            <textarea value={formData.example || ''} onChange={(e) => setFormData({ ...formData, example: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50 italic text-gray-600" placeholder="Ví dụ..." />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Topic</label>
+              <input value={formData.topic || ''} onChange={(e) => setFormData({ ...formData, topic: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Topic..." />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Related Words</label>
+              <input value={formData.relatedWords || ''} onChange={(e) => setFormData({ ...formData, relatedWords: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Synonyms..." />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-between items-center shrink-0">
+          <div>
+            {isEditMode && (
+              <button onClick={() => { if(confirm("Are you sure?")) onDelete(); }} className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200">
+                Delete Word
+              </button>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="text-gray-600 hover:bg-gray-200 px-5 py-2 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+            <button onClick={() => onSave(formData)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-md transform active:scale-95 transition-all">
+              {isEditMode ? "Save Changes" : "Create Word"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/components/vocabulary/VocabTable.tsx
+================================================
+import React from "react";
+import { StarIcon, MicrophoneIcon, SpeakerIcon } from "@/components/Icons";
+
+interface Props {
+  vocabs: any[];
+  loading: boolean;
+  page: number;
+  totalPages: number;
+  onPageChange: (newPage: number) => void;
+  filters: any;
+  onFilterChange: (key: string, value: string) => void;
+  onSort: (key: string) => void;
+  sortConfig: { key: string; direction: "asc" | "desc" };
+  columnOrder: string[];
+  onDragStart: (e: any, col: string) => void;
+  onDragOver: (e: any, col: string) => void;
+  onDragEnd: () => void;
+  draggedCol: string | null;
+  onRowClick: (item: any) => void;
+  onToggleStar: (id: string, status: boolean, e: any) => void;
+  // 👇 Cập nhật type để nhận item
+  onSpeak: (item: any, e: any) => void; 
+  onOpenAssessment: (item: any, e: any) => void;
+}
+
+export default function VocabTable({
+  vocabs, loading, page, totalPages, onPageChange,
+  filters, onFilterChange, onSort, sortConfig,
+  columnOrder, onDragStart, onDragOver, onDragEnd, draggedCol,
+  onRowClick, onToggleStar, onSpeak, onOpenAssessment
+}: Props) {
+
+  const getSortIcon = (colKey: string) =>
+    sortConfig.key !== colKey ? <span className="text-gray-300 ml-1 opacity-50 text-[10px]">↕</span> 
+    : sortConfig.direction === "asc" ? <span className="ml-1 text-indigo-600 text-[10px]">▲</span> 
+    : <span className="ml-1 text-indigo-600 text-[10px]">▼</span>;
+
+  const columnConfig: any = {
+    star: { 
+      label: "★", width: "w-12", sortKey: "isStarred", 
+      renderCell: (v: any) => <button onClick={(e) => onToggleStar(v.id, v.isStarred, e)} className="hover:bg-gray-100 rounded-full p-1"><StarIcon filled={v.isStarred} className={v.isStarred ? "text-yellow-400 w-5 h-5" : "text-gray-300 w-5 h-5"} /></button> 
+    },
+    updatedAt: { 
+      label: "Last Active", width: "w-32", sortKey: "updatedAt", 
+      renderCell: (v: any) => <div className="font-mono text-xs text-gray-500">{new Date(v.updatedAt).toLocaleDateString()}<br />{new Date(v.updatedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div> 
+    },
+    topic: { 
+      label: "Topic", width: "w-32", sortKey: "topic", 
+      renderCell: (v: any) => v.topic && <span className="bg-gray-100 px-2 py-0.5 rounded text-xs border border-gray-200 text-gray-600">{v.topic}</span>, 
+      renderFilter: () => <input className="w-full border rounded px-2 py-1 text-xs outline-none focus:border-indigo-500" placeholder="Filter..." value={filters.topic} onChange={(e) => onFilterChange("topic", e.target.value)} /> 
+    },
+    word: { 
+      label: "Word", width: "w-48", sortKey: "word", 
+      renderCell: (v: any) => (
+        <div className="flex items-center justify-between gap-2 font-bold text-indigo-700">
+          <span className="text-base">{v.word}</span>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button onClick={(e) => onOpenAssessment(v, e)} className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-green-50" title="Check Pronunciation"><MicrophoneIcon className="w-4 h-4" /></button>
+            <button onClick={(e) => onSpeak(v, e)} className="text-gray-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-50" title="Listen"><SpeakerIcon className="w-4 h-4" /></button>
+          </div>
+        </div>
+      ), 
+      renderFilter: () => <input className="w-full border rounded px-2 py-1 text-xs outline-none focus:border-indigo-500" placeholder="Filter..." value={filters.word} onChange={(e) => onFilterChange("word", e.target.value)} /> 
+    },
+    pronunciation: { label: "Pronun.", width: "w-32", renderCell: (v: any) => <span className="font-mono text-gray-500 text-xs tracking-wide">{v.pronunciation}</span> },
+    meaning: { 
+      label: "Meaning", width: "w-48", 
+      renderCell: (v: any) => <span className="text-gray-800 text-sm line-clamp-2 leading-relaxed" title={v.meaning}>{v.meaning}</span>, 
+      renderFilter: () => <input className="w-full border rounded px-2 py-1 text-xs outline-none focus:border-indigo-500" placeholder="Meaning..." value={filters.meaning} onChange={(e) => onFilterChange("meaning", e.target.value)} /> 
+    },
+    example: { label: "Example", width: "w-64", renderCell: (v: any) => <span className="italic text-gray-500 text-xs line-clamp-2" title={v.example}>{v.example}</span> },
+    relatedWords: { label: "Related", width: "w-40", renderCell: (v: any) => <span className="text-gray-500 text-xs">{v.relatedWords}</span> },
+    occurrence: { label: "Count", width: "w-20", sortKey: "occurrence", renderCell: (v: any) => <div className="text-center font-semibold text-gray-500 text-xs bg-gray-50 py-1 rounded">{v.occurrence}</div> },
+    score: { 
+      label: "Score", width: "w-20", 
+      renderCell: (v: any) => {
+        const scores = v.pronunciationScores || [];
+        if (scores.length === 0) return <span className="text-gray-300 text-xs text-center block">-</span>;
+        const avg = Math.round(scores.slice(-3).reduce((a:number, b:number) => a + b, 0) / scores.slice(-3).length);
+        const color = avg >= 80 ? "bg-green-100 text-green-700 border-green-200" : avg >= 60 ? "bg-yellow-100 text-yellow-700 border-yellow-200" : "bg-red-100 text-red-700 border-red-200";
+        return <div className="flex flex-col items-center"><span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${color}`}>{avg}</span></div>;
+      }
+    },
+    actions: { 
+      label: "Action", width: "w-20", 
+      renderCell: (v: any) => <button onClick={(e) => { e.stopPropagation(); onRowClick(v); }} className="text-indigo-600 text-xs border border-indigo-200 px-3 py-1 rounded hover:bg-indigo-50 hover:border-indigo-300 transition-all font-medium">Edit</button> 
+    },
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+      <div className="overflow-x-auto pb-4 flex-1">
+        <table className="min-w-full divide-y divide-gray-200 table-fixed">
+          <thead className="bg-gray-50/80 select-none sticky top-0 z-20 backdrop-blur-sm">
+            <tr>
+              {columnOrder.map((colId) => {
+                const config = columnConfig[colId];
+                if (!config) return null;
+                return (
+                  <th key={colId} draggable onDragStart={(e) => onDragStart(e, colId)} onDragOver={(e) => onDragOver(e, colId)} onDragEnd={onDragEnd}
+                    onClick={() => config.sortKey && onSort(config.sortKey)}
+                    className={`${config.width} px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase border-r border-gray-200 cursor-move hover:bg-gray-100 transition-colors ${draggedCol === colId ? "opacity-50 bg-indigo-50" : ""} ${colId === "actions" ? "sticky right-0 bg-gray-50 z-10 shadow-[-5px_0px_10px_rgba(0,0,0,0.02)]" : ""}`}
+                  >
+                    <div className="flex items-center justify-between pointer-events-none">
+                      <span>{config.label}</span>
+                      {config.sortKey && getSortIcon(config.sortKey)}
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+            <tr className="bg-white border-b border-gray-200">
+              {columnOrder.map((colId) => (
+                <td key={colId} className={`p-2 border-r border-gray-100 bg-gray-50/30 ${colId === "actions" ? "sticky right-0 bg-gray-50/30 z-10" : ""}`}>
+                  {columnConfig[colId]?.renderFilter ? columnConfig[colId].renderFilter() : null}
+                </td>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading ? <tr><td colSpan={columnOrder.length} className="text-center py-20 text-gray-400 italic">Loading data...</td></tr> 
+            : vocabs.length === 0 ? <tr><td colSpan={columnOrder.length} className="text-center py-20 text-gray-400">No vocabulary found. Start by adding one!</td></tr>
+            : vocabs.map((vocab) => (
+              <tr key={vocab.id} className="hover:bg-indigo-50/60 group transition-colors cursor-pointer" onClick={() => onRowClick(vocab)}>
+                {columnOrder.map((colId) => (
+                  <td key={colId} className={`px-4 py-3 text-sm border-r border-gray-100 align-top whitespace-normal break-words ${colId === "actions" ? "sticky right-0 bg-white group-hover:bg-indigo-50/60 z-10 shadow-[-5px_0px_10px_rgba(0,0,0,0.02)]" : ""}`} onClick={colId === "actions" || colId === "star" ? (e) => e.stopPropagation() : undefined}>
+                    {columnConfig[colId]?.renderCell(vocab)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center sticky bottom-0 z-20 shrink-0">
+        <button disabled={page <= 1} onClick={() => onPageChange(page - 1)} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium transition-colors text-gray-700">← Previous</button>
+        <span className="text-sm font-medium text-gray-600">Page <span className="text-indigo-600 font-bold">{page}</span> of {totalPages}</span>
+        <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium transition-colors text-gray-700">Next →</button>
+      </div>
+    </div>
+  );
+}
+
+
+================================================
+FILE: apps/frontend/contexts/AuthContext.tsx
+================================================
+'use client';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<void>;
+  logout: () => void;
+  isLoading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load token from localStorage on mount
+  useEffect(() => {
+    const savedToken = localStorage.getItem('token');
+    if (savedToken) {
+      setToken(savedToken);
+      fetchUser(savedToken);
+    } else {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch user info
+  const fetchUser = async (authToken: string) => {
+    try {
+      const response = await axios.get('http://localhost:5000/auth/me', {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      localStorage.removeItem('token');
+      setToken(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Login
+  const login = async (email: string, password: string) => {
+    const response = await axios.post('http://localhost:5000/auth/login', {
+      email,
+      password,
+    });
+
+    const { token: newToken, user: newUser } = response.data;
+    
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    setUser(newUser);
+  };
+
+  // Register
+  const register = async (email: string, password: string, name?: string) => {
+    const response = await axios.post('http://localhost:5000/auth/register', {
+      email,
+      password,
+      name,
+    });
+
+    const { token: newToken, user: newUser } = response.data;
+    
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    setUser(newUser);
+  };
+
+  // Logout
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
