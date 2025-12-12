@@ -1,6 +1,7 @@
 Directory structure:
 └── c2025-12-09-full-app-english/
     ├── AI_CONTEXT.md
+    ├── digest_now-use.txt
     ├── docker-compose.yml
     └── apps/
         ├── extension.crx
@@ -71,7 +72,12 @@ Directory structure:
         │   ├── manifest.json
         │   ├── popup.css
         │   ├── popup.html
-        │   └── popup.js
+        │   ├── popup.js
+        │   └── content-scripts/
+        │       ├── main.js
+        │       ├── messager.js
+        │       ├── shortcuts.js
+        │       └── ui.js
         └── frontend/
             ├── README.md
             ├── eslint.config.mjs
@@ -100,6 +106,13 @@ Directory structure:
             │   └── vocabulary/
             │       ├── page.tsx
             │       └── tree.txt
+            ├── components/
+            │   ├── Icons.tsx
+            │   └── vocabulary/
+            │       ├── AssessmentModal.tsx
+            │       ├── QuickSearchModal.tsx
+            │       ├── VocabFormModal.tsx
+            │       └── VocabTable.tsx
             └── contexts/
                 └── AuthContext.tsx
 
@@ -107,6 +120,12 @@ Directory structure:
 FILE: AI_CONTEXT.md
 ================================================
 [Empty file]
+
+
+================================================
+FILE: digest_now-use.txt
+================================================
+[Binary file]
 
 
 ================================================
@@ -331,7 +350,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 ## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
+- Author - [Kamil MyÅ›liwiec](https://twitter.com/kammysliwiec)
 - Website - [https://nestjs.com](https://nestjs.com/)
 - Twitter - [@nestframework](https://twitter.com/nestframework)
 
@@ -496,25 +515,25 @@ FILE: apps/backend/package.json
 FILE: apps/backend/tree.txt
 ================================================
 backend
-├── README.md
-├── eslint.config.mjs
-├── nest-cli.json
-├── package-lock.json
-├── package.json
-├── prisma
-│   └── schema.prisma
-├── src
-│   ├── app.controller.spec.ts
-│   ├── app.controller.ts
-│   ├── app.module.ts
-│   ├── app.service.ts
-│   └── main.ts
-├── test
-│   ├── app.e2e-spec.ts
-│   └── jest-e2e.json
-├── tree.txt
-├── tsconfig.build.json
-└── tsconfig.json
+â”œâ”€â”€ README.md
+â”œâ”€â”€ eslint.config.mjs
+â”œâ”€â”€ nest-cli.json
+â”œâ”€â”€ package-lock.json
+â”œâ”€â”€ package.json
+â”œâ”€â”€ prisma
+â”‚   â””â”€â”€ schema.prisma
+â”œâ”€â”€ src
+â”‚   â”œâ”€â”€ app.controller.spec.ts
+â”‚   â”œâ”€â”€ app.controller.ts
+â”‚   â”œâ”€â”€ app.module.ts
+â”‚   â”œâ”€â”€ app.service.ts
+â”‚   â””â”€â”€ main.ts
+â”œâ”€â”€ test
+â”‚   â”œâ”€â”€ app.e2e-spec.ts
+â”‚   â””â”€â”€ jest-e2e.json
+â”œâ”€â”€ tree.txt
+â”œâ”€â”€ tsconfig.build.json
+â””â”€â”€ tsconfig.json
 
 
 
@@ -603,18 +622,19 @@ model User {
 // apps/backend/prisma/schema.prisma
 
 model VocabItem {
-  id String @id @default(uuid())
-
+  id                  String  @id @default(uuid())
+  // 👇 THÊM DÒNG NÀY: Lưu lịch sử điểm số (PostgreSQL hỗ trợ mảng Int[])
+  pronunciationScores Int[]   @default([])
   // --- CÁC CỘT KHỚP VỚI EXCEL ---
-  topic         String? // Topic
-  word          String // Word (Bắt buộc)
-  partOfSpeech  String? @map("part_of_speech") // Part of speech
-  pronunciation String? // Pronunciation
-  meaning       String? // Meaning
-  example       String? // Example
-  relatedWords  String? @map("related_words") // Related words
-  occurrence    Int?    @default(1)
-  isStarred     Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
+  topic               String? // Topic
+  word                String // Word (Bắt buộc)
+  partOfSpeech        String? @map("part_of_speech") // Part of speech
+  pronunciation       String? // Pronunciation
+  meaning             String? // Meaning
+  example             String? // Example
+  relatedWords        String? @map("related_words") // Related words
+  occurrence          Int?    @default(1)
+  isStarred           Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
 
   // --- CÁC CỘT HỆ THỐNG (Bắt buộc phải giữ) ---
   userId String @map("user_id")
@@ -735,7 +755,7 @@ async function bootstrap() {
 
   // Enable CORS with credentials
   app.enableCors({
-    origin: true, // 👈 Thêm cả 2 port
+    origin: true, // ðŸ‘ˆ ThÃªm cáº£ 2 port
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -750,7 +770,7 @@ async function bootstrap() {
   );
 
   await app.listen(5000);
-  console.log('🚀 Backend running on http://localhost:5000');
+  console.log('ðŸš€ Backend running on http://localhost:5000');
 }
 bootstrap();
 
@@ -762,7 +782,7 @@ import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import type { Response } from 'express'; // 👈 Thêm "type"
+import type { Response } from 'express'; // ðŸ‘ˆ ThÃªm "type"
 
 @Controller('auth')
 export class AuthController {
@@ -1095,7 +1115,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
       callbackURL: 'http://localhost:5000/auth/google/callback',
       scope: ['email', 'profile'],
-    } as StrategyOptions); // 👈 Thêm "as StrategyOptions"
+    } as StrategyOptions); // ðŸ‘ˆ ThÃªm "as StrategyOptions"
   }
 
   async validate(
@@ -1160,15 +1180,15 @@ import { AuthService } from '../auth.service';
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
     super({
-      usernameField: 'email', // Mặc định là 'username', mình đổi thành 'email' cho đúng project
+      usernameField: 'email', // Máº·c Ä‘á»‹nh lÃ  'username', mÃ¬nh Ä‘á»•i thÃ nh 'email' cho Ä‘Ãºng project
     });
   }
 
-  // Hàm này sẽ tự động chạy khi user login
+  // HÃ m nÃ y sáº½ tá»± Ä‘á»™ng cháº¡y khi user login
   async validate(email: string, pass: string): Promise<any> {
     const user = await this.authService.validateUser(email, pass);
     if (!user) {
-      throw new UnauthorizedException('Sai email hoặc mật khẩu');
+      throw new UnauthorizedException('Sai email hoáº·c máº­t kháº©u');
     }
     return user;
   }
@@ -1254,7 +1274,7 @@ FILE: apps/backend/src/modules/users/dto/create-user.dto.ts
 ================================================
 export class CreateUserDto {
   email: string;
-  password?: string; // Optional vì sau này có thể login bằng Google
+  password?: string; // Optional vÃ¬ sau nÃ y cÃ³ thá»ƒ login báº±ng Google
   name?: string;
 }
 
@@ -1305,18 +1325,24 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class VocabularyController {
   constructor(private readonly vocabularyService: VocabularyService) {}
 
+  // ðŸ‘‡ THÃŠM ROUTE NÃ€Y: LÆ°u Ä‘iá»ƒm phÃ¡t Ã¢m
+  @Patch(':id/score')
+  async addScore(
+    @Request() req,
+    @Param('id') id: string,
+    @Body('score') score: number,
+  ) {
+    return this.vocabularyService.addScore(id, req.user.id, score);
+  }
   @Post()
   create(@Request() req, @Body() createDto: CreateVocabularyDto) {
-    // 👇 UPDATE: Sử dụng upsertVocab để handle logic create hoặc update nếu đã tồn tại
+    // ðŸ‘‡ UPDATE: Sá»­ dá»¥ng upsertVocab Ä‘á»ƒ handle logic create hoáº·c update náº¿u Ä‘Ã£ tá»“n táº¡i
     return this.vocabularyService.upsertVocab(req.user.id, createDto);
   }
 
   @Post('import/csv')
   @UseInterceptors(FileInterceptor('file'))
-  async importCsv(
-    @Request() req,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
+  async importCsv(@Request() req, @UploadedFile() file: Express.Multer.File) {
     return this.vocabularyService.importFromCsv(req.user.id, file);
   }
 
@@ -1325,13 +1351,13 @@ export class VocabularyController {
     @Request() req,
     @Query('page') page: string,
     @Query('limit') limit: string,
-    @Query('search') search: string, // Quick search (tìm chung)
+    @Query('search') search: string, // Quick search (tÃ¬m chung)
     // Filter Params
     @Query('word') word: string,
     @Query('topic') topic: string,
     @Query('partOfSpeech') partOfSpeech: string,
     @Query('meaning') meaning: string,
-    @Query('isStarred') isStarred: string, // Filter từ yêu thích
+    @Query('isStarred') isStarred: string, // Filter tá»« yÃªu thÃ­ch
     // Sort Params
     @Query('sortBy') sortBy: string,
     @Query('sortOrder') sortOrder: string,
@@ -1339,30 +1365,30 @@ export class VocabularyController {
     const pageNumber = page ? parseInt(page) : 1;
     const limitNumber = limit ? parseInt(limit) : 20;
 
-    // Gom các filter criteria vào một object
-    const filters = { 
-      word, 
-      topic, 
-      partOfSpeech, 
+    // Gom cÃ¡c filter criteria vÃ o má»™t object
+    const filters = {
+      word,
+      topic,
+      partOfSpeech,
       meaning,
-      // Convert string 'true' thành boolean true, ngược lại là false/undefined
-      isStarred: isStarred === 'true' 
+      // Convert string 'true' thÃ nh boolean true, ngÆ°á»£c láº¡i lÃ  false/undefined
+      isStarred: isStarred === 'true',
     };
-    
+
     // Config sort option
     const sort = {
       field: sortBy || 'createdAt',
       order: (sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc',
     };
 
-    // Call service với full arguments
+    // Call service vá»›i full arguments
     return this.vocabularyService.findAll(
       req.user.id,
       pageNumber,
       limitNumber,
       filters,
       sort,
-      search
+      search,
     );
   }
 
@@ -1387,6 +1413,7 @@ export class VocabularyController {
 }
 
 
+
 ================================================
 FILE: apps/backend/src/modules/vocabulary/vocabulary.module.ts
 ================================================
@@ -1404,188 +1431,11 @@ import { PrismaModule } from '../../prisma/prisma.module';
 export class VocabularyModule {}
 
 
+
 ================================================
 FILE: apps/backend/src/modules/vocabulary/vocabulary.service.ts
 ================================================
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
-import { CreateVocabularyDto } from './dto/create-vocabulary.dto';
-import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
-import csv from 'csv-parser';
-import { Readable } from 'stream';
-
-interface VocabFilters {
-  word?: string;
-  topic?: string;
-  partOfSpeech?: string;
-  meaning?: string;
-  isStarred?: boolean;
-}
-
-@Injectable()
-export class VocabularyService {
-  constructor(private prisma: PrismaService) {}
-
-  // --- 1. SMART UPSERT (LOGIC TRÁNH TRÙNG LẶP) ---
-  async upsertVocab(userId: string, createDto: CreateVocabularyDto) {
-    const cleanWord = createDto.word.trim();
-    console.log(`🔍 Checking existence for word: "${cleanWord}" (User: ${userId})`);
-
-    // 1. Tìm xem từ đã có chưa (Không phân biệt hoa thường)
-    const existing = await this.prisma.vocabItem.findFirst({
-      where: {
-        userId,
-        word: {
-          equals: cleanWord,
-          mode: 'insensitive',
-        },
-      },
-    });
-
-    if (existing) {
-      console.log(`✅ Word exists (ID: ${existing.id}). Updating count only...`);
-      // 2a. Nếu có rồi -> Chỉ tăng count & cập nhật time (BỎ TỰ ĐỘNG STAR)
-      return this.prisma.vocabItem.update({
-        where: { id: existing.id },
-        data: {
-          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Không ép star nữa)
-          occurrence: (existing.occurrence || 0) + 1,
-          // Nếu muốn update thêm thông tin thì uncomment dòng dưới:
-          // ...createDto 
-        },
-      });
-    } else {
-      console.log(`🆕 Word not found. Creating new entry...`);
-      // 2b. Nếu chưa có -> Tạo mới
-      return this.prisma.vocabItem.create({
-        data: {
-          ...createDto, // 👈 Backend sẽ dùng giá trị isStarred từ Frontend gửi lên (false)
-          word: cleanWord,
-          userId,
-          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Để không bị override)
-        },
-      });
-    }
-  }
-
-  // --- GIỮ LẠI HÀM CREATE GỐC ---
-  async create(userId: string, createDto: CreateVocabularyDto) {
-    return this.prisma.vocabItem.create({
-      data: { ...createDto, userId },
-    });
-  }
-
-  // --- 2. FIND ALL ---
-  async findAll(
-    userId: string,
-    page: number = 1,
-    limit: number = 20,
-    filters: VocabFilters = {},
-    sort: { field: string; order: 'asc' | 'desc' } = { field: 'createdAt', order: 'desc' },
-    search?: string,
-  ) {
-    const skip = (page - 1) * limit;
-    const clean = (text?: string) => text?.trim();
-
-    const whereCondition: Prisma.VocabItemWhereInput = {
-      userId,
-      
-      word: filters.word ? { contains: clean(filters.word), mode: 'insensitive' } : undefined,
-      topic: filters.topic ? { contains: clean(filters.topic), mode: 'insensitive' } : undefined,
-      partOfSpeech: filters.partOfSpeech ? { contains: clean(filters.partOfSpeech), mode: 'insensitive' } : undefined,
-      meaning: filters.meaning ? { contains: clean(filters.meaning), mode: 'insensitive' } : undefined,
-      isStarred: filters.isStarred === true ? true : undefined,
-
-      ...(search ? {
-        OR: [
-          { word: { contains: clean(search), mode: 'insensitive' } },
-          { meaning: { contains: clean(search), mode: 'insensitive' } },
-          { topic: { contains: clean(search), mode: 'insensitive' } },
-        ],
-      } : {}),
-    };
-
-    const orderByInput: Prisma.VocabItemOrderByWithRelationInput[] = [];
-    if (sort.field) orderByInput.push({ [sort.field]: sort.order });
-    orderByInput.push({ id: 'asc' });
-
-    const [items, total] = await Promise.all([
-      this.prisma.vocabItem.findMany({
-        where: whereCondition,
-        skip,
-        take: limit,
-        orderBy: orderByInput,
-      }),
-      this.prisma.vocabItem.count({ where: whereCondition }),
-    ]);
-
-    return {
-      data: items,
-      meta: { total, page, lastPage: Math.ceil(total / limit) },
-    };
-  }
-
-  // --- 3. FIND ONE ---
-  async findOne(id: string, userId: string) {
-    const vocab = await this.prisma.vocabItem.findFirst({ where: { id, userId } });
-    if (!vocab) throw new NotFoundException('Vocabulary not found');
-    return vocab;
-  }
-
-  // --- 4. UPDATE ---
-  async update(id: string, userId: string, updateDto: UpdateVocabularyDto) {
-    await this.findOne(id, userId);
-    return this.prisma.vocabItem.update({ where: { id }, data: updateDto });
-  }
-
-  // --- 5. REMOVE ---
-  async remove(id: string, userId: string) {
-    await this.findOne(id, userId);
-    return this.prisma.vocabItem.delete({ where: { id } });
-  }
-
-  // --- 6. IMPORT CSV ---
-  async importFromCsv(userId: string, file: Express.Multer.File) {
-    if (!file) throw new BadRequestException('File is required');
-    const results: any[] = [];
-    const stream = Readable.from(file.buffer.toString());
-
-    return new Promise((resolve, reject) => {
-      stream
-        .pipe(csv())
-        .on('data', (data) => results.push(data))
-        .on('end', async () => {
-          let successCount = 0;
-          let errorCount = 0;
-          for (const row of results) {
-            try {
-              await this.upsertVocab(userId, {
-                 word: row['Word']?.trim(),
-                 topic: row['Topic']?.trim(),
-                 partOfSpeech: row['Part of speech']?.trim(),
-                 pronunciation: row['Pronunciation']?.trim(),
-                 meaning: row['Meaning']?.trim(),
-                 example: row['Example']?.trim(),
-                 relatedWords: row['Related words']?.trim(),
-                 occurrence: row['Occurrence'] ? parseInt(row['Occurrence']) : 1,
-                 isStarred: false // Import CSV cũng mặc định không Star
-              });
-              successCount++;
-            } catch (error) {
-              errorCount++;
-            }
-          }
-          resolve({ message: 'Import finished', total: results.length, success: successCount, failed: errorCount });
-        })
-        .on('error', () => reject(new BadRequestException('Invalid CSV file')));
-    });
-  }
-}
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x81 in position 1436: character maps to <undefined>
 
 
 ================================================
@@ -1686,7 +1536,7 @@ export class PrismaService
 {
   async onModuleInit() {
     await this.$connect();
-    console.log('✅ DB Connected via Prisma');
+    console.log('âœ… DB Connected via Prisma');
   }
 
   async onModuleDestroy() {
@@ -1745,19 +1595,19 @@ FILE: apps/backend/test/jest-e2e.json
 ================================================
 FILE: apps/extension/background.js
 ================================================
-// Setup Alarm khi Extension được Installed
+// Setup Alarm khi Extension Ä‘Æ°á»£c Installed
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Extension Installed. Setting up alarms...");
-  // Tạo alarm tên 'vocab_review' chạy mỗi 15 phút
+  // Táº¡o alarm tÃªn 'vocab_review' cháº¡y má»—i 15 phÃºt
   chrome.alarms.create("vocab_review", {
     periodInMinutes: 5,
   });
 });
 
-// Lắng nghe Alarm trigger
+// Láº¯ng nghe Alarm trigger
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "vocab_review") {
-    // Tìm tab đang active để gửi message hiển thị Flashcard
+    // TÃ¬m tab Ä‘ang active Ä‘á»ƒ gá»­i message hiá»ƒn thá»‹ Flashcard
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
         chrome.tabs.sendMessage(tabs[0].id, {
@@ -1813,1034 +1663,180 @@ FILE: apps/extension/manifest.json
 ================================================
 FILE: apps/extension/popup.css
 ================================================
-:root {
-  --primary-color: #58cc02; /* Xanh lá kiểu Duolingo/Elsa */
-  --primary-dark: #46a302;
-  --accent-color: #1cb0f6; /* Xanh dương */
-  --text-primary: #3c3c3c;
-  --text-secondary: #777777;
-  --bg-color: #ffffff;
-  --card-bg: #f7f7f7;
-  --danger-color: #ff4b4b;
-  --warning-color: #ffc800;
-  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
-  --border-radius: 16px;
-}
-
-/* Reset & Base */
-* {
-  box-sizing: border-box;
-}
-
-#tts-popup {
-  position: absolute;
-  background: var(--bg-color);
-  color: var(--text-primary);
-  padding: 0;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-soft);
-  z-index: 999999;
-  min-width: 320px;
-  max-width: 400px;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif; /* Font tròn trịa hiện đại */
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-/* --- Header --- */
-.tts-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: move;
-  user-select: none;
-}
-
-.sound-btn,
-.close-btn {
-  background: transparent;
-  border: none;
-  color: #bbbbbb;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  padding: 0;
-}
-
-.sound-btn:hover {
-  background: #f0f8ff;
-  color: var(--accent-color);
-}
-
-.close-btn:hover {
-  background: #fff0f0;
-  color: var(--danger-color);
-}
-
-/* --- Content Area --- */
-.tts-content {
-  padding: 0 20px 20px 20px;
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-/* --- Images Grid --- */
-.tts-images-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 15px 0;
-  width: 100%;
-}
-
-.tts-image {
-  width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  aspect-ratio: 1;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s;
-}
-
-.tts-image:hover {
-  transform: scale(1.05);
-}
-
-.tts-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* --- Phonetic & Meaning --- */
-.tts-phonetic {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
-  justify-content: center;
-}
-
-.phonetic-item {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: var(--text-secondary);
-  background: #f5f5f5;
-  padding: 4px 10px;
-  border-radius: 20px;
-}
-
-.phonetic-item .flag {
-  margin-right: 6px;
-  font-size: 16px;
-}
-
-.phonetic-text {
-  font-family: "Lucida Console", monospace;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.tts-meaning {
-  font-size: 16px;
-  color: var(--text-primary);
-  line-height: 1.6;
-  text-align: center;
-  font-weight: 500;
-  margin-bottom: 10px;
-}
-
-/* --- Actions (Mic Button) --- */
-.tts-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px 0 20px 0;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 20%);
-}
-
-.mic-btn {
-  background: var(--accent-color); /* Màu xanh chủ đạo */
-  border: none;
-  box-shadow: 0 4px 0 #118ec7; /* Hiệu ứng nút bấm 3D */
-  color: white;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.1s;
-  margin-bottom: 10px;
-}
-
-.mic-btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #118ec7;
-}
-
-.mic-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 0 0 #118ec7;
-}
-
-.mic-btn.recording {
-  background: var(--danger-color);
-  box-shadow: 0 4px 0 #d63e3e;
-  animation: pulse-red 1.5s infinite;
-}
-
-@keyframes pulse-red {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 15px rgba(255, 75, 75, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
-  }
-}
-
-/* --- Assessment Result (ELSA Style) --- */
-#assessment-result {
-  width: 100%;
-}
-
-.assessment-box {
-  background: #ffffff;
-  padding: 15px;
-  text-align: center;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Vòng tròn điểm số */
-.total-score-circle {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 5px solid #eee;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 800;
-  margin: 0 auto 5px auto;
-  background: #fff;
-  color: var(--text-primary);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-}
-
-/* Text Word chính */
-.word-text {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 10px 0 5px 0;
-  color: #2b3b4e; /* Màu xanh đậm sang trọng */
-  letter-spacing: -0.5px;
-}
-
-/* Container Phonemes */
-.analyzed-content {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 5px;
-}
-
-.word-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.phoneme-row {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 12px;
-  background: transparent;
-}
-
-.phoneme-char {
-  font-family: "Roboto Mono", monospace;
-  font-size: 16px;
-  font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 8px;
-  transition: all 0.2s;
-  min-width: 32px;
-  text-align: center;
-}
-
-/* Màu sắc điểm số (Color Grading) */
-/* Xanh (Excellent) */
-.p-perfect {
-  background-color: #dff6dd;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
-}
-
-/* Xanh nhạt (Good) */
-.p-good {
-  background-color: #f1f8e9;
-  color: #558b2f;
-  border: 1px solid #dcedc8;
-}
-
-/* Vàng (Fair) */
-.p-fair {
-  background-color: #fff8e1;
-  color: #fbc02d;
-  border: 1px solid #ffecb3;
-}
-
-/* Đỏ (Bad) */
-.p-bad {
-  background-color: #ffebee;
-  color: #c62828;
-  border: 1px solid #ffcdd2;
-  position: relative;
-}
-
-/* Loading & Info */
-.tts-loading,
-.tts-info {
-  font-size: 14px;
-  color: #999;
-  text-align: center;
-  padding: 10px;
-}
-/* --- Flashcard Passive Learning --- */
-#vocab-flashcard {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 280px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  z-index: 2147483647; /* Max z-index */
-  font-family: "Nunito", sans-serif;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.flashcard-slide-in {
-  animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-.flashcard-slide-out {
-  animation: slideOutRight 0.5s forwards;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(120%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(120%);
-    opacity: 0;
-  }
-}
-
-/* Style cho Context Box trong Popup chính */
-.context-box {
-  margin-top: 10px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-left: 3px solid var(--accent-color);
-  border-radius: 4px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-align: left;
-  line-height: 1.4;
-}
-/* --- Dictionary Styles --- */
-.dict-container {
-  text-align: left;
-  margin: 10px 0;
-  padding: 0 10px;
-}
-
-.dict-row {
-  margin-bottom: 8px;
-  line-height: 1.5;
-  display: flex;
-  align-items: baseline;
-}
-
-.dict-pos {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #888;
-  background: #eee;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-right: 8px;
-  font-weight: 700;
-  min-width: 45px;
-  text
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 5187: character maps to <undefined>
 
 
 ================================================
 FILE: apps/extension/popup.html
 ================================================
-<!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edge TTS Reader - Cài đặt</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      /* Thêm style riêng cho status bar */
-      .connection-status {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 13px;
-      }
-      body {
-        width: 450px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-      }
-
-      .container {
-        padding: 20px;
-      }
-
-      h2 {
-        font-size: 20px;
-        margin-bottom: 20px;
-        font-weight: 600;
-      }
-
-      .guide-section {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        font-size: 13px;
-        line-height: 1.6;
-        backdrop-filter: blur(10px);
-      }
-
-      .guide-section h3 {
-        font-size: 14px;
-        margin-bottom: 10px;
-        font-weight: 600;
-      }
-
-      .guide-section ol {
-        padding-left: 20px;
-      }
-
-      .guide-section li {
-        margin-bottom: 6px;
-      }
-
-      .guide-section a {
-        color: #fff;
-        text-decoration: underline;
-      }
-
-      .guide-section a:hover {
-        opacity: 0.8;
-      }
-
-      .input-group {
-        margin-bottom: 15px;
-        position: relative;
-      }
-
-      .input-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 14px;
-        font-weight: 500;
-      }
-
-      .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-      }
-
-      .input-group input {
-        flex: 1;
-        padding: 10px 40px 10px 12px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 6px;
-        font-size: 14px;
-        font-family: monospace;
-        background: rgba(255, 255, 255, 0.95);
-        color: #333;
-        transition: all 0.2s;
-      }
-
-      .input-group input:focus {
-        outline: none;
-        border-color: rgba(255, 255, 255, 0.8);
-        background: white;
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
-      }
-
-      .toggle-visibility {
-        position: absolute;
-        right: 8px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 18px;
-        padding: 6px;
-        z-index: 10;
-        opacity: 0.6;
-        transition: opacity 0.2s;
-      }
-
-      .toggle-visibility:hover {
-        opacity: 1;
-      }
-
-      .button-group {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-      }
-
-      button {
-        flex: 1;
-        padding: 12px;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .save-btn {
-        background: white;
-        color: #667eea;
-      }
-
-      .save-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      }
-
-      .test-btn {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-      }
-
-      .test-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-2px);
-      }
-
-      .status-message {
-        margin-top: 15px;
-        padding: 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 500;
-        text-align: center;
-        display: none;
-      }
-
-      .status-message.show {
-        display: block;
-      }
-
-      .status-message.success {
-        background: rgba(76, 175, 80, 0.9);
-        color: white;
-      }
-
-      .status-message.error {
-        background: rgba(244, 67, 54, 0.9);
-        color: white;
-      }
-
-      .status-message.warning {
-        background: rgba(255, 152, 0, 0.9);
-        color: white;
-      }
-
-      .status-message.loading {
-        background: rgba(33, 150, 243, 0.9);
-        color: white;
-      }
-
-      .info-note {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        margin-top: 15px;
-        border-left: 3px solid rgba(255, 255, 255, 0.5);
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h2>⚙️ Cài đặt Google Search API</h2>
-      <div class="connection-status">
-        <div>
-          <span id="conn-dot" class="status-dot status-disconnected"></span>
-          <span id="conn-text">Chưa kết nối Web App</span>
-        </div>
-        <div style="font-size: 11px; opacity: 0.8">
-          *Auto-sync khi vào localhost:3000
-        </div>
-      </div>
-      <div class="guide-section">
-        <h3>📌 Hướng dẫn lấy API Key:</h3>
-        <ol>
-          <li>
-            Truy cập
-            <a href="https://console.cloud.google.com/" target="_blank"
-              >Google Cloud Console</a
-            >
-          </li>
-          <li>Tạo dự án mới hoặc chọn dự án hiện có</li>
-          <li>Bật Custom Search API</li>
-          <li>Tạo API Key từ phần "Credentials"</li>
-          <li>Dán API Key vào ô dưới</li>
-        </ol>
-      </div>
-
-      <div class="guide-section">
-        <h3>📌 Hướng dẫn lấy Search Engine ID:</h3>
-        <ol>
-          <li>
-            Truy cập
-            <a
-              href="https://programmablesearchengine.google.com/"
-              target="_blank"
-              >Google Programmable Search Engine</a
-            >
-          </li>
-          <li>Tạo search engine mới</li>
-          <li>Sao chép Search Engine ID (cx)</li>
-          <li>Dán vào ô dưới</li>
-        </ol>
-      </div>
-
-      <div class="input-group">
-        <label>🔑 Main Google API Key:</label>
-        <div class="input-wrapper">
-          <input
-            type="password"
-            id="api-key-0"
-            class="api-key-input"
-            placeholder="Key chính (bắt buộc)"
-          />
-          <button type="button" class="toggle-visibility">👁️</button>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>🔍 Main Search Engine ID (cx):</label>
-        <div class="input-wrapper">
-          <input
-            type="text"
-            id="cx-0"
-            class="cx-input"
-            placeholder="CX chính (bắt buộc)"
-          />
-        </div>
-      </div>
-
-      <details
-        style="
-          margin-bottom: 15px;
-          background: rgba(0, 0, 0, 0.1);
-          border-radius: 6px;
-          padding: 10px;
-        "
-      >
-        <summary style="cursor: pointer; font-weight: 600; font-size: 13px">
-          ➕ Mở rộng: 4 Backup Keys (Dự phòng)
-        </summary>
-
-        <div
-          style="
-            margin-top: 10px;
-            padding-left: 10px;
-            border-left: 2px solid rgba(255, 255, 255, 0.3);
-          "
-        >
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #1:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-1"
-              class="api-key-input"
-              placeholder="API Key dự phòng 1"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-1"
-              class="cx-input"
-              placeholder="CX ID dự phòng 1"
-            />
-          </div>
-
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #2:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-2"
-              class="api-key-input"
-              placeholder="API Key dự phòng 2"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-2"
-              class="cx-input"
-              placeholder="CX ID dự phòng 2"
-            />
-          </div>
-
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #3:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-3"
-              class="api-key-input"
-              placeholder="API Key dự phòng 3"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-3"
-              class="cx-input"
-              placeholder="CX ID dự phòng 3"
-            />
-          </div>
-
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #4:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-4"
-              class="api-key-input"
-              placeholder="API Key dự phòng 4"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-4"
-              class="cx-input"
-              placeholder="CX ID dự phòng 4"
-            />
-          </div>
-        </div>
-      </details>
-
-      <div class="input-group">
-        <label for="search-engine-input">Search Engine ID (cx):</label>
-        <div class="input-wrapper">
-          <input
-            type="text"
-            id="search-engine-input"
-            placeholder="Nhập Search Engine ID"
-          />
-        </div>
-      </div>
-
-      <div class="button-group">
-        <button class="save-btn" id="save-btn">💾 Lưu</button>
-        <button class="test-btn" id="test-btn">🧪 Kiểm tra</button>
-      </div>
-      <div
-        class="guide-section"
-        style="
-          margin-top: 20px;
-          border-top: 1px solid rgba(255, 255, 255, 0.2);
-          padding-top: 15px;
-        "
-      >
-        <h3>🎙️ Cài đặt Azure Speech (Pronunciation):</h3>
-        <ol>
-          <li>
-            Tạo resource <strong>Speech Services</strong> trên Azure Portal
-          </li>
-          <li>Lấy Key và Region (ví dụ: eastus, southeastasia)</li>
-        </ol>
-      </div>
-
-      <div class="input-group">
-        <label for="azure-key-input">Azure Speech Key:</label>
-        <div class="input-wrapper">
-          <input
-            type="password"
-            id="azure-key-input"
-            placeholder="Nhập Azure Subscription Key"
-          />
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label for="azure-region-input">Azure Region:</label>
-        <div class="input-wrapper">
-          <input
-            type="text"
-            id="azure-region-input"
-            placeholder="Ví dụ: eastus"
-          />
-        </div>
-      </div>
-      <div class="status-message" id="status-message"></div>
-
-      <div class="info-note">
-        💡 <strong>Lưu ý:</strong> Nếu không cấu hình Google API, extension sẽ
-        tự động sử dụng Unsplash để lấy hình ảnh.
-      </div>
-    </div>
-
-    <script src="popup.js"></script>
-  </body>
-</html>
-
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in position 4906: character maps to <undefined>
 
 
 ================================================
 FILE: apps/extension/popup.js
 ================================================
-document.addEventListener("DOMContentLoaded", async () => {
-  // Elements
-  const azureKeyInput = document.getElementById("azure-key-input");
-  const azureRegionInput = document.getElementById("azure-region-input");
-  const saveBtn = document.getElementById("save-btn");
-  const testBtn = document.getElementById("test-btn");
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 1108: character maps to <undefined>
 
-  // Status Elements
-  const connDot = document.getElementById("conn-dot");
-  const connText = document.getElementById("conn-text");
 
-  // Toggle Visibility
-  document.querySelectorAll(".toggle-visibility").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const input = e.target.parentElement.querySelector("input");
-      if (input) {
-        input.type = input.type === "password" ? "text" : "password";
-      }
+================================================
+FILE: apps/extension/content-scripts/main.js
+================================================
+// ==========================================
+// MODULE: UI MANAGER
+// ==========================================
+const UI = (() => {
+  let iframe = null;
+
+  function create() {
+    if (iframe) return;
+
+    iframe = document.createElement("iframe");
+    iframe.id = "vocab-extension-overlay";
+
+    // Style đè full màn hình
+    Object.assign(iframe.style, {
+      position: "fixed",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+      border: "none",
+      zIndex: "2147483647",
+      backgroundColor: "transparent", // Để React tự lo phần nền đen mờ
     });
-  });
 
-  // --- 1. LOAD DATA ---
-  chrome.storage.sync.get(
-    ["googleApiKeys", "azureKey", "azureRegion", "authToken"],
-    (result) => {
-      // 1.1 Check Auth Token (Auto-sync Status)
-      if (result.authToken) {
-        connDot.className = "status-dot status-connected";
-        connText.textContent = "Đã kết nối Web App (Ready to Save)";
-      } else {
-        connDot.className = "status-dot status-disconnected";
-        connText.textContent = "Chưa có Token (Hãy F5 trang Web App)";
-      }
+    // Gọi về Frontend (Localhost)
+    // iframeMode=true: để Frontend biết đường ẩn Header/Sidebar nếu cần
+    iframe.src =
+      "http://localhost:3000/vocabulary?openSearch=true&iframeMode=true";
+    iframe.allow = "microphone *; camera *; clipboard-write"; // Cấp quyền Mic
 
-      // 1.2 Load Azure
-      if (result.azureKey) azureKeyInput.value = result.azureKey;
-      if (result.azureRegion) azureRegionInput.value = result.azureRegion;
+    document.body.appendChild(iframe);
 
-      // 1.3 Load Google Keys (List)
-      const keys = result.googleApiKeys || [];
-      for (let i = 0; i < 5; i++) {
-        const keyInput = document.getElementById(`api-key-${i}`);
-        const cxInput = document.getElementById(`cx-${i}`);
-        if (keys[i]) {
-          if (keyInput) keyInput.value = keys[i].key || "";
-          if (cxInput) cxInput.value = keys[i].cx || "";
-        }
-      }
+    // Focus vào iframe
+    iframe.onload = () => iframe.contentWindow.focus();
+  }
+
+  function remove() {
+    if (iframe) {
+      iframe.remove();
+      iframe = null;
     }
-  );
+  }
 
-  // --- 2. SAVE DATA ---
-  saveBtn.addEventListener("click", () => {
-    const azureKey = azureKeyInput.value.trim();
-    const azureRegion = azureRegionInput.value.trim();
+  function toggle() {
+    iframe ? remove() : create();
+  }
 
-    let googleKeysList = [];
-    for (let i = 0; i < 5; i++) {
-      const keyVal = document.getElementById(`api-key-${i}`).value.trim();
-      const cxVal = document.getElementById(`cx-${i}`).value.trim();
-      if (keyVal) {
-        googleKeysList.push({ key: keyVal, cx: cxVal });
-      }
-    }
+  return { create, remove, toggle };
+})();
 
-    if (googleKeysList.length === 0) {
-      showStatusMessage("⚠️ Cần ít nhất 1 Google API Key chính!", "warning");
-      return;
-    }
-
-    // Save
-    chrome.storage.sync.set(
-      {
-        googleApiKeys: googleKeysList,
-        azureKey: azureKey,
-        azureRegion: azureRegion,
-      },
-      () => {
-        showStatusMessage(`✅ Đã lưu cài đặt thành công!`, "success");
-        setTimeout(hideStatusMessage, 3000);
-      }
-    );
-  });
-
-  // --- 3. TEST API ---
-  testBtn.addEventListener("click", async () => {
-    const key0 = document.getElementById("api-key-0").value.trim();
-    const cx0 = document.getElementById("cx-0").value.trim();
-
-    if (!key0 || !cx0) {
-      showStatusMessage("⚠️ Cần nhập Key & CX ở ô đầu tiên để test", "warning");
-      return;
-    }
-
-    showStatusMessage("⏳ Đang test Key chính...", "loading");
-
-    try {
-      const url = `https://www.googleapis.com/customsearch/v1?q=test&cx=${cx0}&searchType=image&key=${key0}&num=1`;
-      const response = await fetch(url);
-
-      if (response.ok) {
-        showStatusMessage("✅ Key chính hoạt động ngon lành!", "success");
-        setTimeout(hideStatusMessage, 3000);
-      } else {
-        const errorData = await response.json();
-        showStatusMessage(
-          `❌ Lỗi: ${errorData.error?.message || "Check lại Key/CX"}`,
-          "error"
-        );
-      }
-    } catch (error) {
-      showStatusMessage(`❌ Lỗi mạng: ${error.message}`, "error");
-    }
-  });
+// ==========================================
+// MODULE: SHORTCUT LISTENER
+// ==========================================
+window.addEventListener("keydown", (e) => {
+  // Bắt sự kiện Shift + Q
+  if (e.shiftKey && e.code === "KeyQ") {
+    e.preventDefault();
+    UI.toggle();
+  }
 });
 
-function showStatusMessage(message, type) {
-  const statusDiv = document.getElementById("status-message");
-  statusDiv.textContent = message;
-  statusDiv.className = `status-message show ${type}`;
-  statusDiv.style.display = "block";
-  if (type === "success") statusDiv.style.backgroundColor = "#4caf50";
-  if (type === "error") statusDiv.style.backgroundColor = "#f44336";
-  if (type === "warning") statusDiv.style.backgroundColor = "#ff9800";
-  if (type === "loading") statusDiv.style.backgroundColor = "#2196f3";
-}
+// ==========================================
+// MODULE: MESSAGE LISTENER (From Iframe)
+// ==========================================
+// Lắng nghe lệnh đóng từ bên trong Iframe (Frontend gửi ra)
+window.addEventListener("message", (event) => {
+  // Check origin để bảo mật
+  if (event.origin !== "http://localhost:3000") return;
 
-function hideStatusMessage() {
-  const statusDiv = document.getElementById("status-message");
-  statusDiv.style.display = "none";
-}
+  if (event.data === "CLOSE_EXTENSION_IFRAME") {
+    UI.remove();
+  }
+});
+
+console.log("✅ Vocab Extension Loaded: Press Shift+Q to open!");
+
+
+
+================================================
+FILE: apps/extension/content-scripts/messager.js
+================================================
+[Empty file]
+
+
+================================================
+FILE: apps/extension/content-scripts/shortcuts.js
+================================================
+// shortcuts.js
+import { toggleOverlay } from "./ui.js";
+
+export const initShortcuts = () => {
+  window.addEventListener("keydown", (e) => {
+    // Logic: Shift + Q
+    if (e.shiftKey && (e.key === "Q" || e.key === "q")) {
+      e.preventDefault();
+      console.log("ðŸš€ Shortcut detected: Shift + Q");
+      toggleOverlay();
+    }
+  });
+};
+
+
+
+================================================
+FILE: apps/extension/content-scripts/ui.js
+================================================
+// ui.js
+let iframeElement = null;
+
+export const createOverlay = () => {
+  if (iframeElement) return; // Đã tồn tại thì thôi
+
+  // 1. Tạo Iframe
+  iframeElement = document.createElement("iframe");
+
+  // 2. Style cho Iframe (Full màn hình, đè lên tất cả)
+  Object.assign(iframeElement.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100vw",
+    height: "100vh",
+    border: "none",
+    zIndex: "2147483647", // Max z-index
+    backgroundColor: "rgba(0,0,0,0.5)", // Màu nền tối mờ
+    display: "block",
+  });
+
+  // 3. Load trang Vocabulary của Frontend vào
+  // Thêm param ?openSearch=true để React biết đường mở Popup ngay lập tức
+  iframeElement.src =
+    "http://localhost:3000/vocabulary?openSearch=true&iframeMode=true";
+  iframeElement.allow = "microphone; camera"; // Quan trọng: Cho phép dùng Mic trong Iframe
+
+  document.body.appendChild(iframeElement);
+
+  // 4. Focus vào iframe để gõ phím được ngay
+  iframeElement.onload = () => {
+    iframeElement.contentWindow.focus();
+  };
+};
+
+export const removeOverlay = () => {
+  if (iframeElement) {
+    iframeElement.remove();
+    iframeElement = null;
+  }
+};
+
+export const toggleOverlay = () => {
+  if (iframeElement) {
+    removeOverlay();
+  } else {
+    createOverlay();
+  }
+};
 
 
 
@@ -2918,10 +1914,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  async rewrites() {
+    return [
+      {
+        source: '/vocabulary/search',
+        destination: '/vocabulary?openSearch=true',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
-
 
 
 ================================================
@@ -3345,232 +2348,178 @@ export default function GoogleCallbackPage() {
 ================================================
 FILE: apps/frontend/app/login/page.tsx
 ================================================
-'use client';
-
-import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { login } = useAuth();
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      await login(email, password);
-      router.push('/vocabulary');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth
-    window.location.href = 'http://localhost:5000/auth/google';
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-center mb-8">🔐 Login</h1>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="your@email.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
-          >
-            {isLoading ? 'Loading...' : 'Login'}
-          </button>
-        </form>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <button
-            onClick={handleGoogleLogin}
-            className="mt-4 w-full flex items-center justify-center gap-2 border border-gray-300 bg-white py-2 rounded hover:bg-gray-50"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Continue with Google
-          </button>
-        </div>
-
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-blue-500 hover:underline">
-            Register
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
-}
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 1222: character maps to <undefined>
 
 
 ================================================
 FILE: apps/frontend/app/register/page.tsx
 ================================================
-'use client';
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x9d in position 1134: character maps to <undefined>
 
-import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
-export default function RegisterPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+================================================
+FILE: apps/frontend/app/vocabulary/page.tsx
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 5752: character maps to <undefined>
 
-  const { register } = useAuth();
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+================================================
+FILE: apps/frontend/app/vocabulary/tree.txt
+================================================
+vocabulary
+â”œâ”€â”€ page.tsx
+â””â”€â”€ tree.txt
 
-    try {
-      await register(email, password, name);
-      router.push('/vocabulary');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+
+================================================
+FILE: apps/frontend/components/Icons.tsx
+================================================
+import React from "react";
+
+export const StarIcon = ({ filled, className }: { filled: boolean; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? "0" : "2"} strokeLinecap="round" strokeLinejoin="round" className={className} width="24" height="24">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+);
+
+export const SpeakerIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+  </svg>
+);
+
+export const MicrophoneIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+    <line x1="12" y1="19" x2="12" y2="23"></line>
+    <line x1="8" y1="23" x2="16" y2="23"></line>
+  </svg>
+);
+
+
+================================================
+FILE: apps/frontend/components/vocabulary/AssessmentModal.tsx
+================================================
+import React from "react";
+import { MicrophoneIcon, SpeakerIcon } from "@/components/Icons";
+
+// Define Interfaces ná»™i bá»™ hoáº·c import tá»« types chung
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  vocabWord: string;
+  pronunciation?: string | null;
+  meaning?: string | null;
+  
+  // Recording State
+  isRecording: boolean;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  userAudioUrl: string | null;
+  
+  // Processing State
+  isProcessing: boolean;
+  error: string;
+  
+  // Result
+  result: any; // CÃ³ thá»ƒ define strict type AssessmentResult náº¿u muá»‘n
+}
+
+export default function AssessmentModal({
+  isOpen, onClose, vocabWord, pronunciation, meaning,
+  isRecording, onStartRecording, onStopRecording, userAudioUrl,
+  isProcessing, error, result
+}: Props) {
+  if (!isOpen) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-center mb-8">📝 Register</h1>
+    <div className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+      <div 
+        className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center p-8 relative animate-in fade-in zoom-in duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">âœ•</button>
+        
+        <h3 className="text-3xl font-bold text-gray-800 mb-1">{vocabWord}</h3>
+        
+        <div className="flex flex-col items-center gap-1 mb-6">
+          {pronunciation && <span className="font-mono text-gray-500 text-lg">/{pronunciation}/</span>}
+          {meaning && <span className="text-gray-600 text-center font-medium px-4 line-clamp-2">{meaning}</span>}
+        </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+        {/* Score Circle */}
+        {result ? (
+          <div className="relative w-32 h-32 mb-6 flex items-center justify-center rounded-full border-8 transition-all duration-500 ease-out"
+            style={{ borderColor: result.AccuracyScore >= 80 ? "#4caf50" : result.AccuracyScore >= 60 ? "#ffeb3b" : "#ff5252" }}>
+            <span className="text-4xl font-bold"
+              style={{ color: result.AccuracyScore >= 80 ? "#4caf50" : result.AccuracyScore >= 60 ? "#fbc02d" : "#ff5252" }}>
+              {Math.round(result.AccuracyScore)}
+            </span>
+          </div>
+        ) : (
+          <div className="w-32 h-32 mb-6 rounded-full border-4 border-gray-100 flex items-center justify-center bg-gray-50">
+            <span className="text-4xl text-gray-300">?</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Your name"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="your@email.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
+        {/* Action Buttons */}
+        <div className="mb-6 flex gap-6 items-center">
+          <button onClick={() => { /* Handle Speak in parent if needed, or pass prop */ }} className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 text-indigo-600 flex items-center justify-center transition-transform hover:scale-105 shadow-sm">
+             <SpeakerIcon className="w-6 h-6" />
+          </button>
+          
+          <button
+            onClick={isRecording ? onStopRecording : onStartRecording}
+            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-105 ${
+              isRecording ? "bg-red-500 animate-pulse ring-4 ring-red-200" : "bg-indigo-600 hover:bg-indigo-700 ring-4 ring-indigo-100"
+            }`}
+          >
+            {isRecording ? <div className="w-6 h-6 bg-white rounded-sm" /> : <MicrophoneIcon className="w-8 h-8 text-white" />}
+          </button>
 
           <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+            disabled={!userAudioUrl}
+            onClick={() => { const audio = new Audio(userAudioUrl!); audio.play(); }}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-105 shadow-sm ${
+              userAudioUrl ? "bg-green-100 hover:bg-green-200 text-green-700 cursor-pointer" : "bg-gray-100 text-gray-300 cursor-not-allowed"
+            }`}
           >
-            {isLoading ? 'Loading...' : 'Register'}
+             <span className="text-xl">â–¶</span>
           </button>
-        </form>
+        </div>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link href="/login" className="text-blue-500 hover:underline">
-            Login
-          </Link>
-        </p>
+        {isProcessing && <p className="text-indigo-500 font-medium animate-pulse">Analyzing...</p>}
+        {error && <p className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">{error}</p>}
+
+        {/* Detailed Result */}
+        {result && (
+          <div className="w-full bg-gray-50 rounded-xl p-4 mt-2 border border-gray-100">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+              {result.Words.map((word: any, idx: number) => (
+                <div key={idx} className="flex flex-col items-center">
+                  <span className={`text-lg font-bold ${word.AccuracyScore >= 80 ? "text-green-700" : word.AccuracyScore >= 60 ? "text-yellow-600" : "text-red-600"}`}>
+                    {word.Word}
+                  </span>
+                  <div className="flex gap-0.5 mt-1">
+                    {word.Phonemes?.map((p: any, pIdx: number) => (
+                      <span key={pIdx}
+                        className={`text-xs px-1 rounded min-w-[20px] text-center ${
+                          p.AccuracyScore >= 80 ? "bg-green-100 text-green-800" : p.AccuracyScore >= 60 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
+                        }`}
+                        title={`/${p.Phoneme}/: ${p.AccuracyScore}`}
+                      >
+                        {p.Phoneme}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3578,101 +2527,205 @@ export default function RegisterPage() {
 
 
 ================================================
-FILE: apps/frontend/app/vocabulary/page.tsx
+FILE: apps/frontend/components/vocabulary/QuickSearchModal.tsx
 ================================================
-'use client';
+// apps/frontend/components/vocabulary/QuickSearchModal.tsx
+import React, { useEffect, useRef } from "react";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import axios from 'axios';
-
-// --- HELPER: WAV ENCODER (Ported from Extension) ---
-// Chuyển đổi Blob Audio sang WAV 16kHz Mono (Chuẩn Azure)
-async function convertAudioToWav(audioBlob: Blob): Promise<Blob> {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 16000,
-    });
-    const arrayBuffer = await audioBlob.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    const pcmData = audioBuffer.getChannelData(0);
-    const wavBuffer = encodeWAV(pcmData, 16000);
-    return new Blob([wavBuffer], { type: "audio/wav" });
-}
-
-function encodeWAV(samples: Float32Array, sampleRate: number) {
-    const buffer = new ArrayBuffer(44 + samples.length * 2);
-    const view = new DataView(buffer);
-    const writeString = (view: DataView, offset: number, string: string) => {
-        for (let i = 0; i < string.length; i++) {
-            view.setUint8(offset + i, string.charCodeAt(i));
-        }
-    };
-    writeString(view, 0, "RIFF");
-    view.setUint32(4, 36 + samples.length * 2, true);
-    writeString(view, 8, "WAVE");
-    writeString(view, 12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-    writeString(view, 36, "data");
-    view.setUint32(40, samples.length * 2, true);
-    
-    let offset = 44;
-    for (let i = 0; i < samples.length; i++, offset += 2) {
-        let s = Math.max(-1, Math.min(1, samples[i]));
-        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    }
-    return view;
-}
-
-// --- INTERFACES ---
+// Định nghĩa lại interface VocabItem ở đây (hoặc import nếu bạn có file types chung)
 interface VocabItem {
   id: string;
   word: string;
-  topic?: string | null;
-  partOfSpeech?: string | null;
-  pronunciation?: string | null;
   meaning?: string | null;
-  example?: string | null;
-  relatedWords?: string | null;
-  occurrence: number;
-  isStarred: boolean;
-  createdAt: string;
-  updatedAt: string;
+  partOfSpeech?: string | null;
+  topic?: string | null;
+  isStarred?: boolean;
+  occurrence?: number;
 }
 
-// Interface kết quả từ Azure
-interface AssessmentResult {
-    AccuracyScore: number;
-    FluencyScore?: number;
-    CompletenessScore?: number;
-    PronScore?: number;
-    Words: Array<{
-        Word: string;
-        AccuracyScore: number;
-        ErrorType: string;
-        Phonemes: Array<{
-            Phoneme: string;
-            AccuracyScore: number;
-        }>
-    }>
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  searchText: string;
+  onSearchChange: (text: string) => void;
+  results: VocabItem[];
+  isSearching: boolean;
+  isIframeMode: boolean; // 👇 Quan trọng để chỉnh độ mờ
+  
+  // Các Actions
+  onSelect: (item: VocabItem) => void;
+  onCreate: (text: string) => void;
+  onSpeak: (text: string, e: React.MouseEvent) => void;
+  onOpenAssessment: (item: VocabItem, e: React.MouseEvent) => void;
 }
 
-interface FilterState {
-  word: string;
-  topic: string;
-  partOfSpeech: string;
-  meaning: string;
+export default function QuickSearchModal({
+  isOpen,
+  onClose,
+  searchText,
+  onSearchChange,
+  results,
+  isSearching,
+  isIframeMode,
+  onSelect,
+  onCreate,
+  onSpeak,
+  onOpenAssessment
+}: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  // 👇 LOGIC FIX BLUR: 
+  // Nếu là Iframe (Extension): Nền trong suốt hoặc rất mờ để nhìn thấy web dưới
+  // Nếu là Web thường: Nền đen mờ 60%
+  const overlayClass = isIframeMode
+    ? "fixed inset-0 bg-black/5 z-[100] flex items-start justify-center pt-20"
+    : "fixed inset-0 bg-black/60 z-[100] flex items-start justify-center pt-32 backdrop-blur-sm";
+
+  const hasExactMatch = results.some(
+    (item) => item.word.toLowerCase() === searchText.trim().toLowerCase()
+  );
+
+  return (
+    <div className={overlayClass} onClick={onClose}>
+      <div
+        className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col mx-4 border border-gray-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+          <span className="text-xl">🔍</span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchText}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" &&
+              results.length === 0 &&
+              onCreate(searchText)
+            }
+            placeholder="Type to search or create..."
+            className="flex-1 text-xl font-light outline-none bg-transparent h-10"
+          />
+          <div className="text-xs text-gray-400 border border-gray-200 px-2 py-1 rounded">
+            ESC to close
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 max-h-[60vh] overflow-y-auto">
+          {isSearching ? (
+            <div className="p-8 text-center text-gray-400">Searching...</div>
+          ) : (
+            <>
+              {/* Create New Button */}
+              {searchText && !hasExactMatch && (
+                <div
+                  className="p-4 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center group cursor-pointer hover:bg-indigo-100 transition-colors"
+                  onClick={() => onCreate(searchText)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center font-bold text-xl">
+                      +
+                    </div>
+                    <div>
+                      <div className="font-bold text-indigo-800">
+                        Create "{searchText}"
+                      </div>
+                      <div className="text-xs text-indigo-500">
+                        Auto-fill meaning & pronunciation
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-indigo-600 bg-white px-3 py-1 rounded-full shadow-sm">
+                    Enter ↵
+                  </span>
+                </div>
+              )}
+
+              {/* Results List */}
+              {results.length > 0 ? (
+                <ul className="divide-y divide-gray-100">
+                  {results.map((item) => (
+                    <li
+                      key={item.id}
+                      onClick={() => onSelect(item)}
+                      className="p-3 hover:bg-indigo-50 cursor-pointer transition-colors group"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-lg text-indigo-700">
+                              {item.word}
+                            </span>
+                            
+                            {/* Actions nhỏ trong list */}
+                            <button
+                              onClick={(e) => onOpenAssessment(item, e)}
+                              className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-green-100"
+                            >
+                              🎤
+                            </button>
+                            <button
+                              onClick={(e) => onSpeak(item.word, e)}
+                              className="text-gray-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-100"
+                            >
+                              🔊
+                            </button>
+                            
+                            {item.partOfSpeech && (
+                              <span className="text-[10px] uppercase font-bold text-indigo-500 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
+                                {item.partOfSpeech}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-800 line-clamp-2">
+                            {item.meaning || <span className="italic text-gray-400">No meaning</span>}
+                          </div>
+                        </div>
+                        
+                        {/* Meta info bên phải */}
+                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                          {item.topic && (
+                            <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              {item.topic}
+                            </span>
+                          )}
+                          {item.isStarred && <span className="text-yellow-400 text-xs">★</span>}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                !hasExactMatch &&
+                searchText && (
+                  <div className="p-4 text-center text-gray-400 text-sm">
+                    No existing words match.
+                  </div>
+                )
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-interface SortState {
-  key: string;
-  direction: 'asc' | 'desc';
-}
+
+================================================
+FILE: apps/frontend/components/vocabulary/VocabFormModal.tsx
+================================================
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { MicrophoneIcon, SpeakerIcon } from "@/components/Icons";
 
 interface VocabFormData {
   word: string;
@@ -3684,943 +2737,153 @@ interface VocabFormData {
   pronunciation: string;
 }
 
-export default function VocabularyPage() {
-  const { token } = useAuth();
-  
-  // --- STATES ---
-  const [vocabs, setVocabs] = useState<VocabItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [showStarredOnly, setShowStarredOnly] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    word: '', topic: '', partOfSpeech: '', meaning: ''
-  });
-  const [sortConfig, setSortConfig] = useState<SortState>({
-    key: 'updatedAt', direction: 'desc'
-  });
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: VocabFormData;
+  isEditMode: boolean;
+  onSave: (data: VocabFormData) => void;
+  // Removed onDelete
+  onSpeak: (text: string) => void;
+  onRecord: (tempData: VocabFormData) => void;
+}
 
-  // --- RECORDING & ASSESSMENT STATES ---
-  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
-  const [recordingVocab, setRecordingVocab] = useState<string>(""); // Từ đang luyện
-  const [isRecording, setIsRecording] = useState(false);
-  const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
-  const [assessmentError, setAssessmentError] = useState<string>("");
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const [userAudioUrl, setUserAudioUrl] = useState<string | null>(null);
+export default function VocabFormModal({
+  isOpen, onClose, initialData, isEditMode, onSave, onSpeak, onRecord
+}: Props) {
+  const [formData, setFormData] = useState<VocabFormData>(initialData);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
 
-  // --- DRAG & DROP COLUMN STATE ---
-  const [columnOrder, setColumnOrder] = useState<string[]>([
-    'star', 'updatedAt', 'topic', 'word', 'partOfSpeech', 
-    'pronunciation', 'meaning', 'example', 'relatedWords', 'occurrence', 'actions'
-  ]);
-  const [draggedCol, setDraggedCol] = useState<string | null>(null);
+  useEffect(() => {
+    setFormData(initialData);
+  }, [initialData]);
 
-  // --- QUICK SEARCH STATES ---
-  const [showSearch, setShowSearch] = useState(false);
-  const [quickSearchText, setQuickSearchText] = useState('');
-  const [quickSearchResults, setQuickSearchResults] = useState<VocabItem[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const quickSearchDebounce = useRef<NodeJS.Timeout | null>(null);
+  if (!isOpen) return null;
 
-  // --- MODAL STATES ---
-  const [selectedVocab, setSelectedVocab] = useState<VocabItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<VocabFormData>({
-    word: '', meaning: '', example: '', topic: '', partOfSpeech: '', relatedWords: '', pronunciation: ''
-  });
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // --- FETCH DATA ---
-  const fetchVocabs = useCallback(async (
-    pageNum = 1,
-    currentFilters = filters,
-    currentSort = sortConfig,
-    starred = showStarredOnly
-  ) => {
-    if (!token) return;
-    setLoading(true);
+  const fetchAutoFillData = async (word: string) => {
+    if (!word) return;
+    setIsAutoFilling(true);
     try {
-      const params: any = {
-        page: pageNum,
-        limit: 20,
-        ...currentFilters,
-        sortBy: currentSort.key,
-        sortOrder: currentSort.direction
-      };
-      if (starred) params.isStarred = 'true';
+      const [dictRes, transRes] = await Promise.all([
+        axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`).catch(() => null),
+        axios.get(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(word)}`).catch(() => null),
+      ]);
+      let newData: Partial<VocabFormData> = {};
 
-      const res = await axios.get('http://localhost:5000/vocabulary', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: params,
-      });
+      // Parse Dictionary
+      if (dictRes?.data?.[0]) {
+        const entry = dictRes.data[0];
+        newData.pronunciation = entry.phonetic || entry.phonetics?.find((x: any) => x.text && x.audio)?.text;
+        if (entry.meanings?.[0]) {
+          newData.partOfSpeech = entry.meanings[0].partOfSpeech;
+          newData.example = entry.meanings[0].definitions?.find((d: any) => d.example)?.example;
+        }
+      }
 
-      setVocabs(res.data.data);
-      setTotalPages(res.data.meta.lastPage);
-      setPage(res.data.meta.page);
-    } catch (error) {
-      console.error("Fetch error:", error);
+      // Parse Translate
+      if (transRes?.data?.[0]) {
+        newData.meaning = transRes.data[0].map((item: any) => item[0]).join("");
+      }
+
+      setFormData((prev) => ({ ...prev, ...newData }));
+    } catch (e) {
+      console.error(e);
     } finally {
-      setLoading(false);
+      setIsAutoFilling(false);
     }
-  }, [token, filters, sortConfig, showStarredOnly]);
-
-  useEffect(() => {
-    fetchVocabs();
-  }, [fetchVocabs]);
-
-  // ==========================================
-  // 👇 PRONUNCIATION LOGIC (NEW)
-  // ==========================================
-  
-  const handleOpenAssessment = (word: string, e?: React.MouseEvent) => {
-      if(e) e.stopPropagation();
-      setRecordingVocab(word);
-      setAssessmentResult(null);
-      setAssessmentError("");
-      setUserAudioUrl(null);
-      setIsAssessmentModalOpen(true);
-  };
-
-  const startRecording = async () => {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) audioChunksRef.current.push(event.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-             const audioUrl = URL.createObjectURL(audioBlob);
-             setUserAudioUrl(audioUrl);
-             await processAudio(audioBlob);
-             // Stop tracks
-             stream.getTracks().forEach(track => track.stop());
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
-        setAssessmentError("");
-    } catch (err) {
-        console.error(err);
-        setAssessmentError("Microphone access denied or not available.");
-    }
-  };
-
-  const stopRecording = () => {
-      if (mediaRecorderRef.current && isRecording) {
-          mediaRecorderRef.current.stop();
-          setIsRecording(false);
-      }
-  };
-
-  const processAudio = async (audioBlob: Blob) => {
-      setIsProcessingAudio(true);
-      try {
-          // 1. Get Config from LocalStorage (Synced from Extension)
-          const azureKey = localStorage.getItem("azureKey");
-          const azureRegion = localStorage.getItem("azureRegion");
-
-          if (!azureKey || !azureRegion) {
-              throw new Error("Missing Azure Configuration. Please install the Extension or configure keys.");
-          }
-
-          // 2. Convert to WAV
-          const wavBlob = await convertAudioToWav(audioBlob);
-
-          // 3. Prepare Headers
-          const assessParams = {
-              ReferenceText: recordingVocab,
-              GradingSystem: "HundredMark",
-              Granularity: "Phoneme",
-              Dimension: "Comprehensive",
-          };
-          const paramsHeader = btoa(JSON.stringify(assessParams));
-          const url = `https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`;
-
-          // 4. Call Azure API
-          const response = await axios.post(url, wavBlob, {
-              headers: {
-                  "Ocp-Apim-Subscription-Key": azureKey,
-                  "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
-                  "Accept": "application/json",
-                  "Pronunciation-Assessment": paramsHeader,
-              }
-          });
-
-          // 5. Handle Result
-          const data = response.data;
-          if (data.NBest && data.NBest[0]) {
-              const result = data.NBest[0];
-              setAssessmentResult({
-                  AccuracyScore: result.PronunciationAssessment?.AccuracyScore || result.AccuracyScore,
-                  Words: result.Words
-              });
-          } else {
-              setAssessmentError("Could not recognize speech. Please try again.");
-          }
-
-      } catch (err: any) {
-          console.error("Azure API Error:", err);
-          setAssessmentError(err.response?.data ? JSON.stringify(err.response.data) : err.message);
-      } finally {
-          setIsProcessingAudio(false);
-      }
-  };
-
-  // ==========================================
-  // 👇 CORE LOGIC HANDLERS
-  // ==========================================
-
-  const triggerInteraction = async (vocab: VocabItem) => {
-    try {
-        const newOccurrence = (vocab.occurrence || 0) + 1;
-        const newTime = new Date().toISOString();
-        setVocabs(prev => prev.map(v => v.id === vocab.id 
-            ? { ...v, occurrence: newOccurrence, updatedAt: newTime } : v
-        ));
-        await axios.patch(`http://localhost:5000/vocabulary/${vocab.id}`, 
-            { occurrence: newOccurrence },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-    } catch (e) { console.error("Interaction update failed", e); }
-  };
-
-  const handleRowClick = (vocab: VocabItem) => {
-    setSelectedVocab(vocab);
-    setFormData({
-      word: vocab.word,
-      meaning: vocab.meaning || '',
-      example: vocab.example || '',
-      topic: vocab.topic || '',
-      partOfSpeech: vocab.partOfSpeech || '',
-      relatedWords: vocab.relatedWords || '',
-      pronunciation: vocab.pronunciation || ''
-    });
-    setIsModalOpen(true);
-    triggerInteraction(vocab);
-  };
-
-  const handleSpeakerClick = (vocab: VocabItem, e: React.MouseEvent) => {
-      e.stopPropagation();
-      handleSpeak(vocab.word);
-      triggerInteraction(vocab);
-  }
-
-  const handleSpeak = (text: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (!text) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice =
-      voices.find((voice) => voice.name.includes("Aria") && voice.lang === "en-US") ||
-      voices.find((voice) => voice.name.includes("Natural") && voice.lang.startsWith("en-US")) ||
-      voices.find((voice) => (voice.name.includes("Microsoft") || voice.name.includes("Online")) && voice.lang === "en-US") ||
-      voices.find((voice) => voice.lang === "en-US");
-    if (preferredVoice) utterance.voice = preferredVoice;
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const handleSave = async () => {
-    if (!token || !formData.word) {
-        alert("Word is required!");
-        return;
-    }
-    try {
-        if (selectedVocab) {
-            await axios.patch(`http://localhost:5000/vocabulary/${selectedVocab.id}`, 
-                formData, { headers: { Authorization: `Bearer ${token}` } }
-            );
-        } else {
-            await axios.post('http://localhost:5000/vocabulary', 
-                { ...formData, isStarred: false }, 
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-        }
-        setIsModalOpen(false);
-        setQuickSearchText('');
-        fetchVocabs(page);
-    } catch (error) {
-        console.error("Save failed", error);
-        alert("Failed to save.");
-    }
-  };
-
-  const handleToggleStar = async (id: string, currentStatus: boolean, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const toggleFunc = (list: VocabItem[]) =>
-      list.map(item => item.id === id ? { ...item, isStarred: !currentStatus } : item);
-    setVocabs(toggleFunc);
-    setQuickSearchResults(toggleFunc);
-
-    try {
-      await axios.patch(`http://localhost:5000/vocabulary/${id}`,
-        { isStarred: !currentStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-    } catch (error) { console.error("Failed to star", error); }
-  };
-
-  // --- DRAG & DROP HANDLERS ---
-  const handleDragStart = (e: React.DragEvent, colId: string) => {
-    setDraggedCol(colId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-  const handleDragOver = (e: React.DragEvent, colId: string) => {
-    e.preventDefault();
-    if (!draggedCol || draggedCol === colId) return;
-    const newOrder = [...columnOrder];
-    const draggedIdx = newOrder.indexOf(draggedCol);
-    const targetIdx = newOrder.indexOf(colId);
-    if (draggedIdx !== -1 && targetIdx !== -1) {
-        newOrder.splice(draggedIdx, 1);
-        newOrder.splice(targetIdx, 0, draggedCol);
-        setColumnOrder(newOrder);
-    }
-  };
-  const handleDragEnd = () => { setDraggedCol(null); };
-
-  // --- COLUMN CONFIGURATION (UPDATED WITH MIC) ---
-  const columnConfig: Record<string, { 
-    label: React.ReactNode, 
-    width: string, 
-    renderCell: (v: VocabItem) => React.ReactNode,
-    renderFilter?: () => React.ReactNode,
-    sortKey?: string
-  }> = {
-    'star': {
-        label: '★', width: 'w-12', sortKey: 'isStarred',
-        renderCell: (v) => (
-            <div className="text-center">
-                <button onClick={(e) => handleToggleStar(v.id, v.isStarred, e)} className="hover:bg-gray-100 rounded-full p-1 transition-transform active:scale-90">
-                    <StarIcon filled={v.isStarred} className={v.isStarred ? "text-yellow-400 w-5 h-5" : "text-gray-300 w-5 h-5"} />
-                </button>
-            </div>
-        )
-    },
-    'updatedAt': {
-        label: 'Last Active', width: 'w-40', sortKey: 'updatedAt',
-        renderCell: (v) => (
-            <div className="font-mono text-xs text-gray-500">
-                {new Date(v.updatedAt).toLocaleDateString()} <br/>
-                <span className="text-gray-400">{new Date(v.updatedAt).toLocaleTimeString()}</span>
-            </div>
-        )
-    },
-    'topic': {
-        label: 'Topic', width: 'w-32', sortKey: 'topic',
-        renderCell: (v) => v.topic && <span className="bg-gray-100 px-2 py-0.5 rounded text-xs">{v.topic}</span>,
-        renderFilter: () => <input className="w-full border rounded px-2 py-1 text-xs outline-none focus:border-indigo-500" placeholder="Filter..." value={filters.topic} onChange={(e) => handleFilterChange('topic', e.target.value)} />
-    },
-    'word': {
-        label: 'Word', width: 'w-44', sortKey: 'word',
-        renderCell: (v) => (
-            <div className="flex items-center justify-between gap-2 font-bold text-indigo-700">
-                <span>{v.word}</span>
-                <div className="flex items-center gap-1">
-                    {/* 👇 ADDED: MIC ICON */}
-                    <button 
-                        onClick={(e) => handleOpenAssessment(v.word, e)}
-                        className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-green-50 transition-colors"
-                        title="Practice Pronunciation"
-                    >
-                        <MicrophoneIcon className="w-4 h-4" />
-                    </button>
-                    <button 
-                        onClick={(e) => handleSpeakerClick(v, e)} 
-                        className="text-gray-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-50 transition-colors"
-                    >
-                        <SpeakerIcon className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
-        ),
-        renderFilter: () => <input className="w-full border rounded px-2 py-1 text-xs outline-none focus:border-indigo-500" placeholder="Filter..." value={filters.word} onChange={(e) => handleFilterChange('word', e.target.value)} />
-    },
-    'partOfSpeech': {
-        label: 'Type', width: 'w-24',
-        renderCell: (v) => <span className="italic text-gray-500">{v.partOfSpeech}</span>,
-        renderFilter: () => <input className="w-full border rounded px-2 py-1 text-xs outline-none focus:border-indigo-500" placeholder="Type..." value={filters.partOfSpeech} onChange={(e) => handleFilterChange('partOfSpeech', e.target.value)} />
-    },
-    'pronunciation': {
-        label: 'Pronun.', width: 'w-32',
-        renderCell: (v) => <span className="font-mono text-gray-500 text-xs">{v.pronunciation}</span>
-    },
-    'meaning': {
-        label: 'Meaning', width: 'w-48',
-        renderCell: (v) => <span className="text-gray-800">{v.meaning}</span>,
-        renderFilter: () => <input className="w-full border rounded px-2 py-1 text-xs outline-none focus:border-indigo-500" placeholder="Meaning..." value={filters.meaning} onChange={(e) => handleFilterChange('meaning', e.target.value)} />
-    },
-    'example': {
-        label: 'Example', width: 'w-64',
-        renderCell: (v) => <span className="italic text-gray-500 text-xs">{v.example}</span>
-    },
-    'relatedWords': {
-        label: 'Related', width: 'w-48',
-        renderCell: (v) => <span className="text-gray-500 text-xs">{v.relatedWords}</span>
-    },
-    'occurrence': {
-        label: 'Count', width: 'w-24', sortKey: 'occurrence',
-        renderCell: (v) => <div className="text-center font-semibold text-gray-500">{v.occurrence}</div>
-    },
-    'actions': {
-        label: 'Action', width: 'w-20',
-        renderCell: (v) => (
-            <button onClick={(e) => { e.stopPropagation(); handleRowClick(v); }} className="text-indigo-600 hover:text-indigo-800 text-xs border border-indigo-200 px-2 py-1 rounded hover:bg-indigo-50 w-full mb-1">
-                Edit
-            </button>
-        )
-    }
-  };
-
-  const handleOpenCreateModal = (initialWord = '') => {
-      setSelectedVocab(null);
-      setFormData({ word: initialWord, meaning: '', example: '', topic: '', partOfSpeech: '', relatedWords: '', pronunciation: '' });
-      setIsModalOpen(true);
-      setShowSearch(false); 
-  };
-
-  const performQuickSearch = async (text: string) => {
-    if (!token || !text.trim()) { setQuickSearchResults([]); return; }
-    setIsSearching(true);
-    try {
-      const res = await axios.get('http://localhost:5000/vocabulary', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { page: 1, limit: 5, search: text, sortBy: 'word', sortOrder: 'asc' }
-      });
-      setQuickSearchResults(res.data.data);
-    } catch (error) { console.error("Quick search error", error); } 
-    finally { setIsSearching(false); }
-  };
-
-  const handleQuickSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const text = e.target.value;
-    setQuickSearchText(text);
-    if (quickSearchDebounce.current) clearTimeout(quickSearchDebounce.current);
-    quickSearchDebounce.current = setTimeout(() => performQuickSearch(text), 300);
-  };
-
-  useEffect(() => {
-    let lastKeyPressTime = 0;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'INPUT' && !showSearch) return;
-      if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
-
-      if (e.code === 'Space') {
-        const currentTime = new Date().getTime();
-        if (currentTime - lastKeyPressTime < 300) {
-          e.preventDefault();
-          setShowSearch(true);
-          setQuickSearchText('');
-          setQuickSearchResults([]);
-          setTimeout(() => searchInputRef.current?.focus(), 100);
-        }
-        lastKeyPressTime = currentTime;
-      }
-      if (e.code === 'Escape') {
-        setShowSearch(false);
-        setIsModalOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSearch]);
-
-  const handleSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
-    if ((key === 'createdAt' || key === 'updatedAt') && sortConfig.key !== key) { direction = 'desc'; }
-    const newSort: SortState = { key, direction };
-    setSortConfig(newSort);
-    fetchVocabs(1, filters, newSort);
-  };
-
-  const getSortIcon = (colKey: string) => {
-    if (sortConfig.key !== colKey) return <span className="text-gray-300 ml-1 opacity-50">↕</span>;
-    return sortConfig.direction === 'asc' ? <span className="ml-1 text-indigo-600">▲</span> : <span className="ml-1 text-indigo-600">▼</span>;
-  };
-
-  const handleFilterChange = (field: keyof FilterState, value: string) => {
-    const newFilters = { ...filters, [field]: value };
-    setFilters(newFilters);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchVocabs(1, newFilters, sortConfig), 500);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this word?")) return;
-    try {
-      await axios.delete(`http://localhost:5000/vocabulary/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchVocabs(page, filters, sortConfig);
-      setIsModalOpen(false);
-    } catch (e) { alert("Failed"); }
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !token) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      setIsUploading(true);
-      await axios.post('http://localhost:5000/vocabulary/import/csv', formData, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
-      });
-      alert('Import success!');
-      fetchVocabs(1);
-    } catch (error) { alert('Import failed!'); }
-    finally { setIsUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 text-black relative">
-
-      {/* --- ASSESSMENT MODAL (NEW) --- */}
-      {isAssessmentModalOpen && (
-        <div className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setIsAssessmentModalOpen(false)}>
-            <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center p-8 relative" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setIsAssessmentModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
-                
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">{recordingVocab}</h3>
-                <p className="text-sm text-gray-500 mb-8">Click mic to practice pronunciation</p>
-
-                {/* Score Ring */}
-                {assessmentResult && (
-                    <div className="relative w-32 h-32 mb-6 flex items-center justify-center rounded-full border-8" 
-                        style={{ borderColor: assessmentResult.AccuracyScore >= 80 ? '#4caf50' : assessmentResult.AccuracyScore >= 60 ? '#ffeb3b' : '#ff5252' }}>
-                        <span className="text-4xl font-bold" style={{ color: assessmentResult.AccuracyScore >= 80 ? '#4caf50' : assessmentResult.AccuracyScore >= 60 ? '#fbc02d' : '#ff5252' }}>
-                            {Math.round(assessmentResult.AccuracyScore)}
-                        </span>
-                    </div>
-                )}
-
-                {/* Recording Control */}
-                <div className="mb-6 flex gap-4 items-center">
-                    <button 
-                        onClick={isRecording ? stopRecording : startRecording}
-                        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-105 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-                    >
-                        {isRecording ? <div className="w-6 h-6 bg-white rounded-sm" /> : <MicrophoneIcon className="w-8 h-8 text-white" />}
-                    </button>
-                </div>
-
-                {isProcessingAudio && <p className="text-indigo-500 font-medium animate-pulse">Analyzing...</p>}
-                {assessmentError && <p className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">{assessmentError}</p>}
-
-                {/* Phoneme Analysis */}
-                {assessmentResult && (
-                    <div className="w-full bg-gray-50 rounded-xl p-4 mt-2">
-                        <div className="flex flex-wrap justify-center gap-2">
-                            {assessmentResult.Words.map((word, idx) => (
-                                <div key={idx} className="flex flex-col items-center">
-                                    <span className={`text-lg font-bold ${word.AccuracyScore >= 80 ? 'text-green-700' : word.AccuracyScore >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
-                                        {word.Word}
-                                    </span>
-                                    <div className="flex gap-0.5 mt-1">
-                                        {word.Phonemes?.map((p, pIdx) => (
-                                            <span 
-                                                key={pIdx} 
-                                                className={`text-xs px-1 rounded ${
-                                                    p.AccuracyScore >= 80 ? 'bg-green-100 text-green-800' : 
-                                                    p.AccuracyScore >= 60 ? 'bg-yellow-100 text-yellow-800' : 
-                                                    'bg-red-100 text-red-800'
-                                                }`}
-                                                title={`/${p.Phoneme}/: ${p.AccuracyScore}`}
-                                            >
-                                                {p.Phoneme}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {userAudioUrl && (
-                            <div className="mt-4 flex justify-center">
-                                <audio controls src={userAudioUrl} className="h-8 w-full max-w-[200px]" />
-                            </div>
-                        )}
-                    </div>
-                )}
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="bg-indigo-600 p-6 text-white flex justify-between items-start shrink-0">
+          <div className="w-full">
+            <div className="text-xs uppercase tracking-wider opacity-80 mb-2">
+               {isEditMode ? "Editing Vocabulary" : "Create New Vocabulary"}
             </div>
-        </div>
-      )}
-
-      {/* QUICK SEARCH MODAL */}
-      {showSearch && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center pt-32 backdrop-blur-sm" onClick={() => setShowSearch(false)}>
-          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-              <span className="text-xl">🔍</span>
+            <div className="flex items-center gap-3 w-full">
               <input
-                ref={searchInputRef}
-                type="text"
-                value={quickSearchText}
-                onChange={handleQuickSearchChange}
-                onKeyDown={(e) => e.key === 'Enter' && quickSearchResults.length === 0 && handleOpenCreateModal(quickSearchText)}
-                placeholder="Type to search or create..."
-                className="flex-1 text-xl font-light outline-none bg-transparent h-10"
+                value={formData.word}
+                onChange={(e) => setFormData({ ...formData, word: e.target.value })}
+                onBlur={() => !isEditMode && fetchAutoFillData(formData.word)}
+                className="bg-transparent text-4xl font-bold text-white placeholder-white/50 outline-none w-full border-b border-white/20 pb-1 focus:border-white transition-colors"
+                placeholder="Word..."
+                autoFocus={!isEditMode}
               />
-              <div className="text-xs text-gray-400 border border-gray-200 px-2 py-1 rounded">ESC to close</div>
-            </div>
-            <div className="bg-gray-50 max-h-[60vh] overflow-y-auto">
-              {isSearching ? (
-                <div className="p-8 text-center text-gray-400">Searching...</div>
-              ) : quickSearchText && quickSearchResults.length === 0 ? (
-                <div className="p-6 text-center">
-                  <p className="text-gray-500 mb-4">No matching vocabulary found for "<b>{quickSearchText}</b>"</p>
-                  <button
-                    onClick={() => handleOpenCreateModal(quickSearchText)}
-                    className="bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 shadow-md flex items-center gap-2 mx-auto"
-                  >
-                    <span>+</span> Create new word "{quickSearchText}"
+              {isAutoFilling && <div className="text-xs text-indigo-200 animate-pulse ml-2 whitespace-nowrap">âœ¨ Filling...</div>}
+              
+              {formData.word && (
+                <>
+                  <button onClick={() => onRecord(formData)} className="p-2 bg-white/20 rounded-full hover:bg-green-500 text-white transition-colors">
+                    <MicrophoneIcon className="w-6 h-6" />
                   </button>
-                </div>
-              ) : (
-                <ul className="divide-y divide-gray-100">
-                  {quickSearchResults.map(item => (
-                    <li
-                      key={item.id}
-                      onClick={() => { setShowSearch(false); handleRowClick(item); }}
-                      className="p-3 hover:bg-indigo-50 cursor-pointer transition-colors group"
-                    >
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-lg text-indigo-700">{item.word}</span>
-                            
-                            {/* 👇 ADDED: MIC ICON IN QUICK SEARCH */}
-                            <button 
-                                onClick={(e) => handleOpenAssessment(item.word, e)}
-                                className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-green-100 transition-colors"
-                                title="Practice Pronunciation"
-                            >
-                                <MicrophoneIcon className="w-4 h-4" />
-                            </button>
-
-                            <button 
-                                onClick={(e) => handleSpeakerClick(item, e)}
-                                className="text-gray-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-100 transition-colors"
-                                title="Play Audio"
-                            >
-                                <SpeakerIcon className="w-4 h-4" />
-                            </button>
-                            {item.partOfSpeech && (
-                                <span className="text-[10px] uppercase font-bold text-indigo-500 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
-                                    {item.partOfSpeech}
-                                </span>
-                            )}
-                          </div>
-                          {item.pronunciation && <div className="text-xs font-mono text-gray-500 mb-1">{item.pronunciation}</div>}
-                          <div className="text-sm text-gray-800 line-clamp-2">
-                             {item.meaning || <span className="italic text-gray-400">No meaning provided</span>}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                            {item.topic && ( <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{item.topic}</span> )}
-                            {item.isStarred && ( <span className="text-yellow-400 text-xs">★</span> )}
-                             <span className="text-[10px] text-gray-400">View: {item.occurrence}</span>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                  <button onClick={() => onSpeak(formData.word)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 text-white">
+                    <SpeakerIcon className="w-6 h-6" />
+                  </button>
+                </>
               )}
             </div>
           </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white text-2xl font-bold ml-4">âœ•</button>
         </div>
-      )}
 
-      {/* EDIT / CREATE MODAL */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className="bg-indigo-600 p-6 text-white flex justify-between items-start shrink-0">
-                <div className="w-full">
-                    <div className="text-xs uppercase tracking-wider opacity-80 mb-2">
-                        {selectedVocab ? 'Editing Vocabulary' : 'Create New Vocabulary'}
-                    </div>
-                    <div className="flex items-center gap-3 w-full">
-                        <input 
-                            value={formData.word}
-                            onChange={(e) => setFormData({...formData, word: e.target.value})}
-                            className="bg-transparent text-4xl font-bold text-white placeholder-white/50 outline-none w-full border-b border-white/20 pb-1 focus:border-white transition-colors"
-                            placeholder="Word..."
-                            autoFocus={!selectedVocab}
-                        />
-                        {formData.word && (
-                            <>
-                                {/* 👇 ADDED: MIC ICON IN EDIT MODAL */}
-                                <button onClick={(e) => handleOpenAssessment(formData.word, e)} className="p-2 bg-white/20 rounded-full hover:bg-green-500 text-white transition-colors">
-                                    <MicrophoneIcon className="w-6 h-6" />
-                                </button>
-                                <button onClick={(e) => handleSpeak(formData.word, e)} className="p-2 bg-white/20 rounded-full hover:bg-white/30 text-white">
-                                    <SpeakerIcon className="w-6 h-6" />
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-                <button onClick={() => setIsModalOpen(false)} className="text-white/70 hover:text-white text-2xl font-bold ml-4">✕</button>
+        {/* Body */}
+        <div className="p-6 space-y-5 overflow-y-auto relative">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Pronunciation</label>
+              <input value={formData.pronunciation} onChange={(e) => setFormData({ ...formData, pronunciation: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm" placeholder="/.../" />
             </div>
-
-            <div className="p-6 space-y-5 overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
-                     <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Pronunciation</label>
-                        <input 
-                            value={formData.pronunciation}
-                            onChange={(e) => setFormData({...formData, pronunciation: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
-                            placeholder="/.../"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Part Of Speech</label>
-                        <select 
-                            value={formData.partOfSpeech}
-                            onChange={(e) => setFormData({...formData, partOfSpeech: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-                        >
-                            <option value="">-- Select --</option>
-                            <option value="noun">Noun (Danh từ)</option>
-                            <option value="verb">Verb (Động từ)</option>
-                            <option value="adjective">Adjective (Tính từ)</option>
-                            <option value="adverb">Adverb (Trạng từ)</option>
-                            <option value="phrase">Phrase (Cụm từ)</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Meaning</label>
-                    <textarea 
-                        value={formData.meaning}
-                        onChange={(e) => setFormData({...formData, meaning: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[80px] text-lg font-medium text-gray-800"
-                        placeholder="Nghĩa của từ..."
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Example</label>
-                    <textarea 
-                        value={formData.example}
-                        onChange={(e) => setFormData({...formData, example: e.target.value})}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50 italic text-gray-600"
-                        placeholder="Ví dụ minh họa..."
-                    />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Topic</label>
-                         <input 
-                            value={formData.topic}
-                            onChange={(e) => setFormData({...formData, topic: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="e.g. IT, Travel..."
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Related Words</label>
-                         <input 
-                            value={formData.relatedWords}
-                            onChange={(e) => setFormData({...formData, relatedWords: e.target.value})}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="Synonyms, Antonyms..."
-                        />
-                    </div>
-                </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Part Of Speech</label>
+              <select value={formData.partOfSpeech} onChange={(e) => setFormData({ ...formData, partOfSpeech: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="">-- Select --</option>
+                <option value="noun">Noun</option>
+                <option value="verb">Verb</option>
+                <option value="adjective">Adjective</option>
+                <option value="adverb">Adverb</option>
+                <option value="phrase">Phrase</option>
+              </select>
             </div>
-
-            <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-between items-center shrink-0">
-                 {selectedVocab ? (
-                    <div className="text-xs text-gray-400">
-                       Updated: {new Date(selectedVocab.updatedAt).toLocaleString()}
-                    </div>
-                 ) : <div></div>}
-                 
-                 <div className="flex gap-3">
-                    {selectedVocab && (
-                        <button onClick={() => handleDelete(selectedVocab.id)} className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200">
-                            Delete
-                        </button>
-                    )}
-                    <button onClick={() => setIsModalOpen(false)} className="text-gray-600 hover:bg-gray-200 px-5 py-2 rounded-lg text-sm font-medium transition-colors">
-                        Cancel
-                    </button>
-                    <button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-md transform active:scale-95 transition-all">
-                        {selectedVocab ? 'Save Changes' : 'Create Word'}
-                    </button>
-                 </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Meaning</label>
+            <textarea value={formData.meaning} onChange={(e) => setFormData({ ...formData, meaning: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[80px] text-lg font-medium text-gray-800" placeholder="NghÄ©a cá»§a tá»«..." />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Example</label>
+            <textarea value={formData.example} onChange={(e) => setFormData({ ...formData, example: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50 italic text-gray-600" placeholder="VÃ­ dá»¥..." />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Topic</label>
+              <input value={formData.topic} onChange={(e) => setFormData({ ...formData, topic: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Topic..." />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Related Words</label>
+              <input value={formData.relatedWords} onChange={(e) => setFormData({ ...formData, relatedWords: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Synonyms..." />
             </div>
           </div>
         </div>
-      )}
 
-      {/* PAGE HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">My Vocabulary</h1>
-           <p className="text-gray-500 text-sm mt-1">
-            Double-tap <kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-xs border border-gray-300 font-mono">Space</kbd> to Quick Search / Create
-          </p>
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <button onClick={() => handleOpenCreateModal('')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 font-medium">
-             <span>+</span> New Word
+        {/* Footer */}
+        <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+          <button onClick={onClose} className="text-gray-600 hover:bg-gray-200 px-5 py-2 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+          <button onClick={() => onSave(formData)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-md transform active:scale-95 transition-all">
+            {isEditMode ? "Save Changes" : "Create Word"}
           </button>
-          <button
-            onClick={() => { const newValue = !showStarredOnly; setShowStarredOnly(newValue); fetchVocabs(1, filters, sortConfig, newValue); }}
-            className={`px-4 py-2 rounded-lg border flex items-center gap-2 transition-colors ${showStarredOnly ? 'bg-yellow-50 border-yellow-400 text-yellow-700' : 'bg-white border-gray-300 text-gray-600'}`}
-          >
-            <StarIcon filled={showStarredOnly} className={showStarredOnly ? "text-yellow-500" : "text-gray-400"} />
-            <span className="text-sm font-medium">{showStarredOnly ? 'Starred' : 'All'}</span>
-          </button>
-          <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 text-sm font-medium">
-            {isUploading ? '...' : '📂 CSV'}
-          </button>
-        </div>
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto pb-4">
-          <table className="min-w-full divide-y divide-gray-200 table-fixed">
-            <thead className="bg-gray-50 select-none">
-              <tr>
-                {columnOrder.map((colId) => {
-                    const config = columnConfig[colId];
-                    if (!config) return null;
-                    const isDragging = draggedCol === colId;
-                    return (
-                        <th 
-                            key={colId} draggable
-                            onDragStart={(e) => handleDragStart(e, colId)}
-                            onDragOver={(e) => handleDragOver(e, colId)}
-                            onDragEnd={handleDragEnd}
-                            onClick={() => config.sortKey && handleSort(config.sortKey)}
-                            className={`
-                                ${config.width} px-4 py-3 text-left 
-                                text-xs font-bold text-gray-500 uppercase border-r border-gray-200 
-                                cursor-move hover:bg-gray-100 transition-all duration-200
-                                ${isDragging ? 'opacity-50 bg-indigo-50 border-2 border-indigo-300 scale-95 shadow-inner' : ''}
-                                ${colId === 'actions' ? 'sticky right-0 bg-gray-50 shadow-l z-10' : ''}
-                            `}
-                        >
-                            <div className="flex items-center justify-between pointer-events-none">
-                                <span>{config.label}</span>
-                                {config.sortKey && getSortIcon(config.sortKey)}
-                            </div>
-                        </th>
-                    );
-                })}
-              </tr>
-              <tr className="bg-white border-b border-gray-200">
-                {columnOrder.map((colId) => {
-                    const config = columnConfig[colId];
-                    if (!config) return null;
-                    return (
-                        <td key={colId} className={`p-2 border-r border-gray-100 ${colId === 'actions' ? 'sticky right-0 bg-white z-10' : ''}`}>
-                            {config.renderFilter ? config.renderFilter() : null}
-                        </td>
-                    );
-                })}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr><td colSpan={columnOrder.length} className="text-center py-10 text-gray-500">Loading data...</td></tr>
-              ) : vocabs.length === 0 ? (
-                <tr><td colSpan={columnOrder.length} className="text-center py-10 text-gray-500">No vocabulary found.</td></tr>
-              ) : (
-                vocabs.map((vocab) => (
-                  <tr
-                    key={vocab.id}
-                    className="hover:bg-indigo-50/50 group transition-colors cursor-pointer"
-                    onClick={() => handleRowClick(vocab)}
-                  >
-                    {columnOrder.map((colId) => {
-                        const config = columnConfig[colId];
-                        if (!config) return null;
-                        return (
-                          <td 
-                                key={colId} 
-                                className={`
-                                    px-4 py-3 text-sm border-r border-gray-100 align-top whitespace-normal break-words
-                                    ${colId === 'actions' ? 'sticky right-0 bg-white group-hover:bg-indigo-50/50 shadow-l z-10' : ''}
-                                `}
-                                onClick={colId === 'actions' || colId === 'star' ? (e) => e.stopPropagation() : undefined}
-                            >
-                                {config.renderCell(vocab)}
-                            </td>
-                        )
-                    })}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center sticky bottom-0 z-20">
-           <button disabled={page <= 1} onClick={() => { const newPage = page - 1; setPage(newPage); fetchVocabs(newPage, filters, sortConfig); }} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium">← Previous</button>
-          <span className="text-sm font-medium text-gray-600">Page <span className="text-indigo-600 font-bold">{page}</span> of {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => { const newPage = page + 1; setPage(newPage); fetchVocabs(newPage, filters, sortConfig); }} className="px-4 py-2 bg-white border rounded shadow-sm hover:bg-gray-100 disabled:opacity-50 text-sm font-medium">Next →</button>
         </div>
       </div>
     </div>
   );
 }
 
-// --- ICONS ---
-function StarIcon({ filled, className }: { filled: boolean; className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? "0" : "2"} strokeLinecap="round" strokeLinejoin="round" className={className} width="24" height="24">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  );
-}
-function SpeakerIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-    </svg>
-  );
-}
-function MicrophoneIcon({ className }: { className?: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" y1="19" x2="12" y2="23"></line>
-            <line x1="8" y1="23" x2="16" y2="23"></line>
-        </svg>
-    );
-}
-
 
 ================================================
-FILE: apps/frontend/app/vocabulary/tree.txt
+FILE: apps/frontend/components/vocabulary/VocabTable.tsx
 ================================================
-vocabulary
-├── page.tsx
-└── tree.txt
-
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 8588: character maps to <undefined>
 
 
 ================================================
