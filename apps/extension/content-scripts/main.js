@@ -1,5 +1,5 @@
 // ==========================================
-// MODULE: UI MANAGER
+// MODULE: UI MANAGER - QUICK SEARCH IFRAME
 // ==========================================
 const UI = (() => {
   let iframe = null;
@@ -8,25 +8,28 @@ const UI = (() => {
     if (iframe) return;
 
     iframe = document.createElement("iframe");
-    iframe.id = "vocab-extension-overlay";
+    iframe.id = "vocab-quick-search-iframe";
 
-    // Style đè full màn hình
+    // Style: Giữa màn hình, nền trong suốt
     Object.assign(iframe.style, {
       position: "fixed",
-      top: "0",
-      left: "0",
-      width: "100%",
-      height: "100%",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "500px",
+      height: "600px",
       border: "none",
+      boxShadow: "none",
       zIndex: "2147483647",
-      backgroundColor: "transparent", // Để React tự lo phần nền đen mờ
+      backgroundColor: "transparent",
+      overflow: "hidden",
+      pointerEvents: "auto",
     });
 
-    // Gọi về Frontend (Localhost)
-    // iframeMode=true: để Frontend biết đường ẩn Header/Sidebar nếu cần
     iframe.src =
-      "http://localhost:3000/vocabulary?openSearch=true&iframeMode=true";
-    iframe.allow = "microphone *; camera *; clipboard-write"; // Cấp quyền Mic
+      "https://localhost:3001/vocabulary?openSearch=true&iframeMode=true";
+    iframe.allow = "microphone *; camera *; clipboard-write";
+    iframe.scrolling = "no";
 
     document.body.appendChild(iframe);
 
@@ -52,8 +55,8 @@ const UI = (() => {
 // MODULE: SHORTCUT LISTENER
 // ==========================================
 window.addEventListener("keydown", (e) => {
-  // Bắt sự kiện Shift + Q
-  if (e.shiftKey && e.code === "KeyQ") {
+  // Ctrl + Q hoặc Cmd + Q (Mac)
+  if ((e.ctrlKey || e.metaKey) && e.code === "KeyQ") {
     e.preventDefault();
     UI.toggle();
   }
@@ -65,11 +68,11 @@ window.addEventListener("keydown", (e) => {
 // Lắng nghe lệnh đóng từ bên trong Iframe (Frontend gửi ra)
 window.addEventListener("message", (event) => {
   // Check origin để bảo mật
-  if (event.origin !== "http://localhost:3000") return;
+  if (event.origin !== "https://localhost:3001") return;
 
   if (event.data === "CLOSE_EXTENSION_IFRAME") {
     UI.remove();
   }
 });
 
-console.log("✅ Vocab Extension Loaded: Press Shift+Q to open!");
+console.log("✅ Vocab Quick Search Loaded: Press Ctrl+Q!");

@@ -1,7 +1,6 @@
 // apps/frontend/components/vocabulary/QuickSearchModal.tsx
 import React, { useEffect, useRef } from "react";
 
-// Định nghĩa lại interface VocabItem ở đây (hoặc import nếu bạn có file types chung)
 interface VocabItem {
   id: string;
   word: string;
@@ -16,16 +15,18 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   searchText: string;
-  onSearchChange: (text: string) => void;
+  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   results: VocabItem[];
   isSearching: boolean;
-  isIframeMode: boolean; // 👇 Quan trọng để chỉnh độ mờ
   
   // Các Actions
   onSelect: (item: VocabItem) => void;
-  onCreate: (text: string) => void;
-  onSpeak: (text: string, e: React.MouseEvent) => void;
-  onOpenAssessment: (item: VocabItem, e: React.MouseEvent) => void;
+  onCreate: () => void;
+  hasExactMatch: boolean;
+  searchInputRef: React.RefObject<HTMLInputElement>;
+  handleSpeak: (text: string, e?: React.MouseEvent) => void;
+  handleOpenAssessment: (item: VocabItem, e?: React.MouseEvent) => void;
+  triggerInteraction: (item: VocabItem) => void;
 }
 
 export default function QuickSearchModal({
@@ -35,35 +36,28 @@ export default function QuickSearchModal({
   onSearchChange,
   results,
   isSearching,
-  isIframeMode,
   onSelect,
   onCreate,
-  onSpeak,
-  onOpenAssessment
+  hasExactMatch,
+  searchInputRef,
+  handleSpeak,
+  handleOpenAssessment,
+  triggerInteraction
 }: Props) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+    if (isOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
     }
-  }, [isOpen]);
+  }, [isOpen, searchInputRef]);
 
   if (!isOpen) return null;
 
-  // 👇 LOGIC FIX BLUR: 
-  // Nếu là Iframe (Extension): Nền trong suốt hoặc rất mờ để nhìn thấy web dưới
-  // Nếu là Web thường: Nền đen mờ 60%
-  const overlayClass = isIframeMode
-    ? "fixed inset-0 bg-black/5 z-[100] flex items-start justify-center pt-20"
-    : "fixed inset-0 bg-black/60 z-[100] flex items-start justify-center pt-32 backdrop-blur-sm";
-
-  const hasExactMatch = results.some(
-    (item) => item.word.toLowerCase() === searchText.trim().toLowerCase()
-  );
-
   return (
-    <div className={overlayClass} onClick={onClose}>
+    <div 
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-20"
+      onClick={onClose}
+      style={{ backgroundColor: 'transparent' }}
+    >
       <div
         className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col mx-4 border border-gray-100"
         onClick={(e) => e.stopPropagation()}
@@ -71,15 +65,15 @@ export default function QuickSearchModal({
         <div className="p-4 border-b border-gray-100 flex items-center gap-3">
           <span className="text-xl">🔍</span>
           <input
-            ref={inputRef}
+            ref={searchInputRef}
             type="text"
             value={searchText}
-            onChange={(e) => onSearchChange(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === "Enter" &&
-              results.length === 0 &&
-              onCreate(searchText)
-            }
+            onChange={onSearchChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && results.length === 0 && !hasExactMatch) {
+                onCreate();
+              }
+            }}
             placeholder="Type to search or create..."
             className="flex-1 text-xl font-light outline-none bg-transparent h-10"
           />
@@ -97,7 +91,7 @@ export default function QuickSearchModal({
               {searchText && !hasExactMatch && (
                 <div
                   className="p-4 bg-indigo-50 border-b border-indigo-100 flex justify-between items-center group cursor-pointer hover:bg-indigo-100 transition-colors"
-                  onClick={() => onCreate(searchText)}
+                  onClick={onCreate}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center font-bold text-xl">
@@ -124,7 +118,10 @@ export default function QuickSearchModal({
                   {results.map((item) => (
                     <li
                       key={item.id}
-                      onClick={() => onSelect(item)}
+                      onClick={() => {
+                        triggerInteraction(item);
+                        onSelect(item);
+                      }}
                       className="p-3 hover:bg-indigo-50 cursor-pointer transition-colors group"
                     >
                       <div className="flex justify-between items-start gap-3">
@@ -136,13 +133,19 @@ export default function QuickSearchModal({
                             
                             {/* Actions nhỏ trong list */}
                             <button
-                              onClick={(e) => onOpenAssessment(item, e)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenAssessment(item, e);
+                              }}
                               className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-green-100"
                             >
                               🎤
                             </button>
                             <button
-                              onClick={(e) => onSpeak(item.word, e)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSpeak(item.word, e);
+                              }}
                               className="text-gray-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-100"
                             >
                               🔊

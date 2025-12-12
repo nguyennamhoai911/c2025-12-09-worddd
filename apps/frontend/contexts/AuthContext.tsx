@@ -26,9 +26,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load token from localStorage on mount
+  // Load token from localStorage or cookie on mount
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
+    let savedToken = localStorage.getItem('token');
+    
+    // Nếu không có trong localStorage, thử lấy từ cookie
+    if (!savedToken) {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
+      if (tokenCookie) {
+        savedToken = tokenCookie.split('=')[1];
+        // Lưu lại vào localStorage để sync
+        localStorage.setItem('token', savedToken);
+      }
+    }
+    
     if (savedToken) {
       setToken(savedToken);
       fetchUser(savedToken);
@@ -40,13 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user info
   const fetchUser = async (authToken: string) => {
     try {
-      const response = await axios.get('http://localhost:5000/auth/me', {
+      const response = await axios.get('https://localhost:5001/auth/me', {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setUser(response.data);
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
+      document.cookie = 'token=; path=/; max-age=0'; // Xóa cookie
       setToken(null);
     } finally {
       setIsLoading(false);
@@ -55,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Login
   const login = async (email: string, password: string) => {
-    const response = await axios.post('http://localhost:5000/auth/login', {
+    const response = await axios.post('https://localhost:5001/auth/login', {
       email,
       password,
     });
@@ -63,13 +76,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { token: newToken, user: newUser } = response.data;
     
     localStorage.setItem('token', newToken);
+    // Lưu vào cookie để iframe có thể access (7 ngày)
+    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
     setToken(newToken);
     setUser(newUser);
   };
 
   // Register
   const register = async (email: string, password: string, name?: string) => {
-    const response = await axios.post('http://localhost:5000/auth/register', {
+    const response = await axios.post('https://localhost:5001/auth/register', {
       email,
       password,
       name,
@@ -78,6 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { token: newToken, user: newUser } = response.data;
     
     localStorage.setItem('token', newToken);
+    // Lưu vào cookie để iframe có thể access (7 ngày)
+    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
     setToken(newToken);
     setUser(newUser);
   };
@@ -85,6 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout
   const logout = () => {
     localStorage.removeItem('token');
+    // Xóa cookie
+    document.cookie = 'token=; path=/; max-age=0';
     setToken(null);
     setUser(null);
   };

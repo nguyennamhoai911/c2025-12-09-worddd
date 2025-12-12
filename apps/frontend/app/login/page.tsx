@@ -31,7 +31,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     // Redirect to backend Google OAuth
-    window.location.href = 'http://localhost:5000/auth/google';
+    window.location.href = 'https://localhost:5001/auth/google';
   };
 
   return (
