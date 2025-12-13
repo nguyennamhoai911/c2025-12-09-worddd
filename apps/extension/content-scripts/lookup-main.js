@@ -6,21 +6,43 @@ let isSoundEnabled = true;
 let lastRecordedBlob = null;
 
 // 1. TTS Helper
+// apps/extension/content-scripts/lookup-main.js
+
+// 1. TTS Helper
 async function speakWithEdgeTTS(text) {
   if (!isSoundEnabled) return;
   window.speechSynthesis.cancel();
+
   try {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 0.9;
-    const voices = window.speechSynthesis.getVoices();
-    const ariaVoice = voices.find(
-      (v) =>
-        v.name.includes("Aria") ||
-        v.name.includes("Natural") ||
-        v.lang === "en-US"
-    );
-    if (ariaVoice) utterance.voice = ariaVoice;
+
+    // 👇 LOGIC MỚI: Wait for voices to load (Chrome đôi khi load voice chậm)
+    let voices = window.speechSynthesis.getVoices();
+
+    // Nếu chưa load được voice, chờ sự kiện onvoiceschanged
+    if (voices.length === 0) {
+      await new Promise((resolve) => {
+        window.speechSynthesis.onvoiceschanged = () => {
+          voices = window.speechSynthesis.getVoices();
+          resolve();
+        };
+      });
+    }
+
+    // Logic chọn giọng tương tự Frontend
+    const ariaVoice =
+      voices.find((v) => v.name.includes("Microsoft Aria Online")) || // Ưu tiên 1
+      voices.find((v) => v.name.includes("Aria")) || // Ưu tiên 2
+      voices.find((v) => v.name.includes("Natural") && v.lang === "en-US") || // Ưu tiên 3
+      voices.find((v) => v.lang === "en-US"); // Fallback
+
+    if (ariaVoice) {
+      utterance.voice = ariaVoice;
+      console.log("Extension using voice:", ariaVoice.name);
+    }
+
     window.speechSynthesis.speak(utterance);
   } catch (error) {
     console.error("TTS Error:", error);

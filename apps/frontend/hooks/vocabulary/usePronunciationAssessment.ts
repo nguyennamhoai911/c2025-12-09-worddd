@@ -203,18 +203,40 @@ const usePronunciationAssessment = (
     }
   };
 
+ // apps/frontend/hooks/vocabulary/usePronunciationAssessment.ts
+
   const handleSpeak = (text: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!text) return;
     window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(
-      (v) => v.name.includes("Aria") || v.name.includes("Google US English")
-    );
-    if (preferredVoice) utterance.voice = preferredVoice;
+    utterance.rate = 0.9; // Tốc độ đọc (0.9 là vừa phải)
+
+    // 👇 LOGIC MỚI: Ưu tiên tuyệt đối cho Microsoft Aria Online
+    const getVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      
+      // 1. Tìm chính xác giọng Microsoft Aria Online (Ưu tiên số 1)
+      const ariaOnline = voices.find(v => v.name.includes("Microsoft Aria Online"));
+      if (ariaOnline) return ariaOnline;
+
+      // 2. Nếu không có Online, tìm giọng Aria bất kỳ (Ưu tiên số 2)
+      const ariaAny = voices.find(v => v.name.includes("Aria"));
+      if (ariaAny) return ariaAny;
+
+      // 3. Fallback: Tìm giọng US English tự nhiên (Google US English, etc.)
+      return voices.find(v => v.lang === "en-US" && !v.name.includes("Zira")); 
+    };
+
+    const preferredVoice = getVoice();
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+      // console.log("Using voice:", preferredVoice.name); // Bật dòng này để debug xem nó đang dùng giọng nào
+    }
+
     window.speechSynthesis.speak(utterance);
   };
 
