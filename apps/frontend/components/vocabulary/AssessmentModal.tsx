@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MicrophoneIcon, SpeakerIcon } from "@/components/Icons";
 import { AssessmentResult } from "@/hooks/vocabulary/usePronunciationAssessment";
@@ -35,7 +34,7 @@ export default function AssessmentModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-black/80 z-[2147483649] flex items-center justify-center p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div

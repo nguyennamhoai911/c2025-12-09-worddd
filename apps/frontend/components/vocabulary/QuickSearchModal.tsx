@@ -1,15 +1,6 @@
-// apps/frontend/components/vocabulary/QuickSearchModal.tsx
-import React, { useEffect, useRef } from "react";
-
-interface VocabItem {
-  id: string;
-  word: string;
-  meaning?: string | null;
-  partOfSpeech?: string | null;
-  topic?: string | null;
-  isStarred?: boolean;
-  occurrence?: number;
-}
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { VocabItem } from "@/hooks/vocabulary/useVocabData";
 
 interface Props {
   isOpen: boolean;
@@ -44,11 +35,89 @@ export default function QuickSearchModal({
   handleOpenAssessment,
   triggerInteraction
 }: Props) {
+  const [translation, setTranslation] = useState<string>("");
+  const [pronunciation, setPronunciation] = useState<string>("");
+  const [partOfSpeech, setPartOfSpeech] = useState<string>("");
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  // Auto translate when search text changes and no exact match
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       setTimeout(() => searchInputRef.current?.focus(), 100);
     }
   }, [isOpen, searchInputRef]);
+
+  useEffect(() => {
+    const fetchTranslation = async () => {
+      // Chỉ reset khi có exact match, không phụ thuộc vào results.length
+      if (!searchText || hasExactMatch) {
+        setTranslation("");
+        setPronunciation("");
+        setPartOfSpeech("");
+        return;
+      }
+
+      setIsTranslating(true);
+      try {
+        // Fetch cả dictionary và translation như code autofill hiện tại
+        const dictPromise = axios
+          .get(`https://api.dictionaryapi.dev/api/v2/entries/en/${searchText}`)
+          .catch(() => null);
+
+        const translatePromise = axios
+          .get(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
+              searchText
+            )}`
+          )
+          .catch(() => null);
+
+        const [dictRes, transRes] = await Promise.all([
+          dictPromise,
+          translatePromise,
+        ]);
+
+        // Xử lý dictionary data
+        if (dictRes && dictRes.data && dictRes.data[0]) {
+          const entry = dictRes.data[0];
+          
+          // Pronunciation
+          if (entry.phonetic) {
+            setPronunciation(entry.phonetic);
+          } else if (entry.phonetics && entry.phonetics.length > 0) {
+            const p = entry.phonetics.find((x: any) => x.text && x.audio);
+            setPronunciation(p ? p.text : entry.phonetics[0].text || "");
+          }
+          
+          // Part of Speech
+          if (entry.meanings && entry.meanings.length > 0) {
+            setPartOfSpeech(entry.meanings[0].partOfSpeech || "");
+          }
+        }
+
+        // Xử lý translation
+        if (transRes && transRes.data && transRes.data[0]) {
+          const translatedText = transRes.data[0]
+            .map((item: any) => item[0])
+            .join("");
+          setTranslation(translatedText);
+        }
+      } catch (error) {
+        console.error("Translation error:", error);
+        setTranslation("");
+        setPronunciation("");
+        setPartOfSpeech("");
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchTranslation();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchText, hasExactMatch]);
 
   if (!isOpen) return null;
 
@@ -87,6 +156,77 @@ export default function QuickSearchModal({
             <div className="p-8 text-center text-gray-400">Searching...</div>
           ) : (
             <>
+              {/* Google Translate Preview Section - Show when no exact match */}
+              {searchText && !hasExactMatch && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+                  <div className="p-4 space-y-3">
+                    {/* Word with pronunciation buttons */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-2xl font-bold text-gray-800">
+                        {searchText}
+                      </span>
+                      
+                      {/* Pronunciation */}
+                      {pronunciation && (
+                        <span className="text-sm text-gray-600 font-mono bg-white px-2 py-1 rounded border border-gray-200">
+                          {pronunciation}
+                        </span>
+                      )}
+                      
+                      {/* Part of Speech */}
+                      {partOfSpeech && (
+                        <span className="text-[10px] uppercase font-bold text-indigo-600 bg-indigo-100 border border-indigo-200 px-2 py-1 rounded">
+                          {partOfSpeech}
+                        </span>
+                      )}
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSpeak(searchText, e);
+                        }}
+                        className="p-2 hover:bg-blue-100 rounded-full transition-colors"
+                        title="Play pronunciation"
+                      >
+                        🔊
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenAssessment({ 
+                            id: 'temp', 
+                            word: searchText,
+                            userId: '',
+                            createdAt: new Date(),
+                            updatedAt: new Date()
+                          }, e);
+                        }}
+                        className="p-2 hover:bg-green-100 rounded-full transition-colors"
+                        title="Test pronunciation"
+                      >
+                        🎤
+                      </button>
+                    </div>
+
+                    {/* Translation */}
+                    {isTranslating ? (
+                      <div className="text-sm text-gray-500 italic animate-pulse">
+                        Loading...
+                      </div>
+                    ) : translation ? (
+                      <div className="bg-white rounded-lg p-3 border border-blue-200">
+                        <div className="text-xs text-gray-500 mb-1">
+                          🌐 Google Translate
+                        </div>
+                        <div className="text-base text-gray-800 font-medium">
+                          {translation}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
               {/* Create New Button */}
               {searchText && !hasExactMatch && (
                 <div
@@ -177,7 +317,7 @@ export default function QuickSearchModal({
                 </ul>
               ) : (
                 !hasExactMatch &&
-                searchText && (
+                searchText && !translation && !isTranslating && (
                   <div className="p-4 text-center text-gray-400 text-sm">
                     No existing words match.
                   </div>
