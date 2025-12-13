@@ -10,18 +10,7 @@
         padding: 0;
         box-sizing: border-box;
       }
-      /* Thêm style riêng cho status bar */
-      .connection-status {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 13px;
-      }
+
       body {
         width: 450px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -212,15 +201,7 @@
   <body>
     <div class="container">
       <h2>⚙️ Cài đặt Google Search API</h2>
-      <div class="connection-status">
-        <div>
-          <span id="conn-dot" class="status-dot status-disconnected"></span>
-          <span id="conn-text">Chưa kết nối Web App</span>
-        </div>
-        <div style="font-size: 11px; opacity: 0.8">
-          *Auto-sync khi vào localhost:3000
-        </div>
-      </div>
+
       <div class="guide-section">
         <h3>📌 Hướng dẫn lấy API Key:</h3>
         <ol>

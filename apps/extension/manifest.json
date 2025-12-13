@@ -1,9 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Edge TTS Reader & Vocabulary Coach",
-  "version": "1.2",
-  "description": "Đọc văn bản, Check phát âm Azure, Dịch ngữ cảnh & Ôn tập từ vựng",
-  "permissions": ["storage", "microphone", "alarms"],
+  "name": "Vocabulary Coach & App Connector",
+  "version": "2.0",
+  "description": "Full App Integration: Iframe, TTS, Azure Speech & Flashcards",
+  "permissions": [
+    "storage",
+    "microphone",
+    "alarms"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -13,8 +17,15 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content-scripts/main.js"],
-      "css": ["popup.css"]
+      "js": [
+        "content-scripts/lookup-services.js",
+        "content-scripts/lookup-ui.js",
+        "content-scripts/lookup-main.js",
+        "content-scripts/main.js"
+      ],
+      "css": [
+        "popup.css"
+      ]
     }
   ],
   "host_permissions": [
@@ -24,6 +35,14 @@
     "https://api.duckduckgo.com/*",
     "https://www.googleapis.com/*",
     "https://api.unsplash.com/*",
-    "https://*.cognitiveservices.azure.com/*"
+    "https://*.cognitiveservices.azure.com/*",
+    "http://localhost:3000/*", 
+    "https://localhost:3001/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.css"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

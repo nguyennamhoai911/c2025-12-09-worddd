@@ -1,17 +1,14 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  // Elements
+  // Elements cho Azure (Giữ nguyên)
   const azureKeyInput = document.getElementById("azure-key-input");
   const azureRegionInput = document.getElementById("azure-region-input");
   const saveBtn = document.getElementById("save-btn");
   const testBtn = document.getElementById("test-btn");
 
-  // Status Elements
-  const connDot = document.getElementById("conn-dot");
-  const connText = document.getElementById("conn-text");
-
-  // Toggle Visibility
+  // Xử lý nút mắt thần (Toggle Visibility) cho tất cả input password
   document.querySelectorAll(".toggle-visibility").forEach((btn) => {
     btn.addEventListener("click", (e) => {
+      // Tìm input cùng cấp với nút bấm
       const input = e.target.parentElement.querySelector("input");
       if (input) {
         input.type = input.type === "password" ? "text" : "password";
@@ -21,26 +18,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- 1. LOAD DATA ---
   chrome.storage.sync.get(
-    ["googleApiKeys", "azureKey", "azureRegion", "authToken"],
+    ["googleApiKeys", "azureKey", "azureRegion"], // Lưu ý: key mới là 'googleApiKeys' (dạng mảng)
     (result) => {
-      // 1.1 Check Auth Token (Auto-sync Status)
-      if (result.authToken) {
-        connDot.className = "status-dot status-connected";
-        connText.textContent = "Đã kết nối Web App (Ready to Save)";
-      } else {
-        connDot.className = "status-dot status-disconnected";
-        connText.textContent = "Chưa có Token (Hãy F5 trang Web App)";
-      }
-
-      // 1.2 Load Azure
+      // Load Azure
       if (result.azureKey) azureKeyInput.value = result.azureKey;
       if (result.azureRegion) azureRegionInput.value = result.azureRegion;
 
-      // 1.3 Load Google Keys (List)
+      // Load Google Keys (List)
       const keys = result.googleApiKeys || [];
+
+      // Loop qua 5 slot để điền dữ liệu
       for (let i = 0; i < 5; i++) {
         const keyInput = document.getElementById(`api-key-${i}`);
         const cxInput = document.getElementById(`cx-${i}`);
+
         if (keys[i]) {
           if (keyInput) keyInput.value = keys[i].key || "";
           if (cxInput) cxInput.value = keys[i].cx || "";
@@ -54,35 +45,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     const azureKey = azureKeyInput.value.trim();
     const azureRegion = azureRegionInput.value.trim();
 
+    // Gom dữ liệu từ 5 slot Google
     let googleKeysList = [];
     for (let i = 0; i < 5; i++) {
       const keyVal = document.getElementById(`api-key-${i}`).value.trim();
       const cxVal = document.getElementById(`cx-${i}`).value.trim();
+
+      // Chỉ lưu nếu có điền Key (CX có thể dùng chung hoặc riêng)
       if (keyVal) {
-        googleKeysList.push({ key: keyVal, cx: cxVal });
+        googleKeysList.push({
+          key: keyVal,
+          cx: cxVal, // Nếu cx trống, logic bên content.js sẽ handle sau
+        });
       }
     }
 
+    // Validation
     if (googleKeysList.length === 0) {
       showStatusMessage("⚠️ Cần ít nhất 1 Google API Key chính!", "warning");
       return;
     }
 
-    // Save
+    // Save to Storage
     chrome.storage.sync.set(
       {
-        googleApiKeys: googleKeysList,
+        googleApiKeys: googleKeysList, // Lưu dạng mảng object
         azureKey: azureKey,
         azureRegion: azureRegion,
       },
       () => {
-        showStatusMessage(`✅ Đã lưu cài đặt thành công!`, "success");
+        showStatusMessage(
+          `✅ Đã lưu ${googleKeysList.length} bộ key!`,
+          "success"
+        );
         setTimeout(hideStatusMessage, 3000);
       }
     );
   });
 
-  // --- 3. TEST API ---
+  // --- 3. TEST API (Test key đầu tiên) ---
   testBtn.addEventListener("click", async () => {
     const key0 = document.getElementById("api-key-0").value.trim();
     const cx0 = document.getElementById("cx-0").value.trim();
@@ -118,14 +119,9 @@ function showStatusMessage(message, type) {
   const statusDiv = document.getElementById("status-message");
   statusDiv.textContent = message;
   statusDiv.className = `status-message show ${type}`;
-  statusDiv.style.display = "block";
-  if (type === "success") statusDiv.style.backgroundColor = "#4caf50";
-  if (type === "error") statusDiv.style.backgroundColor = "#f44336";
-  if (type === "warning") statusDiv.style.backgroundColor = "#ff9800";
-  if (type === "loading") statusDiv.style.backgroundColor = "#2196f3";
 }
 
 function hideStatusMessage() {
   const statusDiv = document.getElementById("status-message");
-  statusDiv.style.display = "none";
+  statusDiv.className = "status-message";
 }
