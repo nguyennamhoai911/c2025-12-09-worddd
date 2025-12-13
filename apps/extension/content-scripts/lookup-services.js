@@ -1,11 +1,104 @@
-// --- MODULE: SERVICES & API ---
+// =======================================================================
+// MODULE: SERVICES (API, Audio, Caching)
+// =======================================================================
 
-// 1. Caching System
+const BACKEND_URL = "https://localhost:5001";
+let isSoundEnabled = true;
+
+// --- 1. SETTINGS & AUDIO ---
+function toggleSoundState() {
+  isSoundEnabled = !isSoundEnabled;
+  if (!isSoundEnabled) window.speechSynthesis.cancel();
+  return isSoundEnabled;
+}
+
+async function speakWithEdgeTTS(text) {
+  if (!isSoundEnabled || !text) return;
+  window.speechSynthesis.cancel();
+
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+
+    // Fix lỗi Chrome load voice chậm
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      await new Promise((resolve) => {
+        window.speechSynthesis.onvoiceschanged = () => {
+          voices = window.speechSynthesis.getVoices();
+          resolve();
+        };
+      });
+    }
+
+    // Ưu tiên Microsoft Aria Online
+    const ariaVoice =
+      voices.find((v) => v.name.includes("Microsoft Aria Online")) ||
+      voices.find((v) => v.name.includes("Aria")) ||
+      voices.find(
+        (v) => v.name.includes("Natural") && v.lang.startsWith("en-US")
+      ) ||
+      voices.find((v) => v.lang === "en-US");
+
+    if (ariaVoice) utterance.voice = ariaVoice;
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error("TTS Error:", error);
+  }
+}
+
+// --- 2. BACKEND API (SAVE VOCAB) ---
+async function apiSaveVocabulary(data) {
+  try {
+    // Chuẩn bị dữ liệu
+    const meaning =
+      typeof data.translation === "string"
+        ? data.translation
+        : data.translation?.wordMeaning || "";
+
+    const partOfSpeech =
+      data.translation?.dict && data.translation.dict.length > 0
+        ? data.translation.dict[0].pos
+        : "";
+
+    const pronunciation = data.phonetics?.us
+      ? data.phonetics.us.replace(/\//g, "")
+      : "";
+
+    const payload = {
+      word: data.text,
+      meaning: meaning,
+      example: data.contextText || "",
+      pronunciation: pronunciation,
+      partOfSpeech: partOfSpeech,
+      topic: "Extension",
+      isStarred: false,
+    };
+
+    // Gọi API với credentials để lấy cookie token
+    const response = await fetch(`${BACKEND_URL}/vocabulary`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include", // Quan trọng để gửi cookie xác thực
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) throw new Error("Chưa đăng nhập App");
+      throw new Error("Lỗi kết nối Server");
+    }
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+
+// --- 3. CACHING SYSTEM ---
 async function getFromCache(key) {
   const storageKey = `cache_${key.toLowerCase().trim()}`;
   const result = await chrome.storage.local.get([storageKey]);
   const cachedItem = result[storageKey];
-  // Cache hết hạn sau 24h
   if (cachedItem && Date.now() - cachedItem.timestamp < 24 * 60 * 60 * 1000) {
     return cachedItem.data;
   }
@@ -31,33 +124,26 @@ async function saveToHistory(word, data) {
     if (history.length > 50) history.pop();
     await chrome.storage.local.set({ vocabHistory: history });
   } catch (e) {
-    console.warn("Save History Error:", e);
+    console.warn("History Error:", e);
   }
 }
 
-// 2. Google Translate & Dictionary API
+// --- 4. GOOGLE TRANSLATE API ---
 async function getTranslation(text, contextText = "") {
   try {
     let contextMeaning = null;
-    if (
-      contextText &&
-      contextText.length > 0 &&
-      contextText.length < 500 &&
-      contextText !== text
-    ) {
+    if (contextText && contextText.length > 0 && contextText !== text) {
       try {
-        const urlContext = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
+        const urlCtx = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
           contextText
         )}`;
-        const resCtx = await fetch(urlContext);
+        const resCtx = await fetch(urlCtx);
         if (resCtx.ok) {
           const dataCtx = await resCtx.json();
           if (dataCtx && dataCtx[0])
             contextMeaning = dataCtx[0].map((item) => item[0]).join("");
         }
-      } catch (e) {
-        /* Ignore */
-      }
+      } catch (e) {}
     }
 
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&dt=bd&q=${encodeURIComponent(
@@ -84,13 +170,12 @@ async function getTranslation(text, contextText = "") {
       };
     }
   } catch (error) {
-    console.error("Translation Error:", error);
     return null;
   }
   return null;
 }
 
-// 3. Image Fetching (Google Custom Search + Unsplash Fallback)
+// --- 5. IMAGE API ---
 async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
   try {
     const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
@@ -102,28 +187,11 @@ async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
     if (!response.ok) return null;
     const data = await response.json();
     if (data.items && data.items.length > 0)
-      return data.items.slice(0, 3).map((item) => item.link);
+      return data.items.map((item) => item.link);
   } catch (e) {
     if (e.message === "QUOTA_EXCEEDED") throw e;
   }
   return null;
-}
-
-async function getImagesFromUnsplash(searchTerm) {
-  try {
-    const response = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
-        searchTerm
-      )}&per_page=3&client_id=E8nbwS_cEWGVX4rM0e_-Eq6IpI_QKlO4eFEKfOl3AUo`
-    );
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results) return data.results.map((item) => item.urls.regular);
-    }
-  } catch (error) {
-    console.error("Unsplash Error:", error);
-  }
-  return [];
 }
 
 async function getImages(englishText) {
@@ -144,13 +212,12 @@ async function getImages(englishText) {
   }
 
   if (keyList.length > 0) {
-    for (let i = 0; i < keyList.length; i++) {
-      const { key, cx } = keyList[i];
+    for (const { key, cx } of keyList) {
       if (!key || !cx) continue;
       try {
-        const resultImages = await tryFetchGoogleImage(searchTerm, key, cx);
-        if (resultImages && resultImages.length > 0) {
-          images = resultImages;
+        const res = await tryFetchGoogleImage(searchTerm, key, cx);
+        if (res) {
+          images = res;
           break;
         }
       } catch (err) {
@@ -158,76 +225,44 @@ async function getImages(englishText) {
       }
     }
   }
-  if (images.length === 0) images = await getImagesFromUnsplash(searchTerm);
+  // Fallback Unsplash
+  if (images.length === 0) {
+    try {
+      const res = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
+          searchTerm
+        )}&per_page=3&client_id=E8nbwS_cEWGVX4rM0e_-Eq6IpI_QKlO4eFEKfOl3AUo`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results) images = data.results.map((i) => i.urls.regular);
+      }
+    } catch (e) {}
+  }
   return images;
 }
 
-// 4. Phonetics
-async function getPhoneticForWord(word) {
+// --- 6. PHONETICS & AZURE ---
+async function getPhoneticForText(text) {
   try {
     const response = await fetch(
       `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
-        word.trim()
+        text.trim()
       )}`
     );
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (data && data[0]) {
-      const result = { uk: null, us: null };
-      data[0].phonetics?.forEach((p) => {
-        if (p.text) {
-          if (p.audio && p.audio.includes("-uk")) result.uk = p.text;
-          else if (p.audio && p.audio.includes("-us")) result.us = p.text;
-          else if (!result.us && !result.uk) result.us = p.text;
-        }
-      });
-      if (!result.uk && !result.us && data[0].phonetic)
-        result.us = data[0].phonetic;
-      return result;
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data[0]) {
+        const p =
+          data[0].phonetic || data[0].phonetics.find((x) => x.text)?.text;
+        return { us: p ? `/${p}/` : `//${text}//` };
+      }
     }
-  } catch (error) {
-    console.error("Phonetic Error:", error);
-  }
-  return null;
+  } catch (e) {}
+  return { us: `//${text}//` };
 }
 
-async function getPhoneticForText(text) {
-  const words = text
-    .trim()
-    .split(/\s+/)
-    .filter((w) => w.length > 0);
-  const isLongText = words.length > 5;
-  const phonetics = await Promise.all(
-    words.map(async (word) => {
-      const cleanWord = word.replace(/[.,!?;:'"()]/g, "");
-      return cleanWord ? await getPhoneticForWord(cleanWord) : null;
-    })
-  );
-
-  const ukParts = [],
-    usParts = [];
-  phonetics.forEach((p, idx) => {
-    const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
-    if (p) {
-      if (!isLongText && p.uk) ukParts.push(p.uk);
-      usParts.push(p.us || p.uk || cleanWord);
-    } else {
-      if (!isLongText) ukParts.push(cleanWord);
-      usParts.push(cleanWord);
-    }
-  });
-
-  const formatPhonetics = (parts) => {
-    const combined = parts
-      .map((part) => (part ? part.replace(/^\/|\/$/g, "") : ""))
-      .filter(Boolean)
-      .join(" ");
-    return combined ? `//${combined}//` : null;
-  };
-  return { uk: null, us: formatPhonetics(usParts) };
-}
-
-// 5. Azure Speech & Audio Utils
+// Helper: Convert Audio
 async function convertAudioToWav(audioBlob) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)({
     sampleRate: 16000,
@@ -235,36 +270,32 @@ async function convertAudioToWav(audioBlob) {
   const arrayBuffer = await audioBlob.arrayBuffer();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   const pcmData = audioBuffer.getChannelData(0);
-  const wavBuffer = encodeWAV(pcmData, 16000);
-  return new Blob([wavBuffer], { type: "audio/wav" });
-}
 
-function encodeWAV(samples, sampleRate) {
-  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const buffer = new ArrayBuffer(44 + pcmData.length * 2);
   const view = new DataView(buffer);
   const writeString = (view, offset, string) => {
     for (let i = 0; i < string.length; i++)
       view.setUint8(offset + i, string.charCodeAt(i));
   };
   writeString(view, 0, "RIFF");
-  view.setUint32(4, 36 + samples.length * 2, true);
+  view.setUint32(4, 36 + pcmData.length * 2, true);
   writeString(view, 8, "WAVE");
   writeString(view, 12, "fmt ");
   view.setUint32(16, 16, true);
   view.setUint16(20, 1, true);
   view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true);
+  view.setUint32(24, 16000, true);
+  view.setUint32(28, 32000, true);
   view.setUint16(32, 2, true);
   view.setUint16(34, 16, true);
   writeString(view, 36, "data");
-  view.setUint32(40, samples.length * 2, true);
+  view.setUint32(40, pcmData.length * 2, true);
   let offset = 44;
-  for (let i = 0; i < samples.length; i++, offset += 2) {
-    let s = Math.max(-1, Math.min(1, samples[i]));
+  for (let i = 0; i < pcmData.length; i++, offset += 2) {
+    let s = Math.max(-1, Math.min(1, pcmData[i]));
     view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
   }
-  return view;
+  return new Blob([view], { type: "audio/wav" });
 }
 
 async function assessPronunciation(audioBlob, referenceText) {
@@ -272,8 +303,8 @@ async function assessPronunciation(audioBlob, referenceText) {
     const result = await chrome.storage.sync.get(["azureKey", "azureRegion"]);
     const key = result.azureKey;
     const region = result.azureRegion;
-    if (!key || !region)
-      throw new Error("Chưa nhập Azure Key/Region trong cài đặt.");
+    if (!key || !region) throw new Error("Chưa nhập Azure Key/Region.");
+
     const wavBlob = await convertAudioToWav(audioBlob);
     const assessParams = {
       ReferenceText: referenceText,
@@ -282,6 +313,7 @@ async function assessPronunciation(audioBlob, referenceText) {
       Dimension: "Comprehensive",
     };
     const paramsHeader = btoa(JSON.stringify(assessParams));
+
     const url = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`;
     const response = await fetch(url, {
       method: "POST",
@@ -293,13 +325,8 @@ async function assessPronunciation(audioBlob, referenceText) {
       },
       body: wavBlob,
     });
-    if (!response.ok) {
-      if (response.status === 401)
-        throw new Error("Sai Azure Key hoặc Region.");
-      if (response.status === 400)
-        throw new Error("Bad Request (Audio lỗi hoặc Text quá dài).");
-      throw new Error(`Azure Error ${response.status}`);
-    }
+
+    if (!response.ok) throw new Error(`Azure Error ${response.status}`);
     return await response.json();
   } catch (e) {
     throw e;

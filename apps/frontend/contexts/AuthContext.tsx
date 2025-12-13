@@ -1,3 +1,4 @@
+// apps/frontend/contexts/AuthContext.tsx
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -59,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
-      document.cookie = 'token=; path=/; max-age=0'; // Xóa cookie
+      // Xóa cookie cũ
+      document.cookie = 'token=; path=/; max-age=0; SameSite=None; Secure'; 
       setToken(null);
     } finally {
       setIsLoading(false);
@@ -72,12 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
     });
-
     const { token: newToken, user: newUser } = response.data;
     
     localStorage.setItem('token', newToken);
-    // Lưu vào cookie để iframe có thể access (7 ngày)
-    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
+    
+    // 👇 QUAN TRỌNG: Thêm SameSite=None; Secure để Extension dùng được Cookie này
+    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=None; Secure`;
+    
     setToken(newToken);
     setUser(newUser);
   };
@@ -89,12 +92,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       name,
     });
-
     const { token: newToken, user: newUser } = response.data;
     
     localStorage.setItem('token', newToken);
-    // Lưu vào cookie để iframe có thể access (7 ngày)
-    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
+    
+    // 👇 QUAN TRỌNG: Thêm SameSite=None; Secure
+    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=None; Secure`;
+    
     setToken(newToken);
     setUser(newUser);
   };
@@ -103,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     // Xóa cookie
-    document.cookie = 'token=; path=/; max-age=0';
+    document.cookie = 'token=; path=/; max-age=0; SameSite=None; Secure';
     setToken(null);
     setUser(null);
   };

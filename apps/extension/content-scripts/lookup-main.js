@@ -1,62 +1,43 @@
-// --- MODULE: MAIN CONTROLLER ---
+// =======================================================================
+// MODULE: MAIN CONTROLLER (Entry Point)
+// =======================================================================
+
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
-let isSoundEnabled = true;
 let lastRecordedBlob = null;
 
-// 1. TTS Helper
-// apps/extension/content-scripts/lookup-main.js
-
-// 1. TTS Helper
-async function speakWithEdgeTTS(text) {
-  if (!isSoundEnabled) return;
-  window.speechSynthesis.cancel();
+// 1. Handle Mark Click
+async function onMarkClick(btnElement, statusElement, data) {
+  if (!data) return;
+  btnElement.disabled = true;
+  btnElement.style.opacity = "0.7";
+  btnElement.style.transform = "scale(0.9)";
+  statusElement.innerHTML = '<span style="color:#2196F3">⏳ Đang lưu...</span>';
 
   try {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-
-    // 👇 LOGIC MỚI: Wait for voices to load (Chrome đôi khi load voice chậm)
-    let voices = window.speechSynthesis.getVoices();
-
-    // Nếu chưa load được voice, chờ sự kiện onvoiceschanged
-    if (voices.length === 0) {
-      await new Promise((resolve) => {
-        window.speechSynthesis.onvoiceschanged = () => {
-          voices = window.speechSynthesis.getVoices();
-          resolve();
-        };
-      });
+    await apiSaveVocabulary(data);
+    btnElement.style.background = "#4CAF50";
+    btnElement.style.boxShadow = "0 4px 0 #388E3C";
+    statusElement.innerHTML =
+      '<span style="color:#4CAF50;">✅ Đã lưu vào sổ từ!</span>';
+    await saveToHistory(data.text, data);
+  } catch (err) {
+    btnElement.style.background = "#FF9800";
+    if (err.message.includes("Chưa đăng nhập")) {
+      statusElement.innerHTML =
+        '<span style="color:#F44336">⚠️ Vui lòng đăng nhập App!</span>';
+    } else {
+      statusElement.innerHTML = `<span style="color:#F44336">❌ Lỗi: ${err.message}</span>`;
     }
-
-    // Logic chọn giọng tương tự Frontend
-    const ariaVoice =
-      voices.find((v) => v.name.includes("Microsoft Aria Online")) || // Ưu tiên 1
-      voices.find((v) => v.name.includes("Aria")) || // Ưu tiên 2
-      voices.find((v) => v.name.includes("Natural") && v.lang === "en-US") || // Ưu tiên 3
-      voices.find((v) => v.lang === "en-US"); // Fallback
-
-    if (ariaVoice) {
-      utterance.voice = ariaVoice;
-      console.log("Extension using voice:", ariaVoice.name);
-    }
-
-    window.speechSynthesis.speak(utterance);
-  } catch (error) {
-    console.error("TTS Error:", error);
+  } finally {
+    btnElement.disabled = false;
+    btnElement.style.opacity = "1";
+    btnElement.style.transform = "scale(1)";
   }
 }
 
-function toggleSound() {
-  isSoundEnabled = !isSoundEnabled;
-  if (!isSoundEnabled) window.speechSynthesis.cancel();
-  const btn = document.getElementById("sound-toggle");
-  if (btn) btn.innerHTML = isSoundEnabled ? "🔊" : "🔇";
-}
-
-// 2. Mic & Assessment Handler
+// 2. Handle Mic Click
 async function handleMicClick(referenceText, btnElement) {
   if (!isRecording) {
     try {
@@ -105,10 +86,9 @@ async function handleMicClick(referenceText, btnElement) {
   }
 }
 
-// 3. Shift Key Listener (The Core)
+// 3. Main Event Listener
 document.addEventListener("keydown", async (e) => {
   const target = e.target;
-  // Ignore typing in inputs
   if (
     target.tagName === "INPUT" ||
     target.tagName === "TEXTAREA" ||
@@ -121,7 +101,6 @@ document.addEventListener("keydown", async (e) => {
     const selectedText = selection.toString().trim();
 
     if (selectedText) {
-      // Smart Context Logic
       let contextText = "";
       try {
         if (selection.anchorNode && selection.anchorNode.parentElement) {
@@ -133,69 +112,61 @@ document.addEventListener("keydown", async (e) => {
                 Math.max(0, idx - 100),
                 Math.min(parentText.length, idx + selectedText.length + 100)
               )
-              .trim();
-            contextText = contextText.replace(/\s+/g, " ");
+              .trim()
+              .replace(/\s+/g, " ");
           }
         }
-      } catch (err) {
-        /* ignore */
-      }
+      } catch (err) {}
       if (contextText.length > 200)
         contextText = "..." + contextText.substring(0, 200) + "...";
 
-      // Prepare UI
       const rect = selection.getRangeAt(0).getBoundingClientRect();
       const popup = createPopup();
       isPopupOpen = true;
 
-      // Calculate Position
       const topPos =
-        rect.top + window.scrollY - 400 - 20 < window.scrollY
+        rect.top + window.scrollY - 450 < window.scrollY
           ? rect.bottom + window.scrollY + 10
-          : rect.top + window.scrollY - 400 - 20;
+          : rect.top + window.scrollY - 450;
       const leftPos =
         rect.left + window.scrollX + 350 > window.innerWidth
           ? window.innerWidth - 360
           : rect.left + window.scrollX;
-      popup.style.top = topPos + "px";
-      popup.style.left = leftPos + "px";
+
+      popup.style.top = `${topPos}px`;
+      popup.style.left = `${leftPos}px`;
       popup.innerHTML =
-        '<div class="tts-content"><div class="tts-loading">⏳ Analyzing...</div></div>';
+        '<div class="tts-content"><div class="tts-loading">⏳ Đang phân tích...</div></div>';
       popup.style.display = "block";
 
       speakWithEdgeTTS(selectedText);
 
-      // Data Fetching
       let data = await getFromCache(selectedText);
       if (!data) {
         const isLong = selectedText.split(/\s+/).length > 5;
-        const [translation, phonetics, images] = await Promise.all([
+        const [translation, images] = await Promise.all([
           getTranslation(selectedText, contextText),
-          isLong ? null : getPhoneticForText(selectedText),
           isLong ? [] : getImages(selectedText),
         ]);
         data = {
           translation,
-          phonetics,
+          phonetics: await getPhoneticForText(selectedText),
           images,
           text: selectedText,
           contextText,
         };
-        if (translation) {
-          await saveToCache(selectedText, data);
-          await saveToHistory(selectedText, data);
-        }
+        if (translation) await saveToCache(selectedText, data);
       } else if (contextText && !data.contextMeaning) {
         const tr = await getTranslation(selectedText, contextText);
         if (tr) data.translation = tr;
       }
 
-      // Render
       renderPopupContent(data, isSoundEnabled, {
-        toggleSound,
+        toggleSound: toggleSoundState,
         closePopup,
         speakEdge: speakWithEdgeTTS,
         handleMic: handleMicClick,
+        handleMark: (btn, status) => onMarkClick(btn, status, data),
       });
     } else if (isPopupOpen) {
       closePopup();
@@ -205,15 +176,14 @@ document.addEventListener("keydown", async (e) => {
   }
 });
 
-// 4. Background Message Listener (Flashcard)
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+// 4. Flashcard Listener
+chrome.runtime.onMessage.addListener(async (request) => {
   if (request.action === "SHOW_FLASHCARD") {
     const result = await chrome.storage.local.get(["vocabHistory"]);
     const history = result.vocabHistory || [];
     if (history.length > 0) {
-      const randomItem = history.slice(0, 10)[
-        Math.floor(Math.random() * Math.min(10, history.length))
-      ];
+      const randomItem =
+        history[Math.floor(Math.random() * Math.min(10, history.length))];
       showFlashcard(randomItem, { speakEdge: speakWithEdgeTTS });
     }
   }
