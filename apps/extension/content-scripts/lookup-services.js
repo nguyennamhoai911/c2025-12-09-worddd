@@ -242,24 +242,96 @@ async function getImages(englishText) {
   return images;
 }
 
-// --- 6. PHONETICS & AZURE ---
-async function getPhoneticForText(text) {
+// --- 6. PHONETICS (UPDATED FROM OLD CODE) ---
+
+// Helper: Lấy phiên âm từng từ (Logic cũ)
+async function getPhoneticForWord(word) {
   try {
     const response = await fetch(
       `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
-        text.trim()
+        word.trim()
       )}`
     );
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data[0]) {
-        const p =
-          data[0].phonetic || data[0].phonetics.find((x) => x.text)?.text;
-        return { us: p ? `/${p}/` : `//${text}//` };
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data && data[0]) {
+      const result = { uk: null, us: null };
+
+      // Ưu tiên lấy từ file audio để biết chính xác giọng
+      data[0].phonetics?.forEach((p) => {
+        if (p.text) {
+          if (p.audio && p.audio.includes("-uk")) {
+            result.uk = p.text;
+          } else if (p.audio && p.audio.includes("-us")) {
+            result.us = p.text;
+          } else if (!result.us && !result.uk) {
+            result.us = p.text;
+          }
+        }
+      });
+
+      // Fallback nếu không tìm thấy trong phonetics array
+      if (!result.uk && !result.us && data[0].phonetic) {
+        result.us = data[0].phonetic;
       }
+      return result;
     }
-  } catch (e) {}
-  return { us: `//${text}//` };
+  } catch (error) {}
+  return null;
+}
+
+// Main: Lấy phiên âm cho cả câu/đoạn (Logic cũ)
+async function getPhoneticForText(text) {
+  const words = text
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+  const isLongText = words.length > 5;
+
+  // Chạy song song request cho từng từ
+  const phonetics = await Promise.all(
+    words.map(async (word) => {
+      const cleanWord = word.replace(/[.,!?;:'"()]/g, "");
+      if (!cleanWord) return null;
+      return await getPhoneticForWord(cleanWord);
+    })
+  );
+
+  const ukParts = [];
+  const usParts = [];
+
+  phonetics.forEach((p, idx) => {
+    if (p) {
+      if (!isLongText && p.uk) ukParts.push(p.uk);
+
+      if (p.us) usParts.push(p.us);
+      else if (p.uk) usParts.push(p.uk); // Fallback UK sang US nếu thiếu
+      else {
+        // Fallback word gốc nếu không có phiên âm
+        const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
+        usParts.push(cleanWord);
+      }
+    } else {
+      const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
+      if (!isLongText) ukParts.push(cleanWord);
+      usParts.push(cleanWord);
+    }
+  });
+
+  const format = (parts) => {
+    if (parts.length === 0) return null;
+    const combined = parts
+      .map((part) => (part ? part.replace(/^\/|\/$/g, "") : "")) // Bỏ dấu / thừa
+      .filter(Boolean)
+      .join(" ");
+    return combined ? `/${combined}/` : null; // Bọc lại bằng //
+  };
+
+  return {
+    uk: format(ukParts),
+    us: format(usParts),
+  };
 }
 
 // Helper: Convert Audio

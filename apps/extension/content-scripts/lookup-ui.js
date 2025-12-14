@@ -89,7 +89,21 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
       )
       .join("")}</div>`;
   }
-
+  // 2. Hiển thị Phiên âm
+  if (data.phonetics && (data.phonetics.us || data.phonetics.uk)) {
+    content += `<div class="tts-phonetic">
+            ${
+              data.phonetics.uk
+                ? `<div class="phonetic-item"><span class="flag">🇬🇧</span><span class="phonetic-text">${data.phonetics.uk}</span></div>`
+                : ""
+            }
+            ${
+              data.phonetics.us
+                ? `<div class="phonetic-item"><span class="flag">🇺🇸</span><span class="phonetic-text">${data.phonetics.us}</span></div>`
+                : ""
+            }
+        </div>`;
+  }
   // Meaning
   if (data.translation) {
     content += `<div class="word-text" style="font-size:24px; text-align:center; margin-bottom:5px;">${data.text}</div>`;
