@@ -88,14 +88,6 @@ async function handleMicClick(referenceText, btnElement) {
 
 // 3. Main Event Listener
 document.addEventListener("keydown", async (e) => {
-  const target = e.target;
-  if (
-    target.tagName === "INPUT" ||
-    target.tagName === "TEXTAREA" ||
-    target.isContentEditable
-  )
-    return;
-
   if (e.key === "Shift") {
     const selection = window.getSelection();
     const selectedText = selection.toString().trim();

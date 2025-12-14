@@ -2,6 +2,7 @@ Directory structure:
 └── c2025-12-09-full-app-english/
     ├── AI_CONTEXT.md
     ├── docker-compose.yml
+    ├── setup-guide.md
     └── apps/
         ├── tree.txt
         ├── backend/
@@ -76,6 +77,8 @@ Directory structure:
         │       ├── lookup-ui.js
         │       ├── main.js
         │       ├── messager.js
+        │       ├── native-core.js
+        │       ├── native-ui.js
         │       ├── shortcuts.js
         │       └── ui.js
         └── frontend/
@@ -211,6 +214,191 @@ volumes:
   postgres_data:
     # Mặc định Docker sẽ tạo volume này ở sâu trong hệ thống file của Docker
     # (thường là /var/lib/docker/volumes/...)
+
+
+
+================================================
+FILE: setup-guide.md
+================================================
+
+
+# 📘 Project Documentation: English Vocabulary Learning Ecosystem
+
+Đây là tài liệu hướng dẫn khởi động dự án **Full-stack English Learning App**. Hệ thống bao gồm 3 thành phần chính: **Backend (NestJS)**, **Frontend (Next.js)**, và **Browser Extension**.
+
+## 1\. Tech Stack Overview (Công nghệ sử dụng)
+
+Người mới cần nắm rõ các công nghệ sau để maintain dự án:
+
+### 🛠 Core System
+
+  * [cite_start]**Monorepo Structure:** Dự án chia thành `apps/backend`, `apps/frontend`, `apps/extension`[cite: 1].
+  * [cite_start]**Containerization:** **Docker & Docker Compose** dùng để chạy Database (PostgreSQL) và Redis[cite: 23].
+
+### 🔙 Backend (`apps/backend`)
+
+  * [cite_start]**Framework:** **NestJS** (Node.js framework)[cite: 46].
+  * **Database:** **PostgreSQL** (chạy qua Docker).
+  * [cite_start]**ORM:** **Prisma** để tương tác với Database[cite: 70].
+  * [cite_start]**Authentication:** **Passport** (JWT, Google OAuth2, Local Strategy)[cite: 102].
+  * [cite_start]**Features:** CSV Import (stream processing), Pronunciation Scoring (lưu array điểm số)[cite: 72, 171].
+
+### 🎨 Frontend (`apps/frontend`)
+
+  * [cite_start]**Framework:** **Next.js 15+** (App Router)[cite: 583].
+  * **Language:** TypeScript.
+  * [cite_start]**Styling:** **Tailwind CSS**[cite: 597].
+  * **Data Fetching:** Axios & Custom Hooks (`useVocabData`, `useVocabModals`).
+  * **Deployment:** Config sẵn sàng cho Vercel.
+
+### 🧩 Extension (`apps/extension`)
+
+  * [cite_start]**Manifest V3:** Chuẩn mới nhất của Chrome Extension[cite: 240].
+  * [cite_start]**Architecture:** Sử dụng **Iframe Injection** để hiển thị giao diện React của Frontend ngay trên trang web bất kỳ[cite: 555].
+  * **External APIs:** Azure Speech Services (Pronunciation), Google Custom Search (Image), Google Translate, Free Dictionary API.
+
+-----
+
+## 2\. Prerequisites (Cài đặt trước khi chạy)
+
+Trước khi start project, hãy đảm bảo máy tính đã install:
+
+1.  **Node.js** (Version 18+ recommended).
+2.  **Docker Desktop** (để chạy Database).
+3.  **Mkcert** (Công cụ tạo SSL certificate để chạy HTTPS trên localhost - **Bắt buộc** vì Extension yêu cầu HTTPS để dùng Mic/Iframe).
+
+-----
+
+## 3\. Step-by-Step Installation Guide
+
+### Bước 1: Setup Infrastructure (Docker)
+
+[cite_start]File `docker-compose.yml` đã config sẵn PostgreSQL chạy ở port **5433** (để tránh conflict với port 5432 mặc định nếu máy bạn đã có Postgres)[cite: 36].
+
+1.  Mở terminal tại root folder.
+2.  Run command:
+    ```bash
+    docker-compose up -d
+    ```
+    [cite_start]*Lưu ý:* Database name là `vocab_db`, user `myuser`, pass `mypassword`[cite: 32].
+
+### Bước 2: Setup Certificates (HTTPS)
+
+Vì Extension dùng Iframe và Microphone, browser bắt buộc phải có HTTPS.
+
+1.  Cài đặt `mkcert` trên máy (Google "how to install mkcert").
+2.  Run lệnh tạo cert (hoặc dùng file có sẵn trong `apps/frontend/certificates` nếu key còn hạn):
+    ```bash
+    mkcert -install
+    mkcert localhost
+    ```
+3.  [cite_start]Đảm bảo file `localhost-key.pem` và `localhost.pem` nằm đúng chỗ để Backend và Frontend load được[cite: 19].
+
+### Bước 3: Backend Setup (Port 5001)
+
+[cite_start]Source code backend đang default port 5000 [cite: 94][cite_start], nhưng Frontend gọi API qua `https://localhost:5001`[cite: 426]. Bạn cần config lại port.
+
+1.  Di chuyển vào folder backend:
+    ```bash
+    cd apps/backend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  **Database Migration:** Đồng bộ schema Prisma vào DB Docker:
+    ```bash
+    npx prisma generate
+    npx prisma migrate dev --name init
+    ```
+4.  **Environment Variables (.env):** Tạo file `.env` trong `apps/backend` với nội dung tương tự:
+    ```env
+    DATABASE_URL="postgresql://myuser:mypassword@localhost:5433/vocab_db?schema=public"
+    JWT_SECRET="your-secret-key"
+    GOOGLE_CLIENT_ID="your-google-id"
+    GOOGLE_CLIENT_SECRET="your-google-secret"
+    # Port config nếu code hỗ trợ env, hoặc sửa cứng trong main.ts
+    PORT=5001
+    ```
+5.  **Start Server:**
+      * Sửa file `src/main.ts`: Đổi `app.listen(5000)` thành `app.listen(5001)` và thêm config HTTPS (đọc file key/cert từ Bước 2) nếu chạy local HTTPS trực tiếp từ Node.
+      * Run:
+    <!-- end list -->
+    ```bash
+    npm run start:dev
+    ```
+    [cite_start]*Check:* Truy cập `https://localhost:5001` (hoặc http nếu chưa setup https ở backend layer, nhưng khuyến khích https để cookie `SameSite=None; Secure` hoạt động [cite: 918]).
+
+### Bước 4: Frontend Setup (Port 3001)
+
+[cite_start]Frontend cần chạy ở port **3001** vì Extension được hardcode để trỏ Iframe vào `https://localhost:3001`[cite: 555].
+
+1.  Mở terminal mới, vào folder frontend:
+    ```bash
+    cd apps/frontend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  **Environment Variables:** Tạo `.env.local`:
+    ```env
+    NEXT_PUBLIC_API_URL=https://localhost:5001
+    ```
+4.  **Start Server with HTTPS:**
+    Để chạy Next.js với HTTPS port 3001, bạn dùng command:
+    ```bash
+    # Cần cài server https cho local hoặc dùng flag experimental của Next.js
+    next dev -p 3001 --experimental-https
+    ```
+    *(Hoặc sử dụng `local-ssl-proxy` để map port 3001 https sang 3000 http).*
+
+### Bước 5: Load Extension
+
+1.  Mở Chrome, gõ `chrome://extensions`.
+2.  Bật **Developer mode** (góc phải trên).
+3.  Bấm **Load unpacked**.
+4.  Chọn folder `apps/extension`.
+5.  **Important:** Vào `Details` của extension, đảm bảo pin nó ra ngoài.
+
+-----
+
+## 4\. How to Use & Verify (Cách kiểm tra chạy ổn)
+
+### 1\. Kiểm tra kết nối Backend - Database
+
+  * [cite_start]Backend log phải hiện: `✅ DB Connected via Prisma`[cite: 233].
+  * Backend log chạy ở port 5001: `🚀 Backend running on https://localhost:5001` (sau khi sửa `main.ts`).
+
+### 2\. Kiểm tra Extension Flow
+
+  * Ra một trang web bất kỳ (ví dụ: Medium, CNN).
+  * [cite_start]Bôi đen một từ tiếng Anh -\> Nhấn `Shift` -\> **Popup từ vựng** phải hiện ra[cite: 409].
+  * [cite_start]Nhấn **Ctrl + Q** (hoặc Double Space tùy config cũ): **Iframe Quick Search** phải trượt ra từ màn hình[cite: 570].
+      * *Lưu ý:* Nếu Iframe trắng xóa, kiểm tra Console xem có lỗi `Refused to frame 'https://localhost:3001/'` không. Nếu có, nghĩa là cert HTTPS chưa được trình duyệt tin tưởng. Hãy mở tab `https://localhost:3001` và chọn "Advanced -\> Proceed to localhost (unsafe)" để trust cert.
+
+### 3\. Setup API Keys (Trong Extension Popup)
+
+  * Bấm vào icon Extension trên thanh browser.
+  * [cite_start]Nhập **Google API Key** và **Search Engine ID (CX)** để tính năng tìm ảnh hoạt động[cite: 350].
+  * [cite_start]Nhập **Azure Speech Key** & **Region** để tính năng chấm điểm phát âm hoạt động[cite: 371].
+
+-----
+
+## 5\. Troubleshooting (Các lỗi thường gặp)
+
+1.  **Lỗi CORS:**
+
+      * Nếu Frontend (3001) không gọi được Backend (5001), kiểm tra file `apps/backend/src/main.ts`.
+      * [cite_start]Đảm bảo `app.enableCors` cho phép origin là `https://localhost:3001` và `chrome-extension://<ID-EXTENSION-CUA-BAN>`[cite: 92].
+
+2.  **Lỗi Audio/Microphone trong Iframe:**
+
+      * [cite_start]Iframe cần thuộc tính `allow="microphone; camera"`[cite: 555]. Code hiện tại đã có, nhưng phải chạy trên **HTTPS** mới hoạt động.
+
+3.  **Cookie không lưu được (Lỗi Login):**
+
+      * Do chạy Cross-domain (Extension -\> Backend), Backend phải set cookie với `SameSite=None; Secure`. [cite_start]Code auth đã xử lý việc này[cite: 918], nhưng nó yêu cầu Backend phải serve qua HTTPS.
 
 
 
@@ -1154,15 +1342,34 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // 👇 LOGIC MỚI: Thử lấy từ Custom Extractor trước, sau đó mới thử Header
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        JwtStrategy.extractJWT,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.get('JWT_SECRET') || 'your-secret-key-change-in-production',
     });
+  }
+
+  // Hàm thủ công để moi Token từ Cookie
+  private static extractJWT(req: Request): string | null {
+    // 1. Nếu có cài cookie-parser
+    if (req.cookies && 'token' in req.cookies && req.cookies.token.length > 0) {
+      return req.cookies.token;
+    }
+    // 2. Nếu chưa cài cookie-parser (Parsing thủ công từ header string)
+    if (req.headers.cookie) {
+       const match = req.headers.cookie.match(/token=([^;]+)/);
+       if (match) return match[1];
+    }
+    return null;
   }
 
   async validate(payload: any) {
@@ -1877,7 +2084,7 @@ FILE: apps/extension/manifest.json
   "action": {
     "default_popup": "popup.html"
   },
-  "content_scripts": [ 
+  "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": [
@@ -2983,43 +3190,46 @@ function hideStatusMessage() {
 ================================================
 FILE: apps/extension/content-scripts/lookup-main.js
 ================================================
-// --- MODULE: MAIN CONTROLLER ---
+// =======================================================================
+// MODULE: MAIN CONTROLLER (Entry Point)
+// =======================================================================
+
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
-let isSoundEnabled = true;
 let lastRecordedBlob = null;
 
-// 1. TTS Helper
-async function speakWithEdgeTTS(text) {
-  if (!isSoundEnabled) return;
-  window.speechSynthesis.cancel();
+// 1. Handle Mark Click
+async function onMarkClick(btnElement, statusElement, data) {
+  if (!data) return;
+  btnElement.disabled = true;
+  btnElement.style.opacity = "0.7";
+  btnElement.style.transform = "scale(0.9)";
+  statusElement.innerHTML = '<span style="color:#2196F3">⏳ Đang lưu...</span>';
+
   try {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    const voices = window.speechSynthesis.getVoices();
-    const ariaVoice = voices.find(
-      (v) =>
-        v.name.includes("Aria") ||
-        v.name.includes("Natural") ||
-        v.lang === "en-US"
-    );
-    if (ariaVoice) utterance.voice = ariaVoice;
-    window.speechSynthesis.speak(utterance);
-  } catch (error) {
-    console.error("TTS Error:", error);
+    await apiSaveVocabulary(data);
+    btnElement.style.background = "#4CAF50";
+    btnElement.style.boxShadow = "0 4px 0 #388E3C";
+    statusElement.innerHTML =
+      '<span style="color:#4CAF50;">✅ Đã lưu vào sổ từ!</span>';
+    await saveToHistory(data.text, data);
+  } catch (err) {
+    btnElement.style.background = "#FF9800";
+    if (err.message.includes("Chưa đăng nhập")) {
+      statusElement.innerHTML =
+        '<span style="color:#F44336">⚠️ Vui lòng đăng nhập App!</span>';
+    } else {
+      statusElement.innerHTML = `<span style="color:#F44336">❌ Lỗi: ${err.message}</span>`;
+    }
+  } finally {
+    btnElement.disabled = false;
+    btnElement.style.opacity = "1";
+    btnElement.style.transform = "scale(1)";
   }
 }
 
-function toggleSound() {
-  isSoundEnabled = !isSoundEnabled;
-  if (!isSoundEnabled) window.speechSynthesis.cancel();
-  const btn = document.getElementById("sound-toggle");
-  if (btn) btn.innerHTML = isSoundEnabled ? "🔊" : "🔇";
-}
-
-// 2. Mic & Assessment Handler
+// 2. Handle Mic Click
 async function handleMicClick(referenceText, btnElement) {
   if (!isRecording) {
     try {
@@ -3068,10 +3278,9 @@ async function handleMicClick(referenceText, btnElement) {
   }
 }
 
-// 3. Shift Key Listener (The Core)
+// 3. Main Event Listener
 document.addEventListener("keydown", async (e) => {
   const target = e.target;
-  // Ignore typing in inputs
   if (
     target.tagName === "INPUT" ||
     target.tagName === "TEXTAREA" ||
@@ -3084,7 +3293,6 @@ document.addEventListener("keydown", async (e) => {
     const selectedText = selection.toString().trim();
 
     if (selectedText) {
-      // Smart Context Logic
       let contextText = "";
       try {
         if (selection.anchorNode && selection.anchorNode.parentElement) {
@@ -3096,69 +3304,61 @@ document.addEventListener("keydown", async (e) => {
                 Math.max(0, idx - 100),
                 Math.min(parentText.length, idx + selectedText.length + 100)
               )
-              .trim();
-            contextText = contextText.replace(/\s+/g, " ");
+              .trim()
+              .replace(/\s+/g, " ");
           }
         }
-      } catch (err) {
-        /* ignore */
-      }
+      } catch (err) {}
       if (contextText.length > 200)
         contextText = "..." + contextText.substring(0, 200) + "...";
 
-      // Prepare UI
       const rect = selection.getRangeAt(0).getBoundingClientRect();
       const popup = createPopup();
       isPopupOpen = true;
 
-      // Calculate Position
       const topPos =
-        rect.top + window.scrollY - 400 - 20 < window.scrollY
+        rect.top + window.scrollY - 450 < window.scrollY
           ? rect.bottom + window.scrollY + 10
-          : rect.top + window.scrollY - 400 - 20;
+          : rect.top + window.scrollY - 450;
       const leftPos =
         rect.left + window.scrollX + 350 > window.innerWidth
           ? window.innerWidth - 360
           : rect.left + window.scrollX;
-      popup.style.top = topPos + "px";
-      popup.style.left = leftPos + "px";
+
+      popup.style.top = `${topPos}px`;
+      popup.style.left = `${leftPos}px`;
       popup.innerHTML =
-        '<div class="tts-content"><div class="tts-loading">⏳ Analyzing...</div></div>';
+        '<div class="tts-content"><div class="tts-loading">⏳ Đang phân tích...</div></div>';
       popup.style.display = "block";
 
       speakWithEdgeTTS(selectedText);
 
-      // Data Fetching
       let data = await getFromCache(selectedText);
       if (!data) {
         const isLong = selectedText.split(/\s+/).length > 5;
-        const [translation, phonetics, images] = await Promise.all([
+        const [translation, images] = await Promise.all([
           getTranslation(selectedText, contextText),
-          isLong ? null : getPhoneticForText(selectedText),
           isLong ? [] : getImages(selectedText),
         ]);
         data = {
           translation,
-          phonetics,
+          phonetics: await getPhoneticForText(selectedText),
           images,
           text: selectedText,
           contextText,
         };
-        if (translation) {
-          await saveToCache(selectedText, data);
-          await saveToHistory(selectedText, data);
-        }
+        if (translation) await saveToCache(selectedText, data);
       } else if (contextText && !data.contextMeaning) {
         const tr = await getTranslation(selectedText, contextText);
         if (tr) data.translation = tr;
       }
 
-      // Render
       renderPopupContent(data, isSoundEnabled, {
-        toggleSound,
+        toggleSound: toggleSoundState,
         closePopup,
         speakEdge: speakWithEdgeTTS,
         handleMic: handleMicClick,
+        handleMark: (btn, status) => onMarkClick(btn, status, data),
       });
     } else if (isPopupOpen) {
       closePopup();
@@ -3168,15 +3368,14 @@ document.addEventListener("keydown", async (e) => {
   }
 });
 
-// 4. Background Message Listener (Flashcard)
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+// 4. Flashcard Listener
+chrome.runtime.onMessage.addListener(async (request) => {
   if (request.action === "SHOW_FLASHCARD") {
     const result = await chrome.storage.local.get(["vocabHistory"]);
     const history = result.vocabHistory || [];
     if (history.length > 0) {
-      const randomItem = history.slice(0, 10)[
-        Math.floor(Math.random() * Math.min(10, history.length))
-      ];
+      const randomItem =
+        history[Math.floor(Math.random() * Math.min(10, history.length))];
       showFlashcard(randomItem, { speakEdge: speakWithEdgeTTS });
     }
   }
@@ -3190,14 +3389,107 @@ if (window.speechSynthesis) window.speechSynthesis.getVoices();
 ================================================
 FILE: apps/extension/content-scripts/lookup-services.js
 ================================================
-// --- MODULE: SERVICES & API ---
+// =======================================================================
+// MODULE: SERVICES (API, Audio, Caching)
+// =======================================================================
 
-// 1. Caching System
+const BACKEND_URL = "https://localhost:5001";
+let isSoundEnabled = true;
+
+// --- 1. SETTINGS & AUDIO ---
+function toggleSoundState() {
+  isSoundEnabled = !isSoundEnabled;
+  if (!isSoundEnabled) window.speechSynthesis.cancel();
+  return isSoundEnabled;
+}
+
+async function speakWithEdgeTTS(text) {
+  if (!isSoundEnabled || !text) return;
+  window.speechSynthesis.cancel();
+
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+
+    // Fix lỗi Chrome load voice chậm
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      await new Promise((resolve) => {
+        window.speechSynthesis.onvoiceschanged = () => {
+          voices = window.speechSynthesis.getVoices();
+          resolve();
+        };
+      });
+    }
+
+    // Ưu tiên Microsoft Aria Online
+    const ariaVoice =
+      voices.find((v) => v.name.includes("Microsoft Aria Online")) ||
+      voices.find((v) => v.name.includes("Aria")) ||
+      voices.find(
+        (v) => v.name.includes("Natural") && v.lang.startsWith("en-US")
+      ) ||
+      voices.find((v) => v.lang === "en-US");
+
+    if (ariaVoice) utterance.voice = ariaVoice;
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error("TTS Error:", error);
+  }
+}
+
+// --- 2. BACKEND API (SAVE VOCAB) ---
+async function apiSaveVocabulary(data) {
+  try {
+    // Chuẩn bị dữ liệu
+    const meaning =
+      typeof data.translation === "string"
+        ? data.translation
+        : data.translation?.wordMeaning || "";
+
+    const partOfSpeech =
+      data.translation?.dict && data.translation.dict.length > 0
+        ? data.translation.dict[0].pos
+        : "";
+
+    const pronunciation = data.phonetics?.us
+      ? data.phonetics.us.replace(/\//g, "")
+      : "";
+
+    const payload = {
+      word: data.text,
+      meaning: meaning,
+      example: data.contextText || "",
+      pronunciation: pronunciation,
+      partOfSpeech: partOfSpeech,
+      topic: "Extension",
+      isStarred: false,
+    };
+
+    // Gọi API với credentials để lấy cookie token
+    const response = await fetch(`${BACKEND_URL}/vocabulary`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include", // Quan trọng để gửi cookie xác thực
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) throw new Error("Chưa đăng nhập App");
+      throw new Error("Lỗi kết nối Server");
+    }
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+
+// --- 3. CACHING SYSTEM ---
 async function getFromCache(key) {
   const storageKey = `cache_${key.toLowerCase().trim()}`;
   const result = await chrome.storage.local.get([storageKey]);
   const cachedItem = result[storageKey];
-  // Cache hết hạn sau 24h
   if (cachedItem && Date.now() - cachedItem.timestamp < 24 * 60 * 60 * 1000) {
     return cachedItem.data;
   }
@@ -3223,33 +3515,26 @@ async function saveToHistory(word, data) {
     if (history.length > 50) history.pop();
     await chrome.storage.local.set({ vocabHistory: history });
   } catch (e) {
-    console.warn("Save History Error:", e);
+    console.warn("History Error:", e);
   }
 }
 
-// 2. Google Translate & Dictionary API
+// --- 4. GOOGLE TRANSLATE API ---
 async function getTranslation(text, contextText = "") {
   try {
     let contextMeaning = null;
-    if (
-      contextText &&
-      contextText.length > 0 &&
-      contextText.length < 500 &&
-      contextText !== text
-    ) {
+    if (contextText && contextText.length > 0 && contextText !== text) {
       try {
-        const urlContext = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
+        const urlCtx = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
           contextText
         )}`;
-        const resCtx = await fetch(urlContext);
+        const resCtx = await fetch(urlCtx);
         if (resCtx.ok) {
           const dataCtx = await resCtx.json();
           if (dataCtx && dataCtx[0])
             contextMeaning = dataCtx[0].map((item) => item[0]).join("");
         }
-      } catch (e) {
-        /* Ignore */
-      }
+      } catch (e) {}
     }
 
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&dt=bd&q=${encodeURIComponent(
@@ -3276,13 +3561,12 @@ async function getTranslation(text, contextText = "") {
       };
     }
   } catch (error) {
-    console.error("Translation Error:", error);
     return null;
   }
   return null;
 }
 
-// 3. Image Fetching (Google Custom Search + Unsplash Fallback)
+// --- 5. IMAGE API ---
 async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
   try {
     const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
@@ -3294,28 +3578,11 @@ async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
     if (!response.ok) return null;
     const data = await response.json();
     if (data.items && data.items.length > 0)
-      return data.items.slice(0, 3).map((item) => item.link);
+      return data.items.map((item) => item.link);
   } catch (e) {
     if (e.message === "QUOTA_EXCEEDED") throw e;
   }
   return null;
-}
-
-async function getImagesFromUnsplash(searchTerm) {
-  try {
-    const response = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
-        searchTerm
-      )}&per_page=3&client_id=E8nbwS_cEWGVX4rM0e_-Eq6IpI_QKlO4eFEKfOl3AUo`
-    );
-    if (response.ok) {
-      const data = await response.json();
-      if (data.results) return data.results.map((item) => item.urls.regular);
-    }
-  } catch (error) {
-    console.error("Unsplash Error:", error);
-  }
-  return [];
 }
 
 async function getImages(englishText) {
@@ -3336,13 +3603,12 @@ async function getImages(englishText) {
   }
 
   if (keyList.length > 0) {
-    for (let i = 0; i < keyList.length; i++) {
-      const { key, cx } = keyList[i];
+    for (const { key, cx } of keyList) {
       if (!key || !cx) continue;
       try {
-        const resultImages = await tryFetchGoogleImage(searchTerm, key, cx);
-        if (resultImages && resultImages.length > 0) {
-          images = resultImages;
+        const res = await tryFetchGoogleImage(searchTerm, key, cx);
+        if (res) {
+          images = res;
           break;
         }
       } catch (err) {
@@ -3350,76 +3616,44 @@ async function getImages(englishText) {
       }
     }
   }
-  if (images.length === 0) images = await getImagesFromUnsplash(searchTerm);
+  // Fallback Unsplash
+  if (images.length === 0) {
+    try {
+      const res = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
+          searchTerm
+        )}&per_page=3&client_id=E8nbwS_cEWGVX4rM0e_-Eq6IpI_QKlO4eFEKfOl3AUo`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results) images = data.results.map((i) => i.urls.regular);
+      }
+    } catch (e) {}
+  }
   return images;
 }
 
-// 4. Phonetics
-async function getPhoneticForWord(word) {
+// --- 6. PHONETICS & AZURE ---
+async function getPhoneticForText(text) {
   try {
     const response = await fetch(
       `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
-        word.trim()
+        text.trim()
       )}`
     );
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (data && data[0]) {
-      const result = { uk: null, us: null };
-      data[0].phonetics?.forEach((p) => {
-        if (p.text) {
-          if (p.audio && p.audio.includes("-uk")) result.uk = p.text;
-          else if (p.audio && p.audio.includes("-us")) result.us = p.text;
-          else if (!result.us && !result.uk) result.us = p.text;
-        }
-      });
-      if (!result.uk && !result.us && data[0].phonetic)
-        result.us = data[0].phonetic;
-      return result;
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data[0]) {
+        const p =
+          data[0].phonetic || data[0].phonetics.find((x) => x.text)?.text;
+        return { us: p ? `/${p}/` : `//${text}//` };
+      }
     }
-  } catch (error) {
-    console.error("Phonetic Error:", error);
-  }
-  return null;
+  } catch (e) {}
+  return { us: `//${text}//` };
 }
 
-async function getPhoneticForText(text) {
-  const words = text
-    .trim()
-    .split(/\s+/)
-    .filter((w) => w.length > 0);
-  const isLongText = words.length > 5;
-  const phonetics = await Promise.all(
-    words.map(async (word) => {
-      const cleanWord = word.replace(/[.,!?;:'"()]/g, "");
-      return cleanWord ? await getPhoneticForWord(cleanWord) : null;
-    })
-  );
-
-  const ukParts = [],
-    usParts = [];
-  phonetics.forEach((p, idx) => {
-    const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
-    if (p) {
-      if (!isLongText && p.uk) ukParts.push(p.uk);
-      usParts.push(p.us || p.uk || cleanWord);
-    } else {
-      if (!isLongText) ukParts.push(cleanWord);
-      usParts.push(cleanWord);
-    }
-  });
-
-  const formatPhonetics = (parts) => {
-    const combined = parts
-      .map((part) => (part ? part.replace(/^\/|\/$/g, "") : ""))
-      .filter(Boolean)
-      .join(" ");
-    return combined ? `//${combined}//` : null;
-  };
-  return { uk: null, us: formatPhonetics(usParts) };
-}
-
-// 5. Azure Speech & Audio Utils
+// Helper: Convert Audio
 async function convertAudioToWav(audioBlob) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)({
     sampleRate: 16000,
@@ -3427,36 +3661,32 @@ async function convertAudioToWav(audioBlob) {
   const arrayBuffer = await audioBlob.arrayBuffer();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   const pcmData = audioBuffer.getChannelData(0);
-  const wavBuffer = encodeWAV(pcmData, 16000);
-  return new Blob([wavBuffer], { type: "audio/wav" });
-}
 
-function encodeWAV(samples, sampleRate) {
-  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const buffer = new ArrayBuffer(44 + pcmData.length * 2);
   const view = new DataView(buffer);
   const writeString = (view, offset, string) => {
     for (let i = 0; i < string.length; i++)
       view.setUint8(offset + i, string.charCodeAt(i));
   };
   writeString(view, 0, "RIFF");
-  view.setUint32(4, 36 + samples.length * 2, true);
+  view.setUint32(4, 36 + pcmData.length * 2, true);
   writeString(view, 8, "WAVE");
   writeString(view, 12, "fmt ");
   view.setUint32(16, 16, true);
   view.setUint16(20, 1, true);
   view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true);
+  view.setUint32(24, 16000, true);
+  view.setUint32(28, 32000, true);
   view.setUint16(32, 2, true);
   view.setUint16(34, 16, true);
   writeString(view, 36, "data");
-  view.setUint32(40, samples.length * 2, true);
+  view.setUint32(40, pcmData.length * 2, true);
   let offset = 44;
-  for (let i = 0; i < samples.length; i++, offset += 2) {
-    let s = Math.max(-1, Math.min(1, samples[i]));
+  for (let i = 0; i < pcmData.length; i++, offset += 2) {
+    let s = Math.max(-1, Math.min(1, pcmData[i]));
     view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
   }
-  return view;
+  return new Blob([view], { type: "audio/wav" });
 }
 
 async function assessPronunciation(audioBlob, referenceText) {
@@ -3464,8 +3694,8 @@ async function assessPronunciation(audioBlob, referenceText) {
     const result = await chrome.storage.sync.get(["azureKey", "azureRegion"]);
     const key = result.azureKey;
     const region = result.azureRegion;
-    if (!key || !region)
-      throw new Error("Chưa nhập Azure Key/Region trong cài đặt.");
+    if (!key || !region) throw new Error("Chưa nhập Azure Key/Region.");
+
     const wavBlob = await convertAudioToWav(audioBlob);
     const assessParams = {
       ReferenceText: referenceText,
@@ -3474,6 +3704,7 @@ async function assessPronunciation(audioBlob, referenceText) {
       Dimension: "Comprehensive",
     };
     const paramsHeader = btoa(JSON.stringify(assessParams));
+
     const url = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`;
     const response = await fetch(url, {
       method: "POST",
@@ -3485,13 +3716,8 @@ async function assessPronunciation(audioBlob, referenceText) {
       },
       body: wavBlob,
     });
-    if (!response.ok) {
-      if (response.status === 401)
-        throw new Error("Sai Azure Key hoặc Region.");
-      if (response.status === 400)
-        throw new Error("Bad Request (Audio lỗi hoặc Text quá dài).");
-      throw new Error(`Azure Error ${response.status}`);
-    }
+
+    if (!response.ok) throw new Error(`Azure Error ${response.status}`);
     return await response.json();
   } catch (e) {
     throw e;
@@ -3503,7 +3729,10 @@ async function assessPronunciation(audioBlob, referenceText) {
 ================================================
 FILE: apps/extension/content-scripts/lookup-ui.js
 ================================================
-// --- MODULE: UI & RENDERING ---
+// =======================================================================
+// MODULE: UI RENDERING
+// =======================================================================
+
 let popup = null;
 let isPopupOpen = false;
 let isDragging = false;
@@ -3541,37 +3770,46 @@ function enableDragging(header) {
     popup.style.top = e.clientY - dragOffset.y + "px";
   });
   document.addEventListener("mouseup", () => {
-    if (isDragging) {
-      isDragging = false;
-      header.style.cursor = "move";
-    }
+    isDragging = false;
+    header.style.cursor = "move";
   });
 }
 
 function renderPopupContent(data, isSoundEnabled, callbacks) {
   if (!popup) return;
-  const { toggleSound, closePopup, speakEdge, handleMic } = callbacks;
+  const { toggleSound, closePopup, speakEdge, handleMark, handleMic } =
+    callbacks;
 
   let content = `
-    <div class="tts-header" id="popup-header">
-      <button id="sound-toggle" class="sound-btn">${
-        isSoundEnabled ? "🔊" : "🔇"
-      }</button>
-      <div style="flex:1"></div>
-      <button id="close-popup" class="close-btn">✕</button>
-    </div>
-    <div class="tts-actions">
-      <div style="display:flex; gap:10px; align-items:center;">
-          <button id="replay-tts-btn" class="mic-btn" style="width:40px; height:40px; background:#4CAF50;">
-             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          </button>
-          <button id="mic-btn" class="mic-btn">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          </button>
+      <div class="tts-header" id="popup-header">
+        <button id="sound-toggle" class="sound-btn">${
+          isSoundEnabled ? "🔊" : "🔇"
+        }</button>
+        <div style="flex:1"></div>
+        <button id="close-popup" class="close-btn">✕</button>
       </div>
-      <div id="assessment-result"></div>
-    </div>
-    <div class="tts-content">`;
+
+      <div class="tts-actions">
+        <div style="display:flex; gap:15px; align-items:center;">
+            <button id="replay-tts-btn" class="mic-btn" style="width:45px; height:45px; background:#4CAF50;" title="Nghe lại">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            
+            <button id="mark-btn" class="mic-btn" style="width:55px; height:55px; background:#FF9800; box-shadow: 0 4px 0 #F57C00;" title="Lưu từ này">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </button>
+
+            <button id="mic-btn" class="mic-btn" style="width:45px; height:45px;" title="Check phát âm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+        </div>
+        <div id="save-status" style="margin-top:8px; font-size:12px; font-weight:600; min-height:18px;"></div>
+        <div id="assessment-result"></div>
+      </div>
+      
+      <div class="tts-content">`;
 
   // Images
   if (data.images && data.images.length) {
@@ -3581,22 +3819,6 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
           `<div class="tts-image"><img src="${url}" onerror="this.style.display='none'"/></div>`
       )
       .join("")}</div>`;
-  }
-
-  // Phonetics
-  if (data.phonetics && (data.phonetics.us || data.phonetics.uk)) {
-    content += `<div class="tts-phonetic">
-      ${
-        data.phonetics.uk
-          ? `<div class="phonetic-item"><span class="flag">🇬🇧</span><span class="phonetic-text">${data.phonetics.uk}</span></div>`
-          : ""
-      }
-      ${
-        data.phonetics.us
-          ? `<div class="phonetic-item"><span class="flag">🇺🇸</span><span class="phonetic-text">${data.phonetics.us}</span></div>`
-          : ""
-      }
-    </div>`;
   }
 
   // Meaning
@@ -3609,16 +3831,6 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
     if (mainMeaning)
       content += `<div class="primary-meaning">${mainMeaning}</div>`;
 
-    if (data.translation.dict && data.translation.dict.length > 0) {
-      content += `<div class="dict-container">`;
-      data.translation.dict.forEach((d) => {
-        content += `<div class="dict-row"><span class="dict-pos">${
-          d.pos
-        }</span><span class="dict-meanings">${d.terms.join(", ")}</span></div>`;
-      });
-      content += `</div>`;
-    }
-
     if (data.translation.contextMeaning) {
       content += `<div class="context-box"><strong>Ngữ cảnh:</strong><br/><em style="color:#777">"...${
         data.contextText || ""
@@ -3629,19 +3841,29 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
   } else {
     content += `<div class="tts-info">Không tìm thấy bản dịch.</div>`;
   }
-  content += `</div>`; // End content
 
+  content += `</div>`; // End .tts-content
   popup.innerHTML = content;
 
-  // Bind Events
+  // Events
   enableDragging(document.getElementById("popup-header"));
   document.getElementById("close-popup").onclick = closePopup;
   document.getElementById("sound-toggle").onclick = toggleSound;
   document.getElementById("replay-tts-btn").onclick = () =>
     speakEdge(data.text);
-  document.getElementById("mic-btn").onclick = (e) => {
+
+  // Mark Event
+  const markBtn = document.getElementById("mark-btn");
+  markBtn.onclick = (e) => {
     e.stopPropagation();
-    handleMic(data.text, document.getElementById("mic-btn"));
+    handleMark(markBtn, document.getElementById("save-status"));
+  };
+
+  // Mic Event
+  const micBtn = document.getElementById("mic-btn");
+  micBtn.onclick = (e) => {
+    e.stopPropagation();
+    handleMic(data.text, micBtn);
   };
 }
 
@@ -3653,16 +3875,9 @@ function renderAssessmentResult(data, container, referenceText, callbacks) {
     }</div>`;
     return;
   }
-  if (!data.NBest || !data.NBest[0]) {
-    container.innerHTML = `<div style="color:#ffb74d; text-align:center;">🤔 Không nghe rõ. Thử lại nhé!</div>`;
-    return;
-  }
-
   const result = data.NBest[0];
   const totalScore =
-    result.AccuracyScore !== undefined
-      ? result.AccuracyScore
-      : result.PronunciationAssessment?.AccuracyScore || 0;
+    result.AccuracyScore || result.PronunciationAssessment?.AccuracyScore || 0;
   const words = result.Words || [];
   let scoreColor =
     totalScore >= 80 ? "#4caf50" : totalScore >= 60 ? "#ffeb3b" : "#ff5252";
@@ -3678,14 +3893,12 @@ function renderAssessmentResult(data, container, referenceText, callbacks) {
     <div class="analyzed-content">`;
 
   words.forEach((word) => {
-    const wordText = word.Word;
     const wScore =
       word.AccuracyScore || word.PronunciationAssessment?.AccuracyScore || 0;
     const errorType =
       word.ErrorType || word.PronunciationAssessment?.ErrorType || "None";
     let wordColor =
       errorType === "Omission" ? "#777" : wScore < 60 ? "#ff5252" : "#fff";
-
     let phonemeHtml = "";
     if (errorType !== "Omission") {
       (word.Phonemes || []).forEach((p) => {
@@ -3702,13 +3915,11 @@ function renderAssessmentResult(data, container, referenceText, callbacks) {
     } else {
       phonemeHtml = `<span style="font-size:10px; color:#999;">(missed)</span>`;
     }
-
-    html += `<div class="word-block"><span class="word-text" style="color:${wordColor}">${wordText}</span><div class="phoneme-row">${phonemeHtml}</div></div>`;
+    html += `<div class="word-block"><span class="word-text" style="color:${wordColor}">${word.Word}</span><div class="phoneme-row">${phonemeHtml}</div></div>`;
   });
   html += `</div></div>`;
   container.innerHTML = html;
 
-  // Bind playback buttons
   setTimeout(() => {
     const btnUser = document.getElementById("btn-play-user");
     const btnStandard = document.getElementById("btn-play-standard");
@@ -3721,25 +3932,20 @@ function renderAssessmentResult(data, container, referenceText, callbacks) {
 function showFlashcard(item, callbacks) {
   const oldCard = document.getElementById("vocab-flashcard");
   if (oldCard) oldCard.remove();
-
   const card = document.createElement("div");
   card.id = "vocab-flashcard";
   card.className = "flashcard-slide-in";
-
   let imgHtml =
     item.data.images && item.data.images.length > 0
       ? `<img src="${item.data.images[0]}" style="width:100%; height:120px; object-fit:cover; border-radius:8px 8px 0 0; display:block;">`
       : "";
   const meaning = item.data.translation.wordMeaning || item.data.translation;
-
   card.innerHTML = `${imgHtml}<div style="padding:15px;"><h3 style="margin:0; font-size:22px; color:#333;">${item.word}</h3><p style="margin:5px 0 10px 0; color:#555;">${meaning}</p><div style="display:flex; justify-content:space-between;"><button id="fc-play-btn">▶</button><div id="fc-timer" style="color:#999;">10s</div></div></div><button id="fc-close" style="position:absolute; top:5px; right:5px;">✕</button>`;
   document.body.appendChild(card);
-
   callbacks.speakEdge(item.word);
   document.getElementById("fc-play-btn").onclick = () =>
     callbacks.speakEdge(item.word);
   document.getElementById("fc-close").onclick = () => card.remove();
-
   let timeLeft = 10;
   const interval = setInterval(() => {
     timeLeft--;
@@ -4016,6 +4222,436 @@ console.log("✅ Vocab Quick Search Loaded: Press Ctrl+Q!");
 FILE: apps/extension/content-scripts/messager.js
 ================================================
 [Empty file]
+
+
+================================================
+FILE: apps/extension/content-scripts/native-core.js
+================================================
+console.log("✅ Native Core Loaded");
+
+window.NativeCore = (function () {
+  let debounceTimer = null;
+
+  // 1. INPUT SEARCH
+  function handleInput(text) {
+    const w = text.trim();
+    if (!w) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => runSearch(w), 300);
+  }
+
+  async function runSearch(word) {
+    // 1. Backend Search
+    const dbResults = await apiSearchVocabulary(word);
+
+    // 2. Google Translate (nếu chưa có hoặc để lấy info)
+    let apiData = null;
+    const exact = dbResults.find(
+      (i) => i.word.toLowerCase() === word.toLowerCase()
+    );
+    if (!exact) {
+      const [trans, phonetics] = await Promise.all([
+        getTranslation(word),
+        getPhoneticForText(word),
+      ]);
+      if (trans) apiData = { trans, phonetics };
+    }
+
+    window.NativeUI.renderSearchModal(word, dbResults, apiData, {
+      onInput: handleInput,
+      onSpeak: (t) => speakWithEdgeTTS(t),
+      onMark: (item) => {
+        apiTriggerInteraction(item.id, item.occurrence);
+        // Feedback nhỏ (ko cần reload toàn bộ)
+      },
+      onAdd: async (w, d) => {
+        try {
+          await apiSaveVocabulary({
+            text: w,
+            translation: d.trans,
+            phonetics: d.phonetics,
+          });
+          runSearch(w); // Reload list
+        } catch (e) {
+          alert(e.message);
+        }
+      },
+      // Mic & Speak đã bind trong UI
+    });
+  }
+
+  // 2. TOGGLE
+  function toggle() {
+    // Init search trống
+    window.NativeUI.renderSearchModal("", [], null, { onInput: handleInput });
+  }
+
+  // 3. SHIFT HANDLER
+  async function handleSelection() {
+    const sel = window.getSelection().toString().trim();
+    if (!sel) return;
+    const rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
+
+    // Lấy data nhanh
+    speakWithEdgeTTS(sel);
+    const [trans, phonetics] = await Promise.all([
+      getTranslation(sel),
+      getPhoneticForText(sel),
+    ]);
+
+    if (trans) {
+      window.NativeUI.renderPopup({ text: sel, trans, phonetics }, rect, {
+        onSpeak: (t) => speakWithEdgeTTS(t),
+        // Mic bind trong UI
+        // Add bind trong UI (sẽ gọi lại runSearch)
+        onInput: handleInput, // Truyền vào để nút Add dùng được
+      });
+    }
+  }
+
+  return { toggle, handleSelection };
+})();
+
+// EVENT
+window.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.code === "KeyQ") {
+    e.preventDefault();
+    window.NativeCore.toggle();
+  }
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.key === "Shift") {
+    window.NativeCore.handleSelection();
+  }
+  if (e.key === "Escape") {
+    window.NativeUI.hideAll();
+  }
+});
+
+
+
+================================================
+FILE: apps/extension/content-scripts/native-ui.js
+================================================
+console.log("✅ Native UI Loaded");
+
+window.NativeUI = (function () {
+  let root = null;
+  let searchWrapper = null; // Ctrl+Q Container
+  let miniPopup = null; // Shift Popup
+
+  // Icons
+  const ICONS = {
+    search:
+      '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"/></svg>',
+    mic: '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M512 624c93.9 0 170-75.2 170-168V232c0-92.8-76.1-168-170-168s-170 75.2-170 168v224c0 92.8 76.1 168 170 168zm-110-392c0-59.6 49.3-108 110-108s110 48.4 110 108v224c0 59.6-49.3 108-110 108s-110-48.4-110-108V232zm270 224c0 88.4-71.6 160-160 160s-160-71.6-160-160a30 30 0 00-60 0c0 110.5 82 202.1 190 217.5V944h-90a30 30 0 000 60h240a30 30 0 000-60h-90V873.5c108-15.4 190-107 190-217.5a30 30 0 00-60 0z"/></svg>',
+    sound:
+      '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M625.9 115c-5.9 0-11.9 1.6-17.4 5.3L254 352H90c-17.7 0-32 14.3-32 32v256c0 17.7 14.3 32 32 32h164l354.5 231.7c5.5 3.6 11.6 5.3 17.4 5.3 16.7 0 32.1-13.3 32.1-32.1V147.1c0-18.8-15.4-32.1-32.1-32.1zM586 803L298 614.8V409.2L586 221v582zm302.2-402.1c-5.9-7.9-17.2-9.6-25.2-3.7l-35.9 26.8c-8 6-9.6 17.3-3.7 25.3C842.1 474.6 852 503 852 533c0 23.8-6.2 46.5-16.7 66.7-4.8 9.3-1.4 20.7 7.5 25.8l34.6 19.8c9.3 5.3 21.2 2.3 26.6-6.6C918 612.2 926 573.9 926 533c0-43-12.7-83.3-34.9-117.4z"/></svg>',
+    mark: '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M908.1 353.1l-253.9-36.9L540.7 86.1c-3.1-6.3-8.2-11.4-14.5-14.5-15.8-7.8-35-1.3-42.9 14.5L369.8 316.2l-253.9 36.9c-7 1-13.4 4.3-18.3 9.3a32.05 32.05 0 00.6 45.3l183.7 179.1-43.4 252.9a31.95 31.95 0 0046.4 33.7L512 754l227.1 119.4c6.2 3.3 13.4 4.4 20.3 3.2 17.4-3 29.1-19.5 26.1-36.9l-43.4-252.9 183.7-179.1c5-4.9 8.3-11.3 9.3-18.3 2.7-17.5-9.5-33.7-27-36.3z"/></svg>',
+  };
+
+  function init() {
+    if (document.getElementById("vocab-root")) return;
+    root = document.createElement("div");
+    root.id = "vocab-root";
+    document.body.appendChild(root);
+
+    // 1. Search Wrapper (Ctrl+Q) - Transparent Overlay
+    searchWrapper = document.createElement("div");
+    searchWrapper.id = "vocab-search-wrapper";
+    searchWrapper.innerHTML = `
+        <div id="vocab-search-modal">
+            <div class="vocab-header">
+                <div class="vocab-input-affix">
+                    ${ICONS.search}
+                    <input class="vocab-search-input" id="native-search-input" placeholder="Search vocabulary..." autocomplete="off">
+                </div>
+            </div>
+            <div id="vocab-modal-body" class="vocab-body"></div>
+            <div id="vocab-modal-assessment"></div>
+        </div>
+    `;
+    root.appendChild(searchWrapper);
+
+    // 2. Mini Popup (Shift)
+    miniPopup = document.createElement("div");
+    miniPopup.id = "vocab-mini-popup";
+    root.appendChild(miniPopup);
+
+    // Close Events
+    searchWrapper.onclick = (e) => {
+      if (e.target === searchWrapper) hideAll();
+    };
+    searchWrapper.addEventListener("keydown", (e) => e.stopPropagation());
+  }
+
+  function hideAll() {
+    if (searchWrapper) searchWrapper.style.display = "none";
+    if (miniPopup) miniPopup.style.display = "none";
+    window.speechSynthesis.cancel();
+  }
+
+  // --- MODE 1: RENDER SEARCH MODAL (CTRL + Q) ---
+  function renderSearchModal(keyword, dbResults, apiData, handlers) {
+    init();
+    searchWrapper.style.display = "block";
+
+    const input = document.getElementById("native-search-input");
+    if (input.value !== keyword && keyword) input.value = keyword;
+    input.focus();
+    input.oninput = (e) => handlers.onInput(e.target.value);
+
+    // Enter to Add logic
+    const exactMatch = dbResults.find(
+      (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
+    );
+    input.onkeydown = (e) => {
+      if (e.key === "Enter" && keyword && !exactMatch) {
+        handlers.onAdd(keyword, apiData);
+      }
+    };
+
+    const body = document.getElementById("vocab-modal-body");
+    let html = "";
+
+    // 1. ADD NEW (Nếu chưa có)
+    if (keyword && !exactMatch) {
+      const trans = apiData?.trans || {};
+      const meaning =
+        trans.wordMeaning ||
+        (typeof trans === "string" ? trans : "Translating...");
+      const pronun = apiData?.phonetics?.us || "";
+
+      html += `
+        <div class="vocab-add-box">
+            <div class="vocab-add-title">Add: "${keyword}"</div>
+            <div class="vocab-add-info">${pronun} • ${meaning}</div>
+            <div style="font-size:12px; color:#888; margin-bottom:8px;">Press Enter to save to DB</div>
+            <div>
+                <button id="add-listen" class="ant-btn ant-btn-icon" title="Listen">${ICONS.sound}</button>
+                <button id="add-mic" class="ant-btn ant-btn-icon" title="Practice">${ICONS.mic}</button>
+            </div>
+        </div>`;
+    }
+
+    // 2. LIST (Đã có) - Hiện Mic/Loa, Topic, Type
+    if (dbResults.length > 0) {
+      dbResults.forEach((item, idx) => {
+        html += `
+            <div class="vocab-list-item" id="vocab-item-${idx}">
+                <div class="vocab-list-left">
+                    <div class="vocab-word-row">
+                        <span class="vocab-word-text">${item.word}</span>
+                        ${
+                          item.partOfSpeech
+                            ? `<span class="vocab-tag">${item.partOfSpeech}</span>`
+                            : ""
+                        }
+                        ${
+                          item.topic
+                            ? `<span class="vocab-tag tag-blue">${item.topic}</span>`
+                            : ""
+                        }
+                    </div>
+                    <div class="vocab-word-meta">${item.meaning || ""}</div>
+                </div>
+                <div class="vocab-actions">
+                    <button class="ant-btn ant-btn-icon btn-mark" data-idx="${idx}" title="Mark Interaction">${
+          ICONS.mark
+        }</button>
+                    <button class="ant-btn ant-btn-icon btn-listen" data-idx="${idx}" title="Listen">${
+          ICONS.sound
+        }</button>
+                    <button class="ant-btn ant-btn-icon btn-mic" data-idx="${idx}" title="Practice">${
+          ICONS.mic
+        }</button>
+                </div>
+            </div>`;
+      });
+    } else if (!keyword) {
+      html += `<div style="text-align:center; padding:30px; color:#999;">Type to search...</div>`;
+    }
+
+    body.innerHTML = html;
+
+    // Bind Events
+    if (keyword && !exactMatch) {
+      document.getElementById("add-listen").onclick = () =>
+        handlers.onSpeak(keyword);
+      document.getElementById("add-mic").onclick = () =>
+        handleMicClick(
+          keyword,
+          document.getElementById("vocab-modal-assessment")
+        );
+    }
+
+    dbResults.forEach((item, idx) => {
+      document.getElementById(`vocab-item-${idx}`).onclick = (e) => {
+        if (!e.target.closest("button")) handlers.onMark(item); // Click row -> Mark
+      };
+      // Buttons
+      const btnsListen = document.querySelectorAll(".btn-listen");
+      btnsListen.forEach(
+        (b) =>
+          (b.onclick = (e) => {
+            e.stopPropagation();
+            handlers.onSpeak(dbResults[b.dataset.idx].word);
+          })
+      );
+
+      const btnsMic = document.querySelectorAll(".btn-mic");
+      btnsMic.forEach(
+        (b) =>
+          (b.onclick = (e) => {
+            e.stopPropagation();
+            // Gọi Mic và render kết quả vào div assessment chung
+            handleMicClick(
+              dbResults[b.dataset.idx].word,
+              document.getElementById("vocab-modal-assessment")
+            );
+          })
+      );
+
+      const btnsMark = document.querySelectorAll(".btn-mark");
+      btnsMark.forEach(
+        (b) =>
+          (b.onclick = (e) => {
+            e.stopPropagation();
+            handlers.onMark(dbResults[b.dataset.idx]);
+          })
+      );
+    });
+  }
+
+  // --- MODE 2: RENDER SHIFT POPUP ---
+  function renderPopup(data, rect, handlers) {
+    init();
+    miniPopup.style.display = "block";
+    searchWrapper.style.display = "none";
+
+    // Pos calc
+    let top = rect.bottom + 10;
+    let left = rect.left;
+    if (top + 200 > window.innerHeight) top = rect.top - 200;
+    miniPopup.style.top = top + "px";
+    miniPopup.style.left = left + "px";
+
+    const trans = data.trans;
+    const meaning = typeof trans === "string" ? trans : trans.wordMeaning;
+
+    miniPopup.innerHTML = `
+        <div style="padding:16px;">
+            <div style="font-weight:700; font-size:18px; color:#1890ff; margin-bottom:4px;">${
+              data.text
+            }</div>
+            <div style="color:#888; font-family:monospace; margin-bottom:8px;">${
+              data.phonetics?.us || ""
+            }</div>
+            <div style="margin-bottom:12px; color:#333;">${meaning}</div>
+            <div style="display:flex; gap:8px;">
+                <button id="pp-listen" class="ant-btn ant-btn-icon">${
+                  ICONS.sound
+                }</button>
+                <button id="pp-mic" class="ant-btn ant-btn-icon">${
+                  ICONS.mic
+                }</button>
+                <div style="flex:1"></div>
+                <button id="pp-add" class="ant-btn ant-btn-primary">Add to DB</button>
+            </div>
+            <div id="pp-assessment"></div>
+        </div>
+      `;
+
+    document.getElementById("pp-listen").onclick = () =>
+      handlers.onSpeak(data.text);
+    document.getElementById("pp-mic").onclick = () =>
+      handleMicClick(data.text, document.getElementById("pp-assessment"));
+    document.getElementById("pp-add").onclick = () => {
+      hideAll();
+      // Mở modal to để add
+      renderSearchModal(
+        data.text,
+        [],
+        { trans: data.trans, phonetics: data.phonetics },
+        handlers
+      );
+    };
+  }
+
+  // --- ASSESSMENT RENDERER (ELSA STYLE) ---
+  function renderAssessmentResult(data, container) {
+    if (!data || !data.NBest) {
+      container.innerHTML = `<div style="color:red; text-align:center; padding:10px;">Error</div>`;
+      return;
+    }
+
+    const result = data.NBest[0];
+    const score = Math.round(result.AccuracyScore);
+    const color = score >= 80 ? "#52c41a" : score >= 60 ? "#faad14" : "#ff4d4f";
+
+    let html = `
+        <div class="assessment-box">
+            <div class="total-score-circle" style="color:${color}; border-color:${color}">${score}</div>
+            <div class="analyzed-content">
+      `;
+
+    result.Words.forEach((w) => {
+      if (w.ErrorType === "Omission") return;
+      html += `<div class="word-block"><div class="word-text-display">${w.Word}</div><div class="phoneme-row">`;
+      (w.Phonemes || []).forEach((p) => {
+        let pc =
+          p.AccuracyScore >= 80
+            ? "p-perfect"
+            : p.AccuracyScore >= 60
+            ? "p-good"
+            : "p-bad";
+        html += `<span class="phoneme-char ${pc}">${p.Phoneme}</span>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `</div></div>`;
+
+    container.innerHTML = html;
+    container.style.display = "block";
+  }
+
+  // --- MIC LOGIC (NATIVE) ---
+  async function handleMicClick(text, container) {
+    container.style.display = "block";
+    container.innerHTML = `<div style="text-align:center; padding:10px; color:#1890ff;">Listening...</div>`;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        container.innerHTML = `<div style="text-align:center; padding:10px; color:#888;">Analyzing...</div>`;
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        try {
+          // Gọi hàm assessPronunciation từ services (đã có ở file kia)
+          const res = await assessPronunciation(blob, text);
+          renderAssessmentResult(res, container);
+        } catch (e) {
+          container.innerHTML = `<div style="color:red; text-align:center;">${e.message}</div>`;
+        }
+        stream.getTracks().forEach((t) => t.stop());
+      };
+
+      mediaRecorder.start();
+      setTimeout(() => {
+        if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
+      }, 3500);
+    } catch (e) {
+      container.innerHTML = `<div style="color:red; text-align:center;">Mic Error</div>`;
+    }
+  }
+
+  return { renderSearchModal, renderPopup, hideAll };
+})();
+
 
 
 ================================================
@@ -6402,6 +7038,7 @@ export default function VocabTable({
 ================================================
 FILE: apps/frontend/contexts/AuthContext.tsx
 ================================================
+// apps/frontend/contexts/AuthContext.tsx
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -6463,7 +7100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
-      document.cookie = 'token=; path=/; max-age=0'; // Xóa cookie
+      // Xóa cookie cũ
+      document.cookie = 'token=; path=/; max-age=0; SameSite=None; Secure'; 
       setToken(null);
     } finally {
       setIsLoading(false);
@@ -6476,12 +7114,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
     });
-
     const { token: newToken, user: newUser } = response.data;
     
     localStorage.setItem('token', newToken);
-    // Lưu vào cookie để iframe có thể access (7 ngày)
-    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
+    
+    // 👇 QUAN TRỌNG: Thêm SameSite=None; Secure để Extension dùng được Cookie này
+    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=None; Secure`;
+    
     setToken(newToken);
     setUser(newUser);
   };
@@ -6493,12 +7132,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       name,
     });
-
     const { token: newToken, user: newUser } = response.data;
     
     localStorage.setItem('token', newToken);
-    // Lưu vào cookie để iframe có thể access (7 ngày)
-    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=Lax`;
+    
+    // 👇 QUAN TRỌNG: Thêm SameSite=None; Secure
+    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=None; Secure`;
+    
     setToken(newToken);
     setUser(newUser);
   };
@@ -6507,7 +7147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     // Xóa cookie
-    document.cookie = 'token=; path=/; max-age=0';
+    document.cookie = 'token=; path=/; max-age=0; SameSite=None; Secure';
     setToken(null);
     setUser(null);
   };
@@ -6736,18 +7376,40 @@ const usePronunciationAssessment = (
     }
   };
 
+ // apps/frontend/hooks/vocabulary/usePronunciationAssessment.ts
+
   const handleSpeak = (text: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!text) return;
     window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(
-      (v) => v.name.includes("Aria") || v.name.includes("Google US English")
-    );
-    if (preferredVoice) utterance.voice = preferredVoice;
+    utterance.rate = 0.9; // Tốc độ đọc (0.9 là vừa phải)
+
+    // 👇 LOGIC MỚI: Ưu tiên tuyệt đối cho Microsoft Aria Online
+    const getVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      
+      // 1. Tìm chính xác giọng Microsoft Aria Online (Ưu tiên số 1)
+      const ariaOnline = voices.find(v => v.name.includes("Microsoft Aria Online"));
+      if (ariaOnline) return ariaOnline;
+
+      // 2. Nếu không có Online, tìm giọng Aria bất kỳ (Ưu tiên số 2)
+      const ariaAny = voices.find(v => v.name.includes("Aria"));
+      if (ariaAny) return ariaAny;
+
+      // 3. Fallback: Tìm giọng US English tự nhiên (Google US English, etc.)
+      return voices.find(v => v.lang === "en-US" && !v.name.includes("Zira")); 
+    };
+
+    const preferredVoice = getVoice();
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+      // console.log("Using voice:", preferredVoice.name); // Bật dòng này để debug xem nó đang dùng giọng nào
+    }
+
     window.speechSynthesis.speak(utterance);
   };
 
