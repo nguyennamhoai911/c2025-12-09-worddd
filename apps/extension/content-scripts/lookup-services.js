@@ -501,3 +501,20 @@ async function apiUpdateVocabulary(id, data) {
     throw error;
   }
 }
+// --- [NEW] DỊCH VIỆT -> ANH ---
+async function translateViToEn(vietnameseText) {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(
+      vietnameseText
+    )}`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data[0]) {
+      return data[0].map((item) => item[0]).join("");
+    }
+  } catch (error) {
+    console.error("Translate VI->EN error:", error);
+  }
+  return null;
+}

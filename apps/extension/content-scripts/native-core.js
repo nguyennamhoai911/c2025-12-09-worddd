@@ -2,10 +2,13 @@ console.log("✅ Native Core Loaded");
 
 window.NativeCore = (function () {
   let debounceTimer = null;
-  // 👇 [NEW] Biến theo dõi nội dung thực tế người dùng đang gõ
   let latestQuery = "";
 
+  // 👇 [NEW] QUẢN LÝ CHẾ ĐỘ (EN hoặc VI)
+  let currentMode = "EN"; // Mặc định là Ctrl + Q
+
   // --- 1. LOGIC AUTO-FILL ---
+  // (Giữ nguyên logic cũ)
   async function fetchAutoFillData(word) {
     if (!word) return null;
     try {
@@ -21,6 +24,7 @@ window.NativeCore = (function () {
         dictPromise,
         translatePromise,
       ]);
+
       let newData = {};
       if (dictRes && dictRes[0]) {
         const entry = dictRes[0];
@@ -50,7 +54,7 @@ window.NativeCore = (function () {
     }
   }
 
-  // --- 2. HANDLE SAVE (CREATE / UPDATE) ---
+  // --- 2. HANDLE SAVE ---
   async function handleSaveVocab(data) {
     try {
       if (data.id) {
@@ -60,7 +64,9 @@ window.NativeCore = (function () {
         await apiCreateFullVocabulary(data);
         console.log("✅ Created successfully");
       }
-      runSearch(data.word);
+      // Khi save xong, reload lại search bằng từ tiếng ANH
+      // (Dù đang ở mode VI, ta vẫn muốn thấy kết quả từ tiếng Anh)
+      runSearch(data.word, "EN_FORCE");
     } catch (e) {
       alert("Save failed: " + e.message + "\n(Check Login or Network)");
     }
@@ -68,11 +74,12 @@ window.NativeCore = (function () {
 
   // --- 3. ASSESSMENT HANDLER ---
   function onOpenAssessment(vocab) {
+    // Logic mic luôn luôn dùng tiếng Anh (word)
     const vocabItem = vocab.id
       ? vocab
       : {
           id: "temp",
-          word: vocab.word,
+          word: vocab.word, // Luôn là tiếng Anh
           pronunciation: vocab.pronunciation || "",
         };
 
@@ -85,13 +92,12 @@ window.NativeCore = (function () {
           });
           const mediaRecorder = new MediaRecorder(stream);
           const chunks = [];
-
           mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
           mediaRecorder.onstop = async () => {
             const blob = new Blob(chunks, { type: "audio/webm" });
             window.lastRecordedBlob = blob;
-
             try {
+              // Chấm điểm luôn dùng từ tiếng Anh
               const result = await assessPronunciation(blob, vocabItem.word);
               if (vocabItem.id !== "temp" && result.NBest && result.NBest[0]) {
                 const score = result.NBest[0].AccuracyScore;
@@ -104,7 +110,6 @@ window.NativeCore = (function () {
             }
             stream.getTracks().forEach((t) => t.stop());
           };
-
           mediaRecorder.start();
           window.currentRecorder = mediaRecorder;
         } catch (e) {
@@ -124,11 +129,22 @@ window.NativeCore = (function () {
   }
 
   // --- 4. FORM OPEN HANDLERS ---
-  async function onOpenCreate(initialWord) {
-    let initialData = { word: initialWord || "", isEditMode: false };
-    if (initialWord) {
-      const autoData = await fetchAutoFillData(initialWord);
-      if (autoData) initialData = { ...initialData, ...autoData };
+  async function onOpenCreate(englishWord, meaningSuggestion = "") {
+    // Luôn mở form tạo với từ Tiếng Anh
+    let initialData = {
+      word: englishWord || "",
+      meaning: meaningSuggestion, // Gợi ý nghĩa (nếu từ mode VI)
+      isEditMode: false,
+    };
+
+    if (englishWord) {
+      const autoData = await fetchAutoFillData(englishWord);
+      if (autoData) {
+        // Ưu tiên nghĩa từ Google Translate nếu mode VI chưa cung cấp
+        initialData = { ...initialData, ...autoData };
+        // Nếu mode VI đã có nghĩa (là input), thì giữ nguyên nghĩa đó
+        if (meaningSuggestion) initialData.meaning = meaningSuggestion;
+      }
     }
     window.NativeUI.renderFormModal(initialData, {
       onAutoFill: fetchAutoFillData,
@@ -136,15 +152,11 @@ window.NativeCore = (function () {
     });
   }
 
-  async function onEdit(word) {
-    const existing = await apiCheckVocabulary(word);
-    if (!existing) {
-      alert("Word not found!");
-      return onOpenCreate(word);
-    }
+  async function onEdit(item) {
+    // item luôn là object từ DB (Tiếng Anh)
     window.NativeUI.renderFormModal(
       {
-        ...existing,
+        ...item,
         isEditMode: true,
       },
       {
@@ -154,82 +166,120 @@ window.NativeCore = (function () {
     );
   }
 
-  // --- [UPDATED] INPUT HANDLER ---
+  // --- 5. INPUT & SEARCH ---
   function handleInput(text) {
-    // 1. Cập nhật ngay lập tức giá trị mới nhất vào biến toàn cục
     latestQuery = text;
-
     if (debounceTimer) clearTimeout(debounceTimer);
-
-    // 2. Debounce 300ms mới gọi API
     debounceTimer = setTimeout(() => {
-      // Lưu ý: user có thể gõ dấu cách, nên chỉ trim khi gửi đi search
       runSearch(text.trim());
-    }, 300);
+    }, 500); // Tăng debounce lên chút vì có thể phải gọi Google Translate
   }
 
-  // --- [UPDATED] RUN SEARCH ---
-  async function runSearch(word) {
-    // Lưu lại từ khóa của chính lần chạy này
-    const currentRunWord = word;
+  // 👇 [UPDATED LOGIC] SEARCH VỚI QUY TRÌNH DỊCH -> SEARCH DB
+  async function runSearch(rawInput, forceMode = null) {
+    const runMode = forceMode || currentMode;
+    const currentRunQuery = rawInput;
 
     try {
-      // 1. Gọi API Backend
-      const dbResults = await apiSearchVocabulary(word);
+      let searchKeyword = rawInput; // Mặc định là từ người dùng nhập (Mode EN)
+      let impliedMeaning = ""; // Nghĩa tiếng Việt (nếu Mode VI)
 
-      // 👇 [FIX QUAN TRỌNG]: Kiểm tra độ lệch pha
-      // Nếu từ khóa hiện tại (latestQuery) khác với từ khóa của request này (currentRunWord)
-      // Nghĩa là người dùng đã gõ thêm gì đó rồi -> Hủy bỏ render
-      if (latestQuery.trim() !== currentRunWord) {
-        return;
+      // BƯỚC 1: XỬ LÝ ĐẦU VÀO (DỊCH NẾU CẦN)
+      if (runMode === "VI" && rawInput.trim()) {
+        // Dịch Việt -> Anh
+        const translated = await translateViToEn(rawInput);
+
+        // Check race condition (Nếu người dùng đã gõ từ khác thì hủy luôn)
+        if (latestQuery !== currentRunQuery) return;
+
+        if (translated) {
+          searchKeyword = translated.toLowerCase().trim(); // Từ để search DB là Tiếng Anh
+          impliedMeaning = rawInput; // Input gốc chính là nghĩa
+        } else {
+          // Nếu không dịch được (lỗi mạng...), search luôn từ gốc
+          searchKeyword = rawInput;
+        }
       }
 
-      // 2. Gọi API Translate (nếu cần)
+      // BƯỚC 2: TÌM KIẾM TRONG DB (Luôn tìm bằng từ Tiếng Anh)
+      const dbResults = await apiSearchVocabulary(searchKeyword);
+
+      if (latestQuery !== currentRunQuery) return;
+
+      // BƯỚC 3: CHUẨN BỊ DATA CHO PHẦN "CREATE NEW"
       let apiData = null;
+      // Kiểm tra xem từ Tiếng Anh này đã có trong DB chưa
       const exact = dbResults.find(
-        (i) => i.word.toLowerCase() === (word || "").toLowerCase()
+        (i) => i.word.toLowerCase() === searchKeyword.toLowerCase()
       );
 
-      if (word && !exact) {
-        const [trans, phonetics] = await Promise.all([
-          getTranslation(word),
-          getPhoneticForText(word),
-        ]);
+      // Nếu chưa có, chuẩn bị data để gợi ý tạo mới
+      if (searchKeyword && !exact) {
+        const phonetics = await getPhoneticForText(searchKeyword);
 
-        // 👇 Check lại lần 2 (vì API translate cũng tốn thời gian)
-        if (latestQuery.trim() !== currentRunWord) return;
+        let trans = null;
+        if (runMode === "EN") {
+          // Mode EN: Cần dịch Anh -> Việt
+          trans = await getTranslation(searchKeyword);
+        } else {
+          // Mode VI: Đã có nghĩa (impliedMeaning) rồi
+          // Nhưng vẫn gọi Google để lấy thêm từ loại (dict) nếu có
+          const googleData = await getTranslation(searchKeyword);
+          trans = {
+            wordMeaning: impliedMeaning, // Ưu tiên input của user
+            dict: googleData?.dict || [],
+          };
+        }
 
+        if (latestQuery !== currentRunQuery) return;
         if (trans) apiData = { trans, phonetics };
       }
 
-      // 3. Chỉ Render khi mọi thứ vẫn đồng bộ
-      window.NativeUI.renderSearchModal(word, dbResults, apiData, {
+      // BƯỚC 4: RENDER GIAO DIỆN
+      window.NativeUI.renderSearchModal(searchKeyword, dbResults, apiData, {
         onInput: handleInput,
         onSpeak: (t) => speakWithEdgeTTS(t),
-        onOpenCreate: onOpenCreate,
+
+        // Logic tạo mới:
+        // Mode VI: Tạo từ "hello" với nghĩa "xin chào"
+        onOpenCreate: (word) =>
+          onOpenCreate(word, runMode === "VI" ? impliedMeaning : ""),
+
         onEdit: onEdit,
         onMic: onOpenAssessment,
+        // Logic Mic Practice: Luôn dùng từ Tiếng Anh để chấm điểm
         onMicPractice: (keyword) =>
           onOpenAssessment({
-            word: keyword,
+            word: keyword, // keyword ở đây là searchKeyword (Tiếng Anh)
             id: null,
             pronunciation: apiData?.phonetics?.us || "",
           }),
         onMark: (item) => {
-          apiTriggerInteraction(item.id, item.occurrence);
+          /* ... */
         },
+
+        // Params cho UI hiển thị
+        mode: runMode,
+        rawInput: rawInput, // Để hiển thị lại trong ô input (không bị đổi thành tiếng Anh)
       });
     } catch (e) {
       console.error("Search error:", e);
     }
   }
 
-  // --- CORE PUBLIC METHODS ---
-  function toggle() {
-    latestQuery = ""; // Reset khi mở lại
-    runSearch("");
+  // --- 6. PUBLIC METHODS ---
+  function toggle(mode = "EN") {
+    currentMode = mode; // Set chế độ
+    latestQuery = "";
+    // Reset UI với chế độ mới
+    window.NativeUI.renderSearchModal("", [], null, {
+      onInput: handleInput,
+      mode: currentMode,
+      rawInput: "",
+    });
   }
 
+  // ... (handleSelection giữ nguyên) ...
   async function handleSelection() {
     const sel = window.getSelection().toString().trim();
     if (!sel) return;
@@ -242,7 +292,7 @@ window.NativeCore = (function () {
     if (trans) {
       window.NativeUI.renderPopup({ text: sel, trans, phonetics }, rect, {
         onSpeak: (t) => speakWithEdgeTTS(t),
-        onOpenCreate: onOpenCreate,
+        onOpenCreate: (w) => onOpenCreate(w), // Popup Shift luôn là EN -> VI
       });
     }
   }
@@ -250,14 +300,21 @@ window.NativeCore = (function () {
   return { toggle, handleSelection };
 })();
 
-// --- GLOBAL EVENT LISTENERS ---
+// --- GLOBAL LISTENER ---
 window.addEventListener("keydown", (e) => {
+  // Ctrl + Q: Mode English
   if ((e.ctrlKey || e.metaKey) && e.code === "KeyQ") {
     e.preventDefault();
-    window.NativeCore.toggle();
+    window.NativeCore.toggle("EN");
+  }
+  // Ctrl + Y: Mode Vietnamese
+  if ((e.ctrlKey || e.metaKey) && e.code === "KeyY") {
+    e.preventDefault();
+    window.NativeCore.toggle("VI");
   }
 });
 
+// ... (Escape listener giữ nguyên) ...
 window.addEventListener("keyup", (e) => {
   if (e.key === "Escape") {
     window.NativeUI.hideAll();

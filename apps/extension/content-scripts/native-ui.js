@@ -314,11 +314,31 @@ window.NativeUI = (function () {
 
     const input = document.getElementById("native-search-input");
     const body = document.getElementById("vocab-modal-body");
+    const mode = handlers.mode || "EN";
+    const userTyped = handlers.rawInput || "";
 
-    // Logic focus input (như cũ)
+    // 1. CẬP NHẬT UI THEO MODE (Placeholder & Icon)
+    const placeholder =
+      mode === "VI"
+        ? "Nhập tiếng Việt để dịch & tra cứu..."
+        : "Type English to search or create...";
+    input.setAttribute("placeholder", placeholder);
+
+    // Thêm visual indicator cho mode (Nếu muốn)
+    // Ví dụ đổi màu icon kính lúp: Xanh (EN) - Đỏ (VI)
+    const iconSpan = document.querySelector(".vocab-input-affix span");
+    if (iconSpan) {
+      iconSpan.innerHTML =
+        mode === "VI"
+          ? '<span style="font-size:14px; font-weight:800; color:#e53935;">VI</span>'
+          : ICONS.search;
+    }
+
+    // 2. LOGIC INPUT VALUE
+    // Nếu là active element (đang gõ) -> Không đụng vào value
+    // Nếu mới mở (userTyped rỗng) -> Reset
     if (document.activeElement !== input) {
-      if (keyword) input.value = keyword;
-      else input.value = "";
+      input.value = userTyped;
       input.focus();
     }
 
@@ -347,29 +367,42 @@ window.NativeUI = (function () {
 
     let html = "";
 
-    // 👇 1. CREATE NEW ITEM (Thiết kế lại giống List Item)
+    // 👇 CREATE NEW ITEM
+    // Lưu ý: 'keyword' ở đây là từ Tiếng Anh (đã dịch từ VI hoặc nguyên gốc EN)
     const exactMatch = dbResults.find(
       (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
     );
 
     if (keyword && !exactMatch) {
       const trans = apiData?.trans || {};
-      const meaning =
-        trans.wordMeaning ||
-        (typeof trans === "string" ? trans : "Translating...");
+
+      // Xác định nghĩa hiển thị:
+      // - Nếu Mode VI: Hiển thị input gốc ("xin chào")
+      // - Nếu Mode EN: Hiển thị kết quả dịch ("Translating...")
+      const displayMeaning =
+        handlers.mode === "VI"
+          ? handlers.rawInput
+          : trans.wordMeaning || "Translating...";
+
       const pronun = apiData?.phonetics?.us || "";
 
-      // Layout mới: Giống hệt 1 dòng kết quả, nhưng có Tag "NEW"
+      // Tạo tiêu đề phụ dựa trên mode
+      const subTitle =
+        handlers.mode === "VI"
+          ? `English match: "${keyword}"` // Cho người dùng biết từ tiếng Anh tương ứng
+          : "New Word";
+
       html += `
         <div class="vocab-list-item vocab-create-item" id="open-create-form">
             <div class="vocab-list-left">
                 <div class="vocab-word-row">
-                    <span class="vocab-word-text">${keyword}</span>
-                    <span class="vocab-tag tag-green">New</span> 
+                    <span class="vocab-word-text">${keyword}</span> <span class="vocab-tag tag-green">${subTitle}</span>
                     <span class="vocab-pronun">${pronun}</span>
                 </div>
-                <div class="vocab-word-meta">${meaning}</div>
-                <div style="font-size:11px; color:#1890ff; margin-top:2px;">Press Enter to create</div>
+                <div class="vocab-word-meta">${displayMeaning}</div>
+                <div style="font-size:11px; color:#1890ff; margin-top:2px;">
+                    Press Enter to save to database
+                </div>
             </div>
             
             <div class="vocab-actions" style="opacity: 1; transform: none;">
