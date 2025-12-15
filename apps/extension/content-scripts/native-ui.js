@@ -3,8 +3,9 @@ console.log("✅ Native UI Loaded");
 window.NativeUI = (function () {
   let root = null;
   let searchWrapper = null;
-  let formWrapper = null; // 👇 NEW: Container cho Form Modal
+  let formWrapper = null;
   let miniPopup = null;
+  let assessWrapper = null; // New wrapper for assessment modal
 
   // Icons SVG
   const ICONS = {
@@ -40,7 +41,7 @@ window.NativeUI = (function () {
     `;
     root.appendChild(searchWrapper);
 
-    // 2. Full Form Modal Wrapper (Mới)
+    // 2. Full Form Modal Wrapper
     formWrapper = document.createElement("div");
     formWrapper.className = "vocab-modal-overlay";
     formWrapper.style.display = "none";
@@ -50,6 +51,21 @@ window.NativeUI = (function () {
     miniPopup = document.createElement("div");
     miniPopup.id = "vocab-mini-popup";
     root.appendChild(miniPopup);
+    
+    // 4. Assessment Modal Wrapper
+    if (!document.getElementById("vocab-assess-wrapper")) {
+        assessWrapper = document.createElement("div");
+        assessWrapper.id = "vocab-assess-wrapper";
+        assessWrapper.className = "assess-modal-overlay";
+        assessWrapper.style.display = "none";
+        root.appendChild(assessWrapper);
+        
+        assessWrapper.onclick = (e) => {
+           if(e.target === assessWrapper) assessWrapper.style.display = "none";
+        };
+    } else {
+        assessWrapper = document.getElementById("vocab-assess-wrapper");
+    }
 
     // Close events
     searchWrapper.onclick = (e) => {
@@ -65,17 +81,16 @@ window.NativeUI = (function () {
     if (searchWrapper) searchWrapper.style.display = "none";
     if (formWrapper) formWrapper.style.display = "none";
     if (miniPopup) miniPopup.style.display = "none";
+    if (assessWrapper) assessWrapper.style.display = "none";
     window.speechSynthesis.cancel();
   }
 
-  // --- NEW: RENDER FULL FORM MODAL ---
   function renderFormModal(data, handlers) {
     init();
     formWrapper.style.display = "flex";
-    searchWrapper.style.display = "none"; // Ẩn search đi
+    searchWrapper.style.display = "none";
     miniPopup.style.display = "none";
 
-    // data = { word, meaning, example, topic, partOfSpeech, relatedWords, pronunciation, isEditMode }
     const isEdit = data.isEditMode;
     
     formWrapper.innerHTML = `
@@ -90,7 +105,6 @@ window.NativeUI = (function () {
                 </div>
                 <button id="form-close" style="background:none; border:none; color:white; cursor:pointer;">${ICONS.close}</button>
             </div>
-            
             <div class="vocab-modal-body">
                 <div class="vocab-grid-2">
                     <div>
@@ -109,17 +123,14 @@ window.NativeUI = (function () {
                         </select>
                     </div>
                 </div>
-
                 <div>
                     <label class="vocab-label">Meaning</label>
                     <textarea id="form-meaning" class="vocab-textarea-field" placeholder="Nghĩa của từ...">${data.meaning || ''}</textarea>
                 </div>
-
                 <div>
                     <label class="vocab-label">Example</label>
                     <textarea id="form-example" class="vocab-textarea-field" style="background:#f9fafb; font-style:italic;" placeholder="Ví dụ...">${data.example || ''}</textarea>
                 </div>
-
                 <div class="vocab-grid-2">
                     <div>
                         <label class="vocab-label">Topic</label>
@@ -131,7 +142,6 @@ window.NativeUI = (function () {
                     </div>
                 </div>
             </div>
-
             <div class="vocab-modal-footer">
                 <button id="form-cancel" class="btn-cancel">Cancel</button>
                 <button id="form-save" class="btn-save">${isEdit ? "Save Changes" : "Create Word"}</button>
@@ -139,11 +149,9 @@ window.NativeUI = (function () {
         </div>
     `;
 
-    // Bind Events
     const wordInput = document.getElementById("form-word");
     const statusDiv = document.getElementById("form-autofill-status");
 
-    // Auto-fill trigger on blur (giống Frontend)
     if (!isEdit) {
         wordInput.onblur = async () => {
              const val = wordInput.value.trim();
@@ -151,8 +159,6 @@ window.NativeUI = (function () {
                  statusDiv.style.display = "inline-block";
                  const autoData = await handlers.onAutoFill(val);
                  statusDiv.style.display = "none";
-                 
-                 // Fill data back to UI
                  if(autoData) {
                      if(autoData.pronunciation) document.getElementById("form-pronun").value = autoData.pronunciation;
                      if(autoData.partOfSpeech) document.getElementById("form-pos").value = autoData.partOfSpeech;
@@ -161,7 +167,6 @@ window.NativeUI = (function () {
                  }
              }
         };
-        // Tự động trigger autofill nếu mở form mà word đã có sẵn
         if (data.word) wordInput.onblur();
     }
 
@@ -169,9 +174,8 @@ window.NativeUI = (function () {
     document.getElementById("form-cancel").onclick = () => { formWrapper.style.display = "none"; };
     
     document.getElementById("form-save").onclick = () => {
-        // Collect Data
         const newData = {
-            id: data.id, // Keep ID if edit
+            id: data.id,
             word: document.getElementById("form-word").value.trim(),
             pronunciation: document.getElementById("form-pronun").value.trim(),
             partOfSpeech: document.getElementById("form-pos").value,
@@ -184,42 +188,30 @@ window.NativeUI = (function () {
         formWrapper.style.display = "none";
     };
     
-    // Focus vào ô word nếu tạo mới
     if (!isEdit) setTimeout(() => wordInput.focus(), 100);
   }
 
-  // --- UPDATED: RENDER SEARCH MODAL (CTRL + Q) ---
   function renderSearchModal(keyword, dbResults, apiData, handlers) {
     init();
     searchWrapper.style.display = "block";
-
     const input = document.getElementById("native-search-input");
     if (input.value !== keyword && keyword) input.value = keyword;
     if (!keyword) input.value = '';
     input.focus();
     input.oninput = (e) => handlers.onInput(e.target.value);
 
-    // Enter to Add logic
-    const exactMatch = dbResults.find(
-      (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
-    );
+    const exactMatch = dbResults.find(w => w.word.toLowerCase() === (keyword || "").toLowerCase());
     input.onkeydown = (e) => {
-      if (e.key === "Enter" && keyword && !exactMatch) {
-        handlers.onOpenCreate(keyword); 
-      }
+      if (e.key === "Enter" && keyword && !exactMatch) handlers.onOpenCreate(keyword); 
     };
 
     const body = document.getElementById("vocab-modal-body");
     let html = "";
 
-    // 1. CREATE NEW (Nếu chưa có)
     if (keyword && !exactMatch) {
       const trans = apiData?.trans || {};
-      const meaning =
-        trans.wordMeaning ||
-        (typeof trans === "string" ? trans : "Translating...");
+      const meaning = trans.wordMeaning || (typeof trans === "string" ? trans : "Translating...");
       const pronun = apiData?.phonetics?.us || "";
-
       html += `
         <div class="vocab-add-box" id="open-create-form" style="cursor: pointer;">
             <div class="vocab-add-title">Create New: "${keyword}"</div>
@@ -232,7 +224,6 @@ window.NativeUI = (function () {
         </div>`;
     }
 
-    // 2. LIST (Đã có) - Hiện Mic/Loa, Topic, Type
     if (dbResults.length > 0) {
       dbResults.forEach((item, idx) => {
         html += `
@@ -240,16 +231,8 @@ window.NativeUI = (function () {
                 <div class="vocab-list-left">
                     <div class="vocab-word-row">
                         <span class="vocab-word-text">${item.word}</span>
-                        ${
-                          item.partOfSpeech
-                            ? `<span class="vocab-tag">${item.partOfSpeech}</span>`
-                            : ""
-                        }
-                        ${
-                          item.topic
-                            ? `<span class="vocab-tag tag-blue">${item.topic}</span>`
-                            : ""
-                        }
+                        ${item.partOfSpeech ? `<span class="vocab-tag">${item.partOfSpeech}</span>` : ""}
+                        ${item.topic ? `<span class="vocab-tag tag-blue">${item.topic}</span>` : ""}
                     </div>
                     <div class="vocab-word-meta">${item.meaning || ""}</div>
                 </div>
@@ -266,15 +249,11 @@ window.NativeUI = (function () {
 
     body.innerHTML = html;
 
-    // Bind Events
     if (keyword && !exactMatch) {
       document.getElementById("add-listen").onclick = (e) => { e.stopPropagation(); handlers.onSpeak(keyword); };
       document.getElementById("add-mic").onclick = (e) => {
         e.stopPropagation();
-        handleMicClick(
-          keyword,
-          document.getElementById("vocab-modal-assessment")
-        );
+        if (handlers.onMicPractice) handlers.onMicPractice(keyword);
       };
       document.getElementById("open-create-form").onclick = () => handlers.onOpenCreate(keyword);
     }
@@ -282,61 +261,32 @@ window.NativeUI = (function () {
     dbResults.forEach((item, idx) => {
       const itemElement = document.getElementById(`vocab-item-${idx}`);
       if (!itemElement) return;
-
-      // Click on the row (but not on a button) to mark it
-      itemElement.onclick = (e) => {
-        if (!e.target.closest("button")) {
-          handlers.onMark(item);
-        }
-      };
-
-      // Click on Edit button
+      itemElement.onclick = (e) => { if (!e.target.closest("button")) handlers.onMark(item); };
       const btnEdit = itemElement.querySelector(".btn-edit");
-      if (btnEdit) {
-        btnEdit.onclick = (e) => {
-          e.stopPropagation();
-          handlers.onEdit(item.word); // <-- FIX: Call onEdit
-        };
-      }
-
-      // Click on Listen button
+      if (btnEdit) btnEdit.onclick = (e) => { e.stopPropagation(); handlers.onEdit(item); };
       const btnListen = itemElement.querySelector(".btn-listen");
-      if (btnListen) {
-        btnListen.onclick = (e) => {
-          e.stopPropagation();
-          handlers.onSpeak(item.word);
-        };
-      }
-
-      // Click on Mic button
+      if (btnListen) btnListen.onclick = (e) => { e.stopPropagation(); handlers.onSpeak(item.word); };
       const btnMic = itemElement.querySelector(".btn-mic");
       if (btnMic) {
         btnMic.onclick = (e) => {
           e.stopPropagation();
-          handleMicClick(
-            item.word,
-            document.getElementById("vocab-modal-assessment")
-          );
+          if (handlers.onMic) handlers.onMic(item);
         };
       }
     });
   }
 
-  // --- RETAIN OLD FUNCTIONS ---
   function renderPopup(data, rect, handlers) {
     init();
     miniPopup.style.display = "block";
     searchWrapper.style.display = "none";
-
     let top = rect.bottom + 10;
     let left = rect.left;
     if (top + 200 > window.innerHeight) top = rect.top - 200;
     miniPopup.style.top = top + "px";
     miniPopup.style.left = left + "px";
-
     const trans = data.trans;
     const meaning = typeof trans === "string" ? trans : trans.wordMeaning;
-
     miniPopup.innerHTML = `
         <div style="padding:16px;">
             <div style="font-weight:700; font-size:18px; color:#1890ff; margin-bottom:4px;">${data.text}</div>
@@ -351,7 +301,6 @@ window.NativeUI = (function () {
             <div id="pp-assessment"></div>
         </div>
       `;
-
     document.getElementById("pp-listen").onclick = () => handlers.onSpeak(data.text);
     document.getElementById("pp-mic").onclick = () => handleMicClick(data.text, document.getElementById("pp-assessment"));
     document.getElementById("pp-add").onclick = () => {
@@ -359,69 +308,94 @@ window.NativeUI = (function () {
       handlers.onOpenCreate(data.text);
     };
   }
+  
+  // --- [NEW] RENDER ASSESSMENT MODAL ---
+  function renderAssessmentModal(vocab, handlers) {
+      init();
+      assessWrapper.style.display = "flex";
+      
+      const renderContent = (result = null, isRecording = false, error = "") => {
+          let scoreHtml = `<div style="color:#e5e7eb; font-size:48px;">?</div>`;
+          let borderColor = "#f3f4f6";
+          let phonemeHtml = "";
+
+          if (result) {
+              const score = Math.round(result.AccuracyScore);
+              borderColor = score >= 80 ? "#4caf50" : score >= 60 ? "#fbc02d" : "#ef4444";
+              scoreHtml = `<div style="color:${borderColor}">${score}</div>`;
+              
+              if(result.Words && result.Words[0] && result.Words[0].Phonemes) {
+                  phonemeHtml = result.Words[0].Phonemes.map(p => {
+                      const bgClass = p.AccuracyScore >= 80 ? "bg-green" : p.AccuracyScore >= 60 ? "bg-yellow" : "bg-red";
+                      return `<span class="phoneme-badge ${bgClass}" title="${p.AccuracyScore}">${p.Phoneme}</span>`;
+                  }).join("");
+              }
+          }
+
+          assessWrapper.innerHTML = `
+            <div class="assess-modal-content">
+                <button id="assess-close" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer; color:#9ca3af;">✕</button>
+                <div class="assess-word">${vocab.word}</div>
+                <div class="assess-pronun">/${vocab.pronunciation || ''}/</div>
+                <div class="score-circle-container" style="border-color: ${borderColor}">
+                    ${scoreHtml}
+                </div>
+                ${phonemeHtml ? `<div class="phoneme-list">${phonemeHtml}</div>` : ''}
+                <div class="assess-controls">
+                    <button id="btn-listen-sample" class="btn-control btn-speaker" title="Nghe mẫu">
+                       ${ICONS.sound}
+                    </button>
+                    <button id="btn-record-toggle" class="btn-control btn-record ${isRecording ? 'recording' : ''}">
+                       ${isRecording ? '<div style="width:20px; height:20px; background:white; border-radius:4px;"></div>' : ICONS.mic}
+                    </button>
+                    <button id="btn-playback-user" class="btn-control btn-playback" title="Nghe lại" ${!result ? 'disabled' : ''}>
+                       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </button>
+                </div>
+                <div class="assess-status">
+                    ${isRecording ? '<span style="color:#ef4444">Listening...</span>' : 
+                      error ? `<span style="color:#ef4444">${error}</span>` : 
+                      result ? (vocab.id !== 'temp' ? '<span style="color:#10b981">✅ Score Saved!</span>' : '<span style="color:#f59e0b">⚠️ Practice Mode (Not Saved)</span>') : 
+                      'Click mic to start'}
+                </div>
+            </div>
+          `;
+
+          document.getElementById("assess-close").onclick = () => assessWrapper.style.display = "none";
+          document.getElementById("btn-listen-sample").onclick = () => handlers.onSpeak(vocab.word);
+          
+          document.getElementById("btn-record-toggle").onclick = () => {
+              if (isRecording) handlers.onStop();
+              else handlers.onRecord(
+                  (res) => renderContent(res, false),
+                  (err) => renderContent(null, false, err)
+              );
+              if(!isRecording) renderContent(null, true); 
+          };
+
+          document.getElementById("btn-playback-user").onclick = () => handlers.onPlayback();
+      };
+
+      renderContent();
+  }
 
   function renderAssessmentResult(data, container) {
     if (!data || !data.NBest) {
       container.innerHTML = `<div style="color:red; text-align:center; padding:10px;">Error</div>`;
       return;
     }
-
     const result = data.NBest[0];
     const score = Math.round(result.AccuracyScore);
     const color = score >= 80 ? "#52c41a" : score >= 60 ? "#faad14" : "#ff4d4f";
-
-    let html = `
-        <div class="assessment-box">
-            <div class="total-score-circle" style="color:${color}; border-color:${color}">${score}</div>
-            <div class="analyzed-content">
-      `;
-
-    result.Words.forEach((w) => {
-      if (w.ErrorType === "Omission") return;
-      html += `<div class="word-block"><div class="word-text-display">${w.Word}</div><div class="phoneme-row">`;
-      (w.Phonemes || []).forEach((p) => {
-        let pc = p.AccuracyScore >= 80 ? "p-perfect" : p.AccuracyScore >= 60 ? "p-good" : "p-bad";
-        html += `<span class="phoneme-char ${pc}">${p.Phoneme}</span>`;
-      });
-      html += `</div></div>`;
-    });
-    html += `</div></div>`;
-
+    let html = `...`; // Old assessment result renderer can be deprecated or kept for mini-popups
     container.innerHTML = html;
     container.style.display = "block";
   }
 
   async function handleMicClick(text, container) {
-    container.style.display = "block";
-    container.innerHTML = `<div style="text-align:center; padding:10px; color:#1890ff;">Listening...</div>`;
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      const chunks = [];
-
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        container.innerHTML = `<div style="text-align:center; padding:10px; color:#888;">Analyzing...</div>`;
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        try {
-          // This function is defined in another file (e.g., lookup-services.js) and needs to be available in the scope
-          const res = await assessPronunciation(blob, text);
-          renderAssessmentResult(res, container);
-        } catch (e) {
-          container.innerHTML = `<div style="color:red; text-align:center;">${e.message}</div>`;
-        }
-        stream.getTracks().forEach((t) => t.stop());
-      };
-
-      mediaRecorder.start();
-      setTimeout(() => {
-        if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
-      }, 3500);
-    } catch (e) {
-      container.innerHTML = `<div style="color:red; text-align:center;">Mic Error</div>`;
-    }
+    // This logic should now be in native-core.js
+    // It will call renderAssessmentModal instead
   }
 
-  return { renderSearchModal, renderPopup, renderFormModal, hideAll };
+  return { renderSearchModal, renderPopup, renderFormModal, renderAssessmentModal, hideAll };
 })();

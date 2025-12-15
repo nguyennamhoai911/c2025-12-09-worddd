@@ -837,3 +837,150 @@
   color: #555;
   margin-bottom: 10px;
 }
+/* --- ASSESSMENT MODAL STYLES (ELSA STYLE) --- */
+.assess-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2147483660; /* Cao nhất */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.assess-modal-content {
+  background: white;
+  width: 100%;
+  max-width: 450px;
+  border-radius: 24px;
+  padding: 30px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: scaleIn 0.2s ease-out;
+}
+
+.assess-word {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 5px;
+}
+
+.assess-pronun {
+  font-family: monospace;
+  color: #6b7280;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+/* Score Circle Animation */
+.score-circle-container {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 8px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px auto;
+  font-size: 40px;
+  font-weight: 800;
+  transition: all 0.5s ease;
+}
+
+/* Phonemes Styles */
+.phoneme-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 25px;
+  background: #f9fafb;
+  padding: 15px;
+  border-radius: 16px;
+}
+
+.phoneme-badge {
+  font-family: monospace;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.bg-green {
+  background: #dcfce7;
+  color: #166534;
+}
+.bg-yellow {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.bg-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Control Buttons */
+.assess-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.btn-control {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-control:active {
+  transform: scale(0.95);
+}
+
+.btn-speaker {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #4f46e5;
+}
+
+.btn-record {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+}
+.btn-record.recording {
+  background: #ef4444;
+  animation: pulse 1.5s infinite;
+}
+
+.btn-playback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #059669;
+}
+.btn-playback:disabled {
+  background: #f3f4f6;
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.assess-status {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #6b7280;
+  min-height: 20px;
+}

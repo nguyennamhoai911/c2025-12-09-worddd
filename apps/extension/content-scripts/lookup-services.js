@@ -427,6 +427,9 @@ async function apiCheckVocabulary(word) {
 }
 // --- [NEW] UPDATE SCORE TO BACKEND ---
 async function apiAddScore(vocabId, score) {
+  // Nếu vocabId là "temp" hoặc không có ID -> Không lưu được (chỉ luyện tập)
+  if (!vocabId || vocabId === "temp") return false;
+
   try {
     const response = await fetch(`${BACKEND_URL}/vocabulary/${vocabId}/score`, {
       method: "PATCH",
@@ -445,27 +448,56 @@ async function apiAddScore(vocabId, score) {
 async function apiSearchVocabulary(keyword) {
   try {
     if (!keyword) return [];
-    const res = await fetch(`${BACKEND_URL}/vocabulary?search=${encodeURIComponent(keyword)}&limit=5`, {
-       headers: { "Content-Type": "application/json" },
-       credentials: "include"
-    });
+    const res = await fetch(
+      `${BACKEND_URL}/vocabulary?search=${encodeURIComponent(keyword)}&limit=5`,
+      {
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
     if (res.ok) {
-        const json = await res.json();
-        return json.data; // Trả về mảng items
+      const json = await res.json();
+      return json.data; // Trả về mảng items
     }
-  } catch(e) {}
+  } catch (e) {}
   return [];
 }
 
 // Hàm Save đầy đủ (thay thế hoặc bổ sung cho apiSaveVocabulary cũ)
 async function apiCreateFullVocabulary(payload) {
-    // Payload: { word, meaning, example, topic, partOfSpeech, pronunciation, relatedWords }
-    const response = await fetch(`${BACKEND_URL}/vocabulary`, {
-      method: "POST",
+  // Payload: { word, meaning, example, topic, partOfSpeech, pronunciation, relatedWords }
+  const response = await fetch(`${BACKEND_URL}/vocabulary`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error("Save failed");
+  return await response.json();
+}
+async function apiUpdateVocabulary(id, data) {
+  try {
+    const payload = {
+      word: data.word,
+      meaning: data.meaning,
+      example: data.example,
+      topic: data.topic,
+      partOfSpeech: data.partOfSpeech,
+      pronunciation: data.pronunciation,
+      relatedWords: data.relatedWords,
+      // Backend không nhận 'isEditMode' nên đừng gửi
+    };
+
+    const response = await fetch(`${BACKEND_URL}/vocabulary/${id}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       credentials: "include",
     });
-    if (!response.ok) throw new Error("Save failed");
+
+    if (!response.ok) throw new Error("Update failed");
     return await response.json();
+  } catch (error) {
+    throw error;
+  }
 }
