@@ -656,7 +656,7 @@
   position: fixed;
   inset: 0;
   background: transparent !important; /* Không màu nền */
-  backdrop-filter: none !important;   /* Không làm mờ */
+  backdrop-filter: none !important; /* Không làm mờ */
   z-index: 2147483648;
   display: none;
   pointer-events: none; /* QUAN TRỌNG: Cho phép click vào trang web bên dưới */
@@ -664,36 +664,38 @@
 
 /* Modal: Hiện rõ & Nhận sự kiện chuột */
 #vocab-search-modal {
-  pointer-events: auto; /* Modal vẫn click được */
+  pointer-events: auto;
   background: white;
   width: 600px;
   max-width: 90vw;
   border-radius: 12px;
-  /* Đổ bóng đậm hơn để nổi bật trên nền web lộn xộn */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
-              0 20px 50px -5px rgba(0, 0, 0, 0.3),
-              0 0 0 1px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 20px 50px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  position: absolute; /* Để set top/left tự do */
-  
-  /* Mặc định ở giữa (sẽ bị JS ghi đè nếu có vị trí cũ) */
-  top: 15%; 
-  left: 50%; 
+  position: absolute;
+  top: 15%;
+  left: 50%;
   transform: translateX(-50%);
-  
-  transition: opacity 0.2s ease-out; /* Bỏ transition transform để kéo mượt hơn */
+  transition: opacity 0.2s ease-out;
+
+  /* 👇 QUAN TRỌNG: Cho phép bôi đen văn bản trong toàn bộ Modal */
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
-/* Header: Biến thành tay cầm để kéo */
+/* Header: Tay nắm kéo thả */
 .vocab-header {
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
-  cursor: grab; /* Con trỏ hình bàn tay */
-  user-select: none; /* Không cho bôi đen text khi kéo */
+
+  /* 👇 Chỉ chặn bôi đen ở vùng Header (trừ ô input) để kéo thả mượt */
+  cursor: grab;
+  user-select: none !important;
+  -webkit-user-select: none !important;
   background: #fff;
 }
 
@@ -718,6 +720,11 @@
   font-weight: 300;
   color: #333;
   background: transparent;
+
+  /* 👇 Cực kỳ quan trọng để Paste/Copy hoạt động */
+  cursor: text;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .vocab-search-input::placeholder {

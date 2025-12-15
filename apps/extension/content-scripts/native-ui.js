@@ -317,10 +317,21 @@ window.NativeUI = (function () {
     const exactMatch = dbResults.find(
       (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
     );
-    input.onkeydown = (e) => {
-      if (e.key === "Enter" && keyword && !exactMatch)
+
+    input.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter" && keyword && !exactMatch) {
         handlers.onOpenCreate(keyword);
-    };
+      }
+    });
+
+    input.addEventListener("paste", (e) => {
+      e.stopPropagation();
+    });
+
+    input.addEventListener("copy", (e) => {
+      e.stopPropagation();
+    });
 
     const body = document.getElementById("vocab-modal-body");
     let html = "";
