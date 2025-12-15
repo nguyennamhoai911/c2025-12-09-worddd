@@ -1,13 +1,13 @@
-console.log("✅ Native Core Loaded - Smart Auto Detect Mode");
+console.log("✅ Native Core Loaded - Instant Enter");
 
 window.NativeCore = (function () {
   let debounceTimer = null;
   let latestQuery = "";
-
-  // Biến lưu mode hiện tại (được auto detect cập nhật liên tục)
   let currentMode = "EN";
 
-  // Bộ lọc ký tự tiếng Việt có dấu
+  // 👇 [NEW] Lưu kết quả tìm kiếm gần nhất để check nhanh
+  let lastDbResults = [];
+
   const VIETNAMESE_REGEX =
     /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
 
@@ -204,6 +204,9 @@ window.NativeCore = (function () {
 
       if (latestQuery !== currentRunQuery) return; // Race check
 
+      // 👇 [NEW] Lưu kết quả để check nhanh cho Enter
+      lastDbResults = [...dbResults];
+
       // BƯỚC 3: SMART FALLBACK (Xử lý ca khó: "Anh ta")
       // Logic: Nếu đang ở mode EN (do không có dấu), nhưng tìm DB không thấy
       // -> Thử dịch sang Anh. Nếu dịch ra từ khác -> Chuyển sang mode VI.
@@ -292,12 +295,46 @@ window.NativeCore = (function () {
           /*...*/
         },
 
+        onEnter: handleEnter,
+
         mode: finalMode,
         rawInput: rawInput,
       });
     } catch (e) {
       console.error("Search error:", e);
     }
+  }
+
+  // --- [NEW] INSTANT ENTER HANDLER ---
+  async function handleEnter(inputText) {
+    const text = inputText.trim();
+    if (!text) return;
+
+    // Detect mode and prepare englishWord
+    const isVi = VIETNAMESE_REGEX.test(text);
+    let englishWord = text;
+    let meaning = "";
+
+    if (isVi) {
+      const translated = await translateViToEn(text);
+      if (translated) {
+        englishWord = translated.toLowerCase().trim();
+        meaning = text;
+      }
+    }
+
+    // Check exact match in last results using englishWord
+    const exact = lastDbResults.find(
+      (i) => i.word.toLowerCase() === englishWord.toLowerCase()
+    );
+    if (exact) {
+      // Open edit for existing item
+      onEdit(exact);
+      return;
+    }
+
+    // No exact match -> Open create form
+    onOpenCreate(englishWord, meaning);
   }
 
   // --- 6. PUBLIC METHODS ---
@@ -328,7 +365,7 @@ window.NativeCore = (function () {
     }
   }
 
-  return { toggle, handleSelection };
+  return { toggle, handleSelection, handleEnter };
 })();
 
 // --- GLOBAL EVENT LISTENERS (GỘP PHÍM TẮT) ---

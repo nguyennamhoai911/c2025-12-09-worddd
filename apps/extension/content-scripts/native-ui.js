@@ -348,14 +348,7 @@ window.NativeUI = (function () {
       input.addEventListener("keydown", (e) => {
         e.stopPropagation(); // Chặn Notion cướp phím
         if (e.key === "Enter") {
-          // Logic Enter: Nếu không có kết quả thì Create, có thì Select cái đầu tiên
-          const currentVal = input.value.trim();
-          const exact = dbResults.find(
-            (w) => w.word.toLowerCase() === currentVal.toLowerCase()
-          );
-          if (!exact && currentVal) {
-            handlers.onOpenCreate(currentVal);
-          }
+          handlers.onEnter(input.value);
         }
       });
       // Chặn sự kiện lan ra ngoài để copy/paste ngon lành
