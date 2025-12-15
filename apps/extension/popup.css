@@ -651,50 +651,55 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Wrapper mờ nền */
+/* Wrapper: Trong suốt hoàn toàn & Click xuyên qua được */
 #vocab-search-wrapper {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.2); /* Nền tối nhẹ */
-  z-index: 2147483648; /* Thấp hơn Form Modal 1 chút */
-  display: none; /* Mặc định ẩn, JS sẽ đổi thành block */
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 100px;
-  backdrop-filter: blur(2px);
+  background: transparent !important; /* Không màu nền */
+  backdrop-filter: none !important;   /* Không làm mờ */
+  z-index: 2147483648;
+  display: none;
+  pointer-events: none; /* QUAN TRỌNG: Cho phép click vào trang web bên dưới */
 }
 
-/* Hộp tìm kiếm chính */
+/* Modal: Hiện rõ & Nhận sự kiện chuột */
 #vocab-search-modal {
+  pointer-events: auto; /* Modal vẫn click được */
   background: white;
   width: 600px;
   max-width: 90vw;
   border-radius: 12px;
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+  /* Đổ bóng đậm hơn để nổi bật trên nền web lộn xộn */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+              0 20px 50px -5px rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(0,0,0,0.05);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: slideDown 0.2s ease-out;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  position: absolute; /* Để set top/left tự do */
+  
+  /* Mặc định ở giữa (sẽ bị JS ghi đè nếu có vị trí cũ) */
+  top: 15%; 
+  left: 50%; 
+  transform: translateX(-50%);
+  
+  transition: opacity 0.2s ease-out; /* Bỏ transition transform để kéo mượt hơn */
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Header chứa Input */
+/* Header: Biến thành tay cầm để kéo */
 .vocab-header {
   padding: 16px;
   border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
+  cursor: grab; /* Con trỏ hình bàn tay */
+  user-select: none; /* Không cho bôi đen text khi kéo */
+  background: #fff;
+}
+
+.vocab-header:active {
+  cursor: grabbing; /* Bàn tay nắm lại khi kéo */
+  background: #fafafa;
 }
 
 .vocab-input-affix {
