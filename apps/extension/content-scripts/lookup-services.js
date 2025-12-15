@@ -425,3 +425,18 @@ async function apiCheckVocabulary(word) {
   }
   return null;
 }
+// --- [NEW] UPDATE SCORE TO BACKEND ---
+async function apiAddScore(vocabId, score) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/vocabulary/${vocabId}/score`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ score: Math.round(score) }),
+      credentials: "include",
+    });
+    return response.ok;
+  } catch (e) {
+    console.error("Save score failed:", e);
+    return false;
+  }
+}

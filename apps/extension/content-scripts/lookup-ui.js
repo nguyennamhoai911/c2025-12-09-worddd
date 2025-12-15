@@ -176,7 +176,7 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
   const micBtn = document.getElementById("mic-btn");
   micBtn.onclick = (e) => {
     e.stopPropagation();
-    handleMic(data.text, micBtn);
+    handleMic(data.text, micBtn, data.existing); // 👈 Thêm data.existing
   };
 }
 

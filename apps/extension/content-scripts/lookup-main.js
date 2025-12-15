@@ -38,7 +38,7 @@ async function onMarkClick(btnElement, statusElement, data) {
 }
 
 // 2. Handle Mic Click
-async function handleMicClick(referenceText, btnElement) {
+async function handleMicClick(referenceText, btnElement, existingVocab) {
   if (!isRecording) {
     try {
       if (!navigator.mediaDevices) {
@@ -58,7 +58,29 @@ async function handleMicClick(referenceText, btnElement) {
           const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
           lastRecordedBlob = audioBlob;
           if (audioBlob.size < 1000) throw new Error("No audio detected.");
+
+          // 1. Gọi Azure lấy điểm (Code cũ)
           const result = await assessPronunciation(audioBlob, referenceText);
+
+          // 👇 [NEW CODE] Tự động lưu điểm và thời gian nếu từ đã tồn tại
+          if (
+            existingVocab &&
+            existingVocab.id &&
+            result.NBest &&
+            result.NBest[0]
+          ) {
+            const score = result.NBest[0].AccuracyScore;
+
+            // Gọi API lưu điểm ngầm (không cần await để UI phản hồi nhanh)
+            apiAddScore(existingVocab.id, score).then((success) => {
+              if (success) console.log("✅ Score & Time synced to DB!");
+            });
+
+            // Cập nhật lại UI Badge điểm ngay lập tức (Optional - Visual feedback)
+            // Bạn có thể update lại biến existingVocab.pronunciationScores local ở đây nếu muốn
+          }
+          // 👆 [END NEW CODE]
+
           renderAssessmentResult(result, resultDiv, referenceText, {
             playUserAudio: () => {
               const u = URL.createObjectURL(lastRecordedBlob);
@@ -166,7 +188,8 @@ document.addEventListener("keydown", async (e) => {
         toggleSound: toggleSoundState,
         closePopup,
         speakEdge: speakWithEdgeTTS,
-        handleMic: handleMicClick,
+        handleMic: (referenceText, btnElement) =>
+          handleMicClick(referenceText, btnElement, existingVocab),
         handleMark: (btn, status) => onMarkClick(btn, status, data),
       });
     } else if (isPopupOpen) {

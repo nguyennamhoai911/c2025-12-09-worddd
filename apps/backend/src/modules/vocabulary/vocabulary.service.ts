@@ -21,23 +21,21 @@ interface VocabFilters {
 @Injectable()
 export class VocabularyService {
   constructor(private prisma: PrismaService) {}
-  // 👇 THÊM METHOD NÀY
+// 👇 UPDATE: Lưu điểm, tăng lượt tương tác và cập nhật thời gian
   async addScore(id: string, userId: string, score: number) {
-    // 1. Lấy từ vựng hiện tại để lấy mảng điểm cũ
     const vocab = await this.findOne(id, userId);
-
-    // 2. Push điểm mới vào mảng
-    // (PostgreSQL Prisma hỗ trợ push trực tiếp, nhưng để an toàn logic ta làm thủ công)
+    
+    // Logic mảng điểm (Giữ 10 lần gần nhất)
     const currentScores = vocab.pronunciationScores || [];
     const newScores = [...currentScores, score];
-
-    // Optional: Giới hạn chỉ lưu 10 lần gần nhất để nhẹ DB
     if (newScores.length > 10) newScores.shift();
 
     return this.prisma.vocabItem.update({
       where: { id },
       data: {
         pronunciationScores: newScores,
+        occurrence: { increment: 1 }, // Tăng số lần tương tác
+        // updatedAt sẽ tự động được Prisma cập nhật lên giờ hiện tại
       },
     });
   }
