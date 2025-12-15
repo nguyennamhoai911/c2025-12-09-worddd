@@ -153,6 +153,15 @@ document.addEventListener("keydown", async (e) => {
         if (tr) data.translation = tr;
       }
 
+      // 👇 [UPDATE] Logic kiểm tra DB
+      let existingVocab = null;
+      try {
+        existingVocab = await apiCheckVocabulary(selectedText);
+      } catch (e) {}
+
+      // Gộp thông tin existing vào data
+      data.existing = existingVocab; // 👈 Thêm cái này để UI biết
+
       renderPopupContent(data, isSoundEnabled, {
         toggleSound: toggleSoundState,
         closePopup,

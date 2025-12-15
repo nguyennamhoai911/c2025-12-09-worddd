@@ -167,6 +167,7 @@ const usePronunciationAssessment = (
         GradingSystem: "HundredMark",
         Granularity: "Phoneme",
         Dimension: "Comprehensive",
+        PhonemeAlphabet: "IPA",
       };
       const paramsHeader = btoa(JSON.stringify(assessParams));
       const url = `https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`;

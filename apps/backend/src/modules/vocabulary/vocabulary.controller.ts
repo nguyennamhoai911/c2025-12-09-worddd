@@ -22,8 +22,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 export class VocabularyController {
   constructor(private readonly vocabularyService: VocabularyService) {}
-
-  // 👇 THÊM ROUTE NÀY: Lưu điểm phát âm
   @Patch(':id/score')
   async addScore(
     @Request() req,
@@ -31,6 +29,10 @@ export class VocabularyController {
     @Body('score') score: number,
   ) {
     return this.vocabularyService.addScore(id, req.user.id, score);
+  }
+  @Get('check')
+  async findByWord(@Request() req, @Query('word') word: string) {
+    return this.vocabularyService.findByWord(req.user.id, word);
   }
   @Post()
   create(@Request() req, @Body() createDto: CreateVocabularyDto) {

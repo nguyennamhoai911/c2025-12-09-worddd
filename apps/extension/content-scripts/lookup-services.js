@@ -405,3 +405,23 @@ async function assessPronunciation(audioBlob, referenceText) {
     throw e;
   }
 }
+// --- [NEW] CHECK VOCAB EXISTENCE ---
+async function apiCheckVocabulary(word) {
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/vocabulary/check?word=${encodeURIComponent(word)}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Để lấy cookie auth
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      return data; // Trả về object từ vựng nếu có, hoặc null/rỗng
+    }
+  } catch (e) {
+    console.warn("Check vocab failed:", e);
+  }
+  return null;
+}

@@ -49,6 +49,38 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
   const { toggleSound, closePopup, speakEdge, handleMark, handleMic } =
     callbacks;
 
+  const existing = data.existing;
+
+  // Logic tính điểm trung bình 3 lần gần nhất (nếu có)
+  let scoreBadge = "";
+  if (existing && existing.pronunciationScores && existing.pronunciationScores.length > 0) {
+      const scores = existing.pronunciationScores.slice(-3); // Lấy 3 điểm cuối
+      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      let color = avg >= 80 ? "#4CAF50" : avg >= 60 ? "#FFC107" : "#F44336";
+      scoreBadge = `<span style="position:absolute; top:-5px; right:-5px; background:${color}; color:white; font-size:10px; padding:2px 5px; border-radius:10px; border:1px solid white;">${avg}</span>`;
+  }
+
+  // 👇 [UPDATE] Render nút Mark
+  let markBtnHtml = "";
+  if (existing) {
+      // A. ĐÃ CÓ: Hiện nút "Đã lưu" (Màu xám hoặc Xanh đậm, không cho click save nữa)
+      markBtnHtml = `
+        <button id="mark-btn-disabled" class="mic-btn" style="width:55px; height:55px; background:#E0E0E0; box-shadow:none; cursor:default; position:relative;" title="Đã có trong bộ từ vựng">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#4CAF50" stroke="#4CAF50" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            ${scoreBadge}
+        </button>`;
+  } else {
+      // B. CHƯA CÓ: Hiện nút Save như cũ 
+      markBtnHtml = `
+        <button id="mark-btn" class="mic-btn" style="width:55px; height:55px; background:#FF9800; box-shadow: 0 4px 0 #F57C00;" title="Lưu từ này">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </button>`;
+  }
+
   let content = `
       <div class="tts-header" id="popup-header">
         <button id="sound-toggle" class="sound-btn">${
@@ -64,11 +96,7 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </button>
             
-            <button id="mark-btn" class="mic-btn" style="width:55px; height:55px; background:#FF9800; box-shadow: 0 4px 0 #F57C00;" title="Lưu từ này">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                </svg>
-            </button>
+            ${markBtnHtml}
 
             <button id="mic-btn" class="mic-btn" style="width:45px; height:45px;" title="Check phát âm">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
@@ -135,12 +163,14 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
   document.getElementById("replay-tts-btn").onclick = () =>
     speakEdge(data.text);
 
-  // Mark Event
+  // Chỉ gán sự kiện click nếu nút mark-btn tồn tại (tức là chưa lưu)
   const markBtn = document.getElementById("mark-btn");
-  markBtn.onclick = (e) => {
-    e.stopPropagation();
-    handleMark(markBtn, document.getElementById("save-status"));
-  };
+  if (markBtn) {
+    markBtn.onclick = (e) => {
+      e.stopPropagation();
+      handleMark(markBtn, document.getElementById("save-status"));
+    };
+  }
 
   // Mic Event
   const micBtn = document.getElementById("mic-btn");

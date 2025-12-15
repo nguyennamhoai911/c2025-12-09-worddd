@@ -41,7 +41,16 @@ export class VocabularyService {
       },
     });
   }
-
+  // 👇 [NEW] Helper tìm từ theo text (không phân biệt hoa thường)
+  async findByWord(userId: string, word: string) {
+    const cleanWord = word.trim();
+    return this.prisma.vocabItem.findFirst({
+      where: {
+        userId,
+        word: { equals: cleanWord, mode: 'insensitive' },
+      },
+    });
+  }
   // --- 1. SMART UPSERT (LOGIC TRÁNH TRÙNG LẶP) ---
   async upsertVocab(userId: string, createDto: CreateVocabularyDto) {
     const cleanWord = createDto.word.trim();
@@ -221,4 +230,3 @@ export class VocabularyService {
     });
   }
 }
-
