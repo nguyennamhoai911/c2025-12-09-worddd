@@ -345,6 +345,10 @@ window.NativeCore = (function () {
             id: null,
             pronunciation: apiData?.phonetics?.us || "",
           }),
+
+        // 👇 THÊM HÀM NÀY XUỐNG UI
+        onInteract: handleInteraction,
+
         onMark: (item) => {
           /*...*/
         },
@@ -353,6 +357,31 @@ window.NativeCore = (function () {
       });
     } catch (e) {
       console.error("Search error:", e);
+    }
+  }
+
+  // 👇 [NEW] HÀM CẬP NHẬT COUNT & TIME (INTERACTION)
+  async function handleInteraction(item) {
+    if (!item || !item.id) return;
+
+    // Tính toán count mới (tăng 1)
+    const newCount = (item.occurrence || 0) + 1;
+
+    // Update local cache ngay lập tức để UI phản hồi (nếu cần)
+    item.occurrence = newCount;
+
+    try {
+      // Gọi API PATCH trực tiếp để update count
+      // (Backend Prisma sẽ tự động update cột 'updatedAt' thành giờ hiện tại)
+      await fetch(`https://localhost:5001/vocabulary/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ occurrence: newCount }),
+        credentials: "include",
+      });
+      // console.log(`Interact: ${item.word} -> ${newCount}`);
+    } catch (e) {
+      console.error("Interaction update failed", e);
     }
   }
 
@@ -386,7 +415,7 @@ window.NativeCore = (function () {
     }
   }
 
-  return { toggle, handleSelection };
+  return { toggle, handleSelection, handleEnter, handleInteraction };
 })();
 
 // Global Listeners

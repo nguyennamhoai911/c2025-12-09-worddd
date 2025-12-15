@@ -146,9 +146,10 @@ window.NativeUI = (function () {
     searchWrapper.onclick = (e) => {
       if (e.target === searchWrapper) hideAll();
     };
-    formWrapper.onclick = (e) => {
-      if (e.target === formWrapper) formWrapper.style.display = "none";
-    };
+    // 👇 [FIX 1]: XÓA hoặc COMMENT dòng này để chặn click ra ngoài bị tắt
+    // formWrapper.onclick = (e) => {
+    //   if (e.target === formWrapper) formWrapper.style.display = "none";
+    // };
     searchWrapper.addEventListener("keydown", (e) => e.stopPropagation());
   }
 
@@ -176,9 +177,13 @@ window.NativeUI = (function () {
                       isEdit ? "Editing Vocabulary" : "Create New Vocabulary"
                     }</div>
                     <div style="position:relative">
-                        <input id="form-word" class="vocab-input-large" value="${
-                          data.word || ""
-                        }" placeholder="Word..." ${isEdit ? "readonly" : ""}>
+                        <textarea 
+                            id="form-word" 
+                            class="vocab-input-large" 
+                            placeholder="Word..." 
+                            rows="1"
+                            ${isEdit ? "readonly" : ""}
+                        >${data.word || ""}</textarea>
                         <div id="form-autofill-status" class="autofill-loading" style="display:none">✨ Auto-filling...</div>
                     </div>
                 </div>
@@ -256,6 +261,15 @@ window.NativeUI = (function () {
 
     const wordInput = document.getElementById("form-word");
     const statusDiv = document.getElementById("form-autofill-status");
+
+    // 👇 [FIX 3]: Logic tự động giãn chiều cao (Auto-resize) cho Word Input
+    const adjustHeight = () => {
+      wordInput.style.height = "auto";
+      wordInput.style.height = wordInput.scrollHeight + "px";
+    };
+    wordInput.addEventListener("input", adjustHeight);
+    // Gọi 1 lần lúc init để nó khớp với nội dung ban đầu
+    setTimeout(adjustHeight, 0);
 
     if (!isEdit) {
       wordInput.onblur = async () => {
@@ -429,19 +443,19 @@ window.NativeUI = (function () {
                             ? `<span class="vocab-tag tag-blue">${item.topic}</span>`
                             : ""
                         }
+                        <span style="font-size:10px; color:#ccc; margin-left:5px;">(${
+                          item.occurrence || 0
+                        })</span>
                     </div>
                     <div class="vocab-word-meta">${item.meaning || ""}</div>
                 </div>
                 <div class="vocab-actions">
-                    <button class="action-btn-circle btn-edit" title="Edit">${
-                      ICONS.mark
-                    }</button>
-                    <button class="action-btn-circle btn-listen" title="Listen">${
-                      ICONS.sound
-                    }</button>
-                    <button class="action-btn-circle btn-mic" title="Practice">${
-                      ICONS.mic
-                    }</button>
+                    <button class="action-btn-circle btn-listen" title="Listen">
+                        ${ICONS.sound}
+                    </button>
+                    <button class="action-btn-circle btn-mic" title="Practice">
+                        ${ICONS.mic}
+                    </button>
                 </div>
             </div>`;
       });
@@ -483,29 +497,33 @@ window.NativeUI = (function () {
       const itemEl = document.getElementById(`vocab-item-${idx}`);
       if (!itemEl) return;
 
+      // 👇 SỰ KIỆN CLICK VÀO DÒNG (ROW CLICK)
       itemEl.onclick = (e) => {
-        // Chỉ trigger mark nếu không click vào nút con
-        if (!e.target.closest("button")) handlers.onMark(item);
+        // Nếu click vào nút con (loa/mic) thì bỏ qua, để sự kiện nút con xử lý
+        if (e.target.closest("button")) return;
+
+        // 1. Tăng count & Update time
+        if (handlers.onInteract) handlers.onInteract(item);
+
+        // 2. Mở Popup chỉnh sửa (Edit Mode)
+        handlers.onEdit(item);
       };
 
-      const btnEdit = itemEl.querySelector(".btn-edit");
-      if (btnEdit)
-        btnEdit.onclick = (e) => {
-          e.stopPropagation();
-          handlers.onEdit(item);
-        };
-
+      // 👇 NÚT LOA
       const btnListen = itemEl.querySelector(".btn-listen");
       if (btnListen)
         btnListen.onclick = (e) => {
           e.stopPropagation();
+          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
           handlers.onSpeak(item.word);
         };
 
+      // 👇 NÚT MIC
       const btnMic = itemEl.querySelector(".btn-mic");
       if (btnMic)
         btnMic.onclick = (e) => {
           e.stopPropagation();
+          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
           if (handlers.onMic) handlers.onMic(item);
         };
     });
