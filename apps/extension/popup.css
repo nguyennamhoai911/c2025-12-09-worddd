@@ -731,123 +731,153 @@
   color: #ccc;
 }
 
-/* Body chứa kết quả */
+/* --- BODY LIST STYLES --- */
 .vocab-body {
-  max-height: 400px;
+  max-height: 450px;
   overflow-y: auto;
-  background: #fafafa;
+  background: #fff;
+  padding: 8px 0;
 }
 
-/* Từng dòng kết quả */
+/* Item Row */
 .vocab-list-item {
-  padding: 12px 16px;
+  padding: 12px 24px; /* Tăng padding cho thoáng */
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background 0.1s;
+  transition: background 0.1s ease;
+  border-left: 4px solid transparent;
 }
 
 .vocab-list-item:hover {
-  background: #e6f7ff; /* Màu hover xanh nhạt */
+  background: #f5f7fa;
+  border-left-color: #1890ff;
 }
 
-.vocab-list-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* Riêng phần Create New thì highlight nhẹ */
+.vocab-create-item {
+  background: #f6ffed; /* Xanh lá siêu nhạt */
+}
+.vocab-create-item:hover {
+  background: #d9f7be;
+  border-left-color: #52c41a;
 }
 
-.vocab-word-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+/* Typography */
 .vocab-word-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1890ff;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+.vocab-pronun {
+  font-family: "Lucida Console", monospace;
+  font-size: 13px;
+  color: #888;
+  margin-left: 8px;
 }
 
 .vocab-word-meta {
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 400px;
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
-/* Tags (Topic, Type...) */
+/* Tags */
 .vocab-tag {
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
-  background: #f5f5f5;
+  background: #eee;
   color: #666;
-  border: 1px solid #d9d9d9;
-  text-transform: uppercase;
   font-weight: 700;
+  text-transform: uppercase;
+  margin-left: 8px;
+  border: 1px solid #e0e0e0;
 }
-
+.tag-green {
+  background: #f6ffed;
+  color: #52c41a;
+  border-color: #b7eb8f;
+}
 .tag-blue {
   background: #e6f7ff;
   color: #1890ff;
   border-color: #91d5ff;
 }
 
-/* Actions buttons (Mic, Sound...) */
+/* --- ACTION BUTTONS (ROUND STYLE - GIỐNG SHIFT) --- */
 .vocab-actions {
   display: flex;
-  gap: 8px;
-  opacity: 0; /* Ẩn đi, hover mới hiện */
-  transition: opacity 0.2s;
+  gap: 10px;
+  opacity: 0; /* Mặc định ẩn */
+  transform: translateX(10px);
+  transition: all 0.2s ease;
 }
 
+/* Hover vào dòng thì hiện nút */
 .vocab-list-item:hover .vocab-actions {
   opacity: 1;
+  transform: translateX(0);
 }
 
-.ant-btn-icon {
-  background: white;
-  border: 1px solid #d9d9d9;
+/* Nút bấm tròn xoe */
+.action-btn-circle {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  border: 1px solid #eee;
+  background: white;
+  color: #999;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #666;
   transition: all 0.2s;
+
+  /* Quan trọng để click được */
+  pointer-events: auto !important;
+  user-select: none;
 }
 
-.ant-btn-icon:hover {
+.action-btn-circle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Hover effects */
+.action-btn-circle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-listen:hover {
   color: #1890ff;
   border-color: #1890ff;
+  background: #e6f7ff;
 }
-
-/* Create New Box style */
-.vocab-add-box {
-  padding: 20px;
+.btn-mic:hover {
+  color: #52c41a;
+  border-color: #52c41a;
   background: #f6ffed;
-  border-bottom: 1px solid #b7eb8f;
-  text-align: center;
+}
+.btn-edit:hover {
+  color: #faad14;
+  border-color: #faad14;
+  background: #fffbe6;
+}
+.btn-sound:hover {
+  color: #1890ff;
+  border-color: #1890ff;
+  background: #e6f7ff;
 }
 
-.vocab-add-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #389e0d;
-  margin-bottom: 4px;
-}
-
-.vocab-add-info {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 10px;
+/* Luôn hiện nút ở dòng Create New để user biết mà bấm */
+.vocab-create-item .vocab-actions {
+  opacity: 1;
+  transform: none;
 }
 /* --- ASSESSMENT MODAL STYLES (ELSA STYLE) --- */
 .assess-modal-overlay {

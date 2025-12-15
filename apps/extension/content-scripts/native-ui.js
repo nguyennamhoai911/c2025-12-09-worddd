@@ -8,16 +8,16 @@ window.NativeUI = (function () {
   let miniPopup = null;
   let assessWrapper = null; // New wrapper for assessment modal
 
-  // Icons SVG
+  // 👇 [UPDATED] BỘ ICON CHUẨN ĐẸP (Lấy từ Shift Popup)
   const ICONS = {
     search:
-      '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"/></svg>',
-    mic: '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M512 624c93.9 0 170-75.2 170-168V232c0-92.8-76.1-168-170-168s-170 75.2-170 168v224c0 92.8 76.1 168 170 168zm-110-392c0-59.6 49.3-108 110-108s110 48.4 110 108v224c0 59.6-49.3 108-110 108s-110-48.4-110-108V232zm270 224c0 88.4-71.6 160-160 160s-160-71.6-160-160a30 30 0 00-60 0c0 110.5 82 202.1 190 217.5V944h-90a30 30 0 000 60h240a30 30 0 000-60h-90V873.5c108-15.4 190-107 190-217.5a30 30 0 00-60 0z"/></svg>',
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+    mic: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
     sound:
-      '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M625.9 115c-5.9 0-11.9 1.6-17.4 5.3L254 352H90c-17.7 0-32 14.3-32 32v256c0 17.7 14.3 32 32 32h164l354.5 231.7c5.5 3.6 11.6 5.3 17.4 5.3 16.7 0 32.1-13.3 32.1-32.1V147.1c0-18.8-15.4-32.1-32.1-32.1zM586 803L298 614.8V409.2L586 221v582zm302.2-402.1c-5.9-7.9-17.2-9.6-25.2-3.7l-35.9 26.8c-8 6-9.6 17.3-3.7 25.3C842.1 474.6 852 503 852 533c0 23.8-6.2 46.5-16.7 66.7-4.8 9.3-1.4 20.7 7.5 25.8l34.6 19.8c9.3 5.3 21.2 2.3 26.6-6.6C918 612.2 926 573.9 926 533c0-43-12.7-83.3-34.9-117.4z"/></svg>',
-    mark: '<svg width="1em" height="1em" fill="currentColor" viewBox="0 0 1024 1024"><path d="M908.1 353.1l-253.9-36.9L540.7 86.1c-3.1-6.3-8.2-11.4-14.5-14.5-15.8-7.8-35-1.3-42.9 14.5L369.8 316.2l-253.9 36.9c-7 1-13.4 4.3-18.3 9.3a32.05 32.05 0 00.6 45.3l183.7 179.1-43.4 252.9a31.95 31.95 0 0046.4 33.7L512 754l227.1 119.4c6.2 3.3 13.4 4.4 20.3 3.2 17.4-3 29.1-19.5 26.1-36.9l-43.4-252.9 183.7-179.1c5-4.9 8.3-11.3 9.3-18.3 2.7-17.5-9.5-33.7-27-36.3z"/></svg>',
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+    mark: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>',
     close:
-      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
   };
 
   // --- 1. HÀM XỬ LÝ KÉO THẢ & LƯU VỊ TRÍ ---
@@ -305,36 +305,52 @@ window.NativeUI = (function () {
     if (!isEdit) setTimeout(() => wordInput.focus(), 100);
   }
 
+  // ... (Các phần trên giữ nguyên) ...
+
+  // --- [UPDATED] RENDER SEARCH MODAL ---
   function renderSearchModal(keyword, dbResults, apiData, handlers) {
     init();
     searchWrapper.style.display = "block";
-    const input = document.getElementById("native-search-input");
-    if (input.value !== keyword && keyword) input.value = keyword;
-    if (!keyword) input.value = "";
-    input.focus();
-    input.oninput = (e) => handlers.onInput(e.target.value);
 
+    const input = document.getElementById("native-search-input");
+    const body = document.getElementById("vocab-modal-body");
+
+    // Logic focus input (như cũ)
+    if (document.activeElement !== input) {
+      if (keyword) input.value = keyword;
+      else input.value = "";
+      input.focus();
+    }
+
+    // Logic bind event input (như cũ)
+    if (!input.dataset.hasEvent) {
+      input.oninput = (e) => handlers.onInput(e.target.value);
+      input.addEventListener("keydown", (e) => {
+        e.stopPropagation(); // Chặn Notion cướp phím
+        if (e.key === "Enter") {
+          // Logic Enter: Nếu không có kết quả thì Create, có thì Select cái đầu tiên
+          const currentVal = input.value.trim();
+          const exact = dbResults.find(
+            (w) => w.word.toLowerCase() === currentVal.toLowerCase()
+          );
+          if (!exact && currentVal) {
+            handlers.onOpenCreate(currentVal);
+          }
+        }
+      });
+      // Chặn sự kiện lan ra ngoài để copy/paste ngon lành
+      ["paste", "copy", "cut", "selectstart"].forEach((evt) => {
+        input.addEventListener(evt, (e) => e.stopPropagation());
+      });
+      input.dataset.hasEvent = "true";
+    }
+
+    let html = "";
+
+    // 👇 1. CREATE NEW ITEM (Thiết kế lại giống List Item)
     const exactMatch = dbResults.find(
       (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
     );
-
-    input.addEventListener("keydown", (e) => {
-      e.stopPropagation();
-      if (e.key === "Enter" && keyword && !exactMatch) {
-        handlers.onOpenCreate(keyword);
-      }
-    });
-
-    input.addEventListener("paste", (e) => {
-      e.stopPropagation();
-    });
-
-    input.addEventListener("copy", (e) => {
-      e.stopPropagation();
-    });
-
-    const body = document.getElementById("vocab-modal-body");
-    let html = "";
 
     if (keyword && !exactMatch) {
       const trans = apiData?.trans || {};
@@ -342,18 +358,34 @@ window.NativeUI = (function () {
         trans.wordMeaning ||
         (typeof trans === "string" ? trans : "Translating...");
       const pronun = apiData?.phonetics?.us || "";
+
+      // Layout mới: Giống hệt 1 dòng kết quả, nhưng có Tag "NEW"
       html += `
-        <div class="vocab-add-box" id="open-create-form" style="cursor: pointer;">
-            <div class="vocab-add-title">Create New: "${keyword}"</div>
-            <div class="vocab-add-info">${pronun} • ${meaning}</div>
-            <div style="font-size:12px; color:#1890ff; margin-bottom:8px;">Click here or press Enter to open form</div>
-            <div>
-                <button id="add-listen" class="ant-btn ant-btn-icon" title="Listen">${ICONS.sound}</button>
-                <button id="add-mic" class="ant-btn ant-btn-icon" title="Practice">${ICONS.mic}</button>
+        <div class="vocab-list-item vocab-create-item" id="open-create-form">
+            <div class="vocab-list-left">
+                <div class="vocab-word-row">
+                    <span class="vocab-word-text">${keyword}</span>
+                    <span class="vocab-tag tag-green">New</span> 
+                    <span class="vocab-pronun">${pronun}</span>
+                </div>
+                <div class="vocab-word-meta">${meaning}</div>
+                <div style="font-size:11px; color:#1890ff; margin-top:2px;">Press Enter to create</div>
             </div>
-        </div>`;
+            
+            <div class="vocab-actions" style="opacity: 1; transform: none;">
+                <button id="add-listen" class="action-btn-circle btn-sound" title="Listen">
+                    ${ICONS.sound}
+                </button>
+                <button id="add-mic" class="action-btn-circle btn-mic" title="Practice">
+                    ${ICONS.mic}
+                </button>
+            </div>
+        </div>
+        <div style="height:1px; background:#f0f0f0; margin: 0 20px;"></div>
+      `;
     }
 
+    // 👇 2. RESULTS LIST
     if (dbResults.length > 0) {
       dbResults.forEach((item, idx) => {
         html += `
@@ -375,64 +407,85 @@ window.NativeUI = (function () {
                     <div class="vocab-word-meta">${item.meaning || ""}</div>
                 </div>
                 <div class="vocab-actions">
-                    <button class="ant-btn ant-btn-icon btn-edit" data-idx="${idx}" title="Edit Vocabulary">${
-          ICONS.mark
-        }</button>
-                    <button class="ant-btn ant-btn-icon btn-listen" data-idx="${idx}" title="Listen">${
-          ICONS.sound
-        }</button>
-                    <button class="ant-btn ant-btn-icon btn-mic" data-idx="${idx}" title="Practice">${
-          ICONS.mic
-        }</button>
+                    <button class="action-btn-circle btn-edit" title="Edit">${
+                      ICONS.mark
+                    }</button>
+                    <button class="action-btn-circle btn-listen" title="Listen">${
+                      ICONS.sound
+                    }</button>
+                    <button class="action-btn-circle btn-mic" title="Practice">${
+                      ICONS.mic
+                    }</button>
                 </div>
             </div>`;
       });
     } else if (!keyword) {
-      html += `<div style="text-align:center; padding:30px; color:#999;">Type to search...</div>`;
+      html += `<div style="text-align:center; padding:40px; color:#999; font-size:14px;">Type any word to search or create...</div>`;
     }
 
     body.innerHTML = html;
 
+    // --- RE-BIND EVENTS (FIX LỖI CLICK) ---
+    // Sử dụng stopPropagation để không bị kích hoạt click vào row cha
+
+    // 1. Bind cho Create New Box
     if (keyword && !exactMatch) {
-      document.getElementById("add-listen").onclick = (e) => {
-        e.stopPropagation();
-        handlers.onSpeak(keyword);
-      };
-      document.getElementById("add-mic").onclick = (e) => {
-        e.stopPropagation();
-        if (handlers.onMicPractice) handlers.onMicPractice(keyword);
-      };
-      document.getElementById("open-create-form").onclick = () =>
-        handlers.onOpenCreate(keyword);
+      const btnListen = document.getElementById("add-listen");
+      if (btnListen) {
+        btnListen.onclick = (e) => {
+          e.stopPropagation(); // Chặn lan ra ngoài
+          handlers.onSpeak(keyword);
+        };
+      }
+
+      const btnMic = document.getElementById("add-mic");
+      if (btnMic) {
+        btnMic.onclick = (e) => {
+          e.stopPropagation(); // Chặn lan ra ngoài
+          if (handlers.onMicPractice) handlers.onMicPractice(keyword);
+        };
+      }
+
+      const createBox = document.getElementById("open-create-form");
+      if (createBox) {
+        createBox.onclick = () => handlers.onOpenCreate(keyword);
+      }
     }
 
+    // 2. Bind cho List Results
     dbResults.forEach((item, idx) => {
-      const itemElement = document.getElementById(`vocab-item-${idx}`);
-      if (!itemElement) return;
-      itemElement.onclick = (e) => {
+      const itemEl = document.getElementById(`vocab-item-${idx}`);
+      if (!itemEl) return;
+
+      itemEl.onclick = (e) => {
+        // Chỉ trigger mark nếu không click vào nút con
         if (!e.target.closest("button")) handlers.onMark(item);
       };
-      const btnEdit = itemElement.querySelector(".btn-edit");
+
+      const btnEdit = itemEl.querySelector(".btn-edit");
       if (btnEdit)
         btnEdit.onclick = (e) => {
           e.stopPropagation();
           handlers.onEdit(item);
         };
-      const btnListen = itemElement.querySelector(".btn-listen");
+
+      const btnListen = itemEl.querySelector(".btn-listen");
       if (btnListen)
         btnListen.onclick = (e) => {
           e.stopPropagation();
           handlers.onSpeak(item.word);
         };
-      const btnMic = itemElement.querySelector(".btn-mic");
-      if (btnMic) {
+
+      const btnMic = itemEl.querySelector(".btn-mic");
+      if (btnMic)
         btnMic.onclick = (e) => {
           e.stopPropagation();
           if (handlers.onMic) handlers.onMic(item);
         };
-      }
     });
   }
+
+  // ... (Các hàm khác giữ nguyên) ...
 
   function renderPopup(data, rect, handlers) {
     init();
