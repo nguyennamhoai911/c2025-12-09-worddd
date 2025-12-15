@@ -201,17 +201,139 @@ document.addEventListener("keydown", async (e) => {
 });
 
 // 4. Flashcard Listener
-chrome.runtime.onMessage.addListener(async (request) => {
+// 4. Flashcard Listener
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "SHOW_FLASHCARD") {
-    const result = await chrome.storage.local.get(["vocabHistory"]);
-    const history = result.vocabHistory || [];
-    if (history.length > 0) {
-      const randomItem =
-        history[Math.floor(Math.random() * Math.min(10, history.length))];
-      showFlashcard(randomItem, { speakEdge: speakWithEdgeTTS });
+    console.log("📩 Received SHOW_FLASHCARD message");
+
+    try {
+      // Step 1: Lấy danh sách từ Starred từ Backend
+      const list = await apiGetStarredVocabulary();
+
+      if (list && list.length > 0) {
+        // Step 2: Lấy index hiện tại từ Storage (Logic Xoay Vòng)
+        const storageData = await chrome.storage.local.get([
+          "flashcardCurrentIndex",
+        ]);
+        let currentIndex = storageData.flashcardCurrentIndex || 0;
+
+        // Validate: Nếu index vượt quá độ dài list (do xóa bớt từ), reset về 0
+        if (currentIndex >= list.length) {
+          currentIndex = 0;
+        }
+
+        // Pick từ theo thứ tự
+        const selectedItem = list[currentIndex];
+        console.log(
+          `🔄 Rotational Pick [${currentIndex + 1}/${list.length}]:`,
+          selectedItem.word
+        );
+
+        // Step 3: Tính toán Index tiếp theo và Lưu lại ngay
+        const nextIndex = (currentIndex + 1) % list.length; // Quay vòng về 0 nếu hết list
+        await chrome.storage.local.set({ flashcardCurrentIndex: nextIndex });
+
+        // Step 4: Map Data
+        const flashcardItem = {
+          word: selectedItem.word,
+          data: {
+            translation: selectedItem.meaning || "No definition",
+            pronunciation: selectedItem.pronunciation || "",
+            partOfSpeech: selectedItem.partOfSpeech || "",
+            images: [],
+          },
+        };
+
+        // Step 5: Show UI (Giữ nguyên logic cũ)
+        showFlashcard(flashcardItem, {
+          speakEdge: speakWithEdgeTTS,
+
+          // Mic Logic
+          onMic: () => {
+            if (window.NativeUI) {
+              window.NativeUI.renderAssessmentModal(
+                {
+                  ...selectedItem,
+                  pronunciation: selectedItem.pronunciation || "",
+                },
+                {
+                  onSpeak: (t) => speakWithEdgeTTS(t),
+                  onRecord: async (onSuccess, onError) => {
+                    try {
+                      const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                      });
+                      const mediaRecorder = new MediaRecorder(stream);
+                      const chunks = [];
+                      mediaRecorder.ondataavailable = (e) =>
+                        chunks.push(e.data);
+                      mediaRecorder.onstop = async () => {
+                        const blob = new Blob(chunks, { type: "audio/webm" });
+                        window.lastRecordedBlob = blob;
+                        try {
+                          const result = await assessPronunciation(
+                            blob,
+                            selectedItem.word
+                          );
+                          if (
+                            selectedItem.id &&
+                            result.NBest &&
+                            result.NBest[0]
+                          ) {
+                            apiAddScore(
+                              selectedItem.id,
+                              result.NBest[0].AccuracyScore
+                            );
+                          }
+                          if (result.NBest) onSuccess(result.NBest[0]);
+                          else onError("No result");
+                        } catch (err) {
+                          onError(err.message);
+                        }
+                        stream.getTracks().forEach((t) => t.stop());
+                      };
+                      mediaRecorder.start();
+                      window.currentRecorder = mediaRecorder;
+                    } catch (e) {
+                      onError("Mic Error: " + e.message);
+                    }
+                  },
+                  onStop: () => {
+                    if (window.currentRecorder) window.currentRecorder.stop();
+                  },
+                  onPlayback: () => {
+                    if (window.lastRecordedBlob) {
+                      const url = URL.createObjectURL(window.lastRecordedBlob);
+                      new Audio(url).play();
+                    }
+                  },
+                }
+              );
+            }
+          },
+
+          // Edit Logic
+          onEdit: () => {
+            if (window.NativeUI) {
+              window.NativeUI.renderFormModal(
+                { ...selectedItem, isEditMode: true },
+                {
+                  onAutoFill: () => null,
+                  onSave: async (d) => {
+                    await apiUpdateVocabulary(d.id, d);
+                  },
+                }
+              );
+            }
+          },
+        });
+      } else {
+        console.log(
+          "⚠️ No starred words found. Please star some words in App."
+        );
+      }
+    } catch (e) {
+      console.error("🔥 Flashcard Error:", e);
     }
   }
 });
-
-// Init
-if (window.speechSynthesis) window.speechSynthesis.getVoices();

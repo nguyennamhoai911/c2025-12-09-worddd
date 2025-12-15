@@ -518,3 +518,27 @@ async function translateViToEn(vietnameseText) {
   }
   return null;
 }
+// ... (các code cũ giữ nguyên)
+
+// --- [NEW] FETCH STARRED VOCABULARY ---
+async function apiGetStarredVocabulary() {
+  try {
+    // Gọi API lấy danh sách từ đã Star (Lấy limit 50 từ mới nhất để random)
+    const res = await fetch(
+      `${BACKEND_URL}/vocabulary?isStarred=true&limit=50`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Quan trọng để gửi Cookie Auth
+      }
+    );
+
+    if (res.ok) {
+      const json = await res.json();
+      return json.data; // Trả về mảng VocabItem
+    }
+  } catch (e) {
+    console.error("Fetch starred failed:", e);
+  }
+  return [];
+}

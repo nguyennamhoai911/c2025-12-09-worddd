@@ -415,7 +415,16 @@ window.NativeCore = (function () {
     }
   }
 
-  return { toggle, handleSelection, handleEnter, handleInteraction };
+  return {
+    toggle,
+    handleSelection,
+    handleEnter,
+    handleInteraction,
+    // 👇 EXPOSE HÀM NÀY ĐỂ FLASHCARD GỌI
+    openEdit: onEdit,
+    // 👇 EXPOSE HÀM NÀY ĐỂ FLASHCARD GỌI MIC
+    openAssessment: onOpenAssessment,
+  };
 })();
 
 // Global Listeners
