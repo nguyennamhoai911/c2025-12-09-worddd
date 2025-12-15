@@ -383,6 +383,7 @@ async function assessPronunciation(audioBlob, referenceText) {
       GradingSystem: "HundredMark",
       Granularity: "Phoneme",
       Dimension: "Comprehensive",
+      PhonemeAlphabet: "IPA",
     };
     const paramsHeader = btoa(JSON.stringify(assessParams));
 
