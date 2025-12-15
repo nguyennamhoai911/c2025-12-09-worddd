@@ -440,3 +440,32 @@ async function apiAddScore(vocabId, score) {
     return false;
   }
 }
+
+// Tìm kiếm danh sách từ (cho Quick Search)
+async function apiSearchVocabulary(keyword) {
+  try {
+    if (!keyword) return [];
+    const res = await fetch(`${BACKEND_URL}/vocabulary?search=${encodeURIComponent(keyword)}&limit=5`, {
+       headers: { "Content-Type": "application/json" },
+       credentials: "include"
+    });
+    if (res.ok) {
+        const json = await res.json();
+        return json.data; // Trả về mảng items
+    }
+  } catch(e) {}
+  return [];
+}
+
+// Hàm Save đầy đủ (thay thế hoặc bổ sung cho apiSaveVocabulary cũ)
+async function apiCreateFullVocabulary(payload) {
+    // Payload: { word, meaning, example, topic, partOfSpeech, pronunciation, relatedWords }
+    const response = await fetch(`${BACKEND_URL}/vocabulary`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error("Save failed");
+    return await response.json();
+}
