@@ -165,7 +165,7 @@ export default function VocabularyPage() {
         }}
         onCreate={() => handleOpenCreateModal(quickSearchText)}
         hasExactMatch={hasExactMatch}
-        searchInputRef={searchInputRef}
+        searchInputRef={searchInputRef as React.RefObject<HTMLInputElement>}
         handleSpeak={handleSpeak}
         handleOpenAssessment={handleOpenAssessment}
         triggerInteraction={triggerInteraction}
