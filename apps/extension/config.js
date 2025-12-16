@@ -1,7 +1,7 @@
 // apps/extension/config.js
 
 // 👇 CÔNG TẮC TỔNG: Đổi true/false ở đây
-const IS_DEV_MODE = true;
+const IS_DEV_MODE = false;
 
 const APP_CONFIG = {
   // Backend
@@ -12,7 +12,7 @@ const APP_CONFIG = {
   // Frontend
   FRONTEND_URL: IS_DEV_MODE
     ? "https://localhost:3001"
-    : "https://c2025-12-09-full-app-english.vercel.app",
+    : "https://localhost:3001",
 };
 
 // Log ra để biết đang chạy môi trường nào

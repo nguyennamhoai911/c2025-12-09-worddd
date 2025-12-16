@@ -4,7 +4,6 @@ Directory structure:
     ├── docker-compose.yml
     ├── setup-guide.md
     └── apps/
-        ├── tree.txt
         ├── backend/
         │   ├── README.md
         │   ├── eslint.config.mjs
@@ -226,235 +225,7 @@ volumes:
 ================================================
 FILE: setup-guide.md
 ================================================
-
-
-# 📘 Project Documentation: English Vocabulary Learning Ecosystem
-
-Đây là tài liệu hướng dẫn khởi động dự án **Full-stack English Learning App**. Hệ thống bao gồm 3 thành phần chính: **Backend (NestJS)**, **Frontend (Next.js)**, và **Browser Extension**.
-
-## 1\. Tech Stack Overview (Công nghệ sử dụng)
-
-Người mới cần nắm rõ các công nghệ sau để maintain dự án:
-
-### 🛠 Core System
-
-  * [cite_start]**Monorepo Structure:** Dự án chia thành `apps/backend`, `apps/frontend`, `apps/extension`[cite: 1].
-  * [cite_start]**Containerization:** **Docker & Docker Compose** dùng để chạy Database (PostgreSQL) và Redis[cite: 23].
-
-### 🔙 Backend (`apps/backend`)
-
-  * [cite_start]**Framework:** **NestJS** (Node.js framework)[cite: 46].
-  * **Database:** **PostgreSQL** (chạy qua Docker).
-  * [cite_start]**ORM:** **Prisma** để tương tác với Database[cite: 70].
-  * [cite_start]**Authentication:** **Passport** (JWT, Google OAuth2, Local Strategy)[cite: 102].
-  * [cite_start]**Features:** CSV Import (stream processing), Pronunciation Scoring (lưu array điểm số)[cite: 72, 171].
-
-### 🎨 Frontend (`apps/frontend`)
-
-  * [cite_start]**Framework:** **Next.js 15+** (App Router)[cite: 583].
-  * **Language:** TypeScript.
-  * [cite_start]**Styling:** **Tailwind CSS**[cite: 597].
-  * **Data Fetching:** Axios & Custom Hooks (`useVocabData`, `useVocabModals`).
-  * **Deployment:** Config sẵn sàng cho Vercel.
-
-### 🧩 Extension (`apps/extension`)
-
-  * [cite_start]**Manifest V3:** Chuẩn mới nhất của Chrome Extension[cite: 240].
-  * [cite_start]**Architecture:** Sử dụng **Iframe Injection** để hiển thị giao diện React của Frontend ngay trên trang web bất kỳ[cite: 555].
-  * **External APIs:** Azure Speech Services (Pronunciation), Google Custom Search (Image), Google Translate, Free Dictionary API.
-
------
-
-## 2\. Prerequisites (Cài đặt trước khi chạy)
-
-Trước khi start project, hãy đảm bảo máy tính đã install:
-
-1.  **Node.js** (Version 18+ recommended).
-2.  **Docker Desktop** (để chạy Database).
-3.  **Mkcert** (Công cụ tạo SSL certificate để chạy HTTPS trên localhost - **Bắt buộc** vì Extension yêu cầu HTTPS để dùng Mic/Iframe).
-
------
-
-## 3\. Step-by-Step Installation Guide
-
-### Bước 1: Setup Infrastructure (Docker)
-
-[cite_start]File `docker-compose.yml` đã config sẵn PostgreSQL chạy ở port **5433** (để tránh conflict với port 5432 mặc định nếu máy bạn đã có Postgres)[cite: 36].
-
-1.  Mở terminal tại root folder.
-2.  Run command:
-    ```bash
-    docker-compose up -d
-    ```
-    [cite_start]*Lưu ý:* Database name là `vocab_db`, user `myuser`, pass `mypassword`[cite: 32].
-
-### Bước 2: Setup Certificates (HTTPS)
-
-Vì Extension dùng Iframe và Microphone, browser bắt buộc phải có HTTPS.
-
-1.  Cài đặt `mkcert` trên máy (Google "how to install mkcert").
-2.  Run lệnh tạo cert (hoặc dùng file có sẵn trong `apps/frontend/certificates` nếu key còn hạn):
-    ```bash
-    mkcert -install
-    mkcert localhost
-    ```
-3.  [cite_start]Đảm bảo file `localhost-key.pem` và `localhost.pem` nằm đúng chỗ để Backend và Frontend load được[cite: 19].
-
-### Bước 3: Backend Setup (Port 5001)
-
-[cite_start]Source code backend đang default port 5000 [cite: 94][cite_start], nhưng Frontend gọi API qua `https://localhost:5001`[cite: 426]. Bạn cần config lại port.
-
-1.  Di chuyển vào folder backend:
-    ```bash
-    cd apps/backend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  **Database Migration:** Đồng bộ schema Prisma vào DB Docker:
-    ```bash
-    npx prisma generate
-    npx prisma migrate dev --name init
-    ```
-4.  **Environment Variables (.env):** Tạo file `.env` trong `apps/backend` với nội dung tương tự:
-    ```env
-    DATABASE_URL="postgresql://myuser:mypassword@localhost:5433/vocab_db?schema=public"
-    JWT_SECRET="your-secret-key"
-    GOOGLE_CLIENT_ID="your-google-id"
-    GOOGLE_CLIENT_SECRET="your-google-secret"
-    # Port config nếu code hỗ trợ env, hoặc sửa cứng trong main.ts
-    PORT=5001
-    ```
-5.  **Start Server:**
-      * Sửa file `src/main.ts`: Đổi `app.listen(5000)` thành `app.listen(5001)` và thêm config HTTPS (đọc file key/cert từ Bước 2) nếu chạy local HTTPS trực tiếp từ Node.
-      * Run:
-    <!-- end list -->
-    ```bash
-    npm run start:dev
-    ```
-    [cite_start]*Check:* Truy cập `https://localhost:5001` (hoặc http nếu chưa setup https ở backend layer, nhưng khuyến khích https để cookie `SameSite=None; Secure` hoạt động [cite: 918]).
-
-### Bước 4: Frontend Setup (Port 3001)
-
-[cite_start]Frontend cần chạy ở port **3001** vì Extension được hardcode để trỏ Iframe vào `https://localhost:3001`[cite: 555].
-
-1.  Mở terminal mới, vào folder frontend:
-    ```bash
-    cd apps/frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  **Environment Variables:** Tạo `.env.local`:
-    ```env
-    NEXT_PUBLIC_API_URL=https://localhost:5001
-    ```
-4.  **Start Server with HTTPS:**
-    Để chạy Next.js với HTTPS port 3001, bạn dùng command:
-    ```bash
-    # Cần cài server https cho local hoặc dùng flag experimental của Next.js
-    next dev -p 3001 --experimental-https
-    ```
-    *(Hoặc sử dụng `local-ssl-proxy` để map port 3001 https sang 3000 http).*
-
-### Bước 5: Load Extension
-
-1.  Mở Chrome, gõ `chrome://extensions`.
-2.  Bật **Developer mode** (góc phải trên).
-3.  Bấm **Load unpacked**.
-4.  Chọn folder `apps/extension`.
-5.  **Important:** Vào `Details` của extension, đảm bảo pin nó ra ngoài.
-
------
-
-## 4\. How to Use & Verify (Cách kiểm tra chạy ổn)
-
-### 1\. Kiểm tra kết nối Backend - Database
-
-  * [cite_start]Backend log phải hiện: `✅ DB Connected via Prisma`[cite: 233].
-  * Backend log chạy ở port 5001: `🚀 Backend running on https://localhost:5001` (sau khi sửa `main.ts`).
-
-### 2\. Kiểm tra Extension Flow
-
-  * Ra một trang web bất kỳ (ví dụ: Medium, CNN).
-  * [cite_start]Bôi đen một từ tiếng Anh -\> Nhấn `Shift` -\> **Popup từ vựng** phải hiện ra[cite: 409].
-  * [cite_start]Nhấn **Ctrl + Q** (hoặc Double Space tùy config cũ): **Iframe Quick Search** phải trượt ra từ màn hình[cite: 570].
-      * *Lưu ý:* Nếu Iframe trắng xóa, kiểm tra Console xem có lỗi `Refused to frame 'https://localhost:3001/'` không. Nếu có, nghĩa là cert HTTPS chưa được trình duyệt tin tưởng. Hãy mở tab `https://localhost:3001` và chọn "Advanced -\> Proceed to localhost (unsafe)" để trust cert.
-
-### 3\. Setup API Keys (Trong Extension Popup)
-
-  * Bấm vào icon Extension trên thanh browser.
-  * [cite_start]Nhập **Google API Key** và **Search Engine ID (CX)** để tính năng tìm ảnh hoạt động[cite: 350].
-  * [cite_start]Nhập **Azure Speech Key** & **Region** để tính năng chấm điểm phát âm hoạt động[cite: 371].
-
------
-
-## 5\. Troubleshooting (Các lỗi thường gặp)
-
-1.  **Lỗi CORS:**
-
-      * Nếu Frontend (3001) không gọi được Backend (5001), kiểm tra file `apps/backend/src/main.ts`.
-      * [cite_start]Đảm bảo `app.enableCors` cho phép origin là `https://localhost:3001` và `chrome-extension://<ID-EXTENSION-CUA-BAN>`[cite: 92].
-
-2.  **Lỗi Audio/Microphone trong Iframe:**
-
-      * [cite_start]Iframe cần thuộc tính `allow="microphone; camera"`[cite: 555]. Code hiện tại đã có, nhưng phải chạy trên **HTTPS** mới hoạt động.
-
-3.  **Cookie không lưu được (Lỗi Login):**
-
-      * Do chạy Cross-domain (Extension -\> Backend), Backend phải set cookie với `SameSite=None; Secure`. [cite_start]Code auth đã xử lý việc này[cite: 918], nhưng nó yêu cầu Backend phải serve qua HTTPS.
-
-
-
-================================================
-FILE: apps/tree.txt
-================================================
-apps
-├── backend
-│   ├── README.md
-│   ├── eslint.config.mjs
-│   ├── nest-cli.json
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── prisma
-│   │   └── schema.prisma
-│   ├── src
-│   │   ├── app.controller.spec.ts
-│   │   ├── app.controller.ts
-│   │   ├── app.module.ts
-│   │   ├── app.service.ts
-│   │   └── main.ts
-│   ├── test
-│   │   ├── app.e2e-spec.ts
-│   │   └── jest-e2e.json
-│   ├── tree.txt
-│   ├── tsconfig.build.json
-│   └── tsconfig.json
-├── extension
-├── frontend
-│   ├── README.md
-│   ├── app
-│   │   ├── favicon.ico
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   ├── page.module.css
-│   │   └── page.tsx
-│   ├── eslint.config.mjs
-│   ├── next-env.d.ts
-│   ├── next.config.ts
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── public
-│   │   ├── file.svg
-│   │   ├── globe.svg
-│   │   ├── next.svg
-│   │   ├── vercel.svg
-│   │   └── window.svg
-│   └── tsconfig.json
-└── tree.txt
-
+[Empty file]
 
 
 ================================================
@@ -954,16 +725,145 @@ describe('AppController', () => {
 ================================================
 FILE: apps/backend/src/app.controller.ts
 ================================================
-import { Controller, Get } from '@nestjs/common';
+// apps/backend/src/app.controller.ts
+import { Controller, Get, Res } from '@nestjs/common';
 import { AppService } from './app.service';
+import type { Response } from 'express'; // 👈 Thêm chữ "type" vào đây
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  async getHealthCheck(@Res() res: Response) {
+    // 1. Lấy dữ liệu raw từ Service
+    const data = await this.appService.getHealthCheck();
+
+    // 2. Tạo giao diện Hacker (HTML + CSS)
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>SYSTEM STATUS :: CLASSIFIED</title>
+        <style>
+          :root {
+            --bg-color: #0a0a0a;
+            --text-color: #00ff41; /* Hacker Green */
+            --dim-color: #008f11;
+            --alert-color: #ff3333;
+            --font-stack: 'Courier New', 'Consolas', monospace;
+          }
+          body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-stack);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            text-shadow: 0 0 2px rgba(0, 255, 65, 0.5);
+          }
+          .terminal {
+            width: 100%;
+            max-width: 900px;
+            border: 2px solid var(--dim-color);
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 143, 17, 0.2);
+            position: relative;
+            overflow: hidden;
+          }
+          .terminal::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+          }
+          h1, h2 { text-transform: uppercase; margin: 0; letter-spacing: 2px; }
+          h1 { border-bottom: 2px solid var(--dim-color); padding-bottom: 10px; margin-bottom: 20px; font-size: 24px; }
+          .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+          .card { border: 1px dashed var(--dim-color); padding: 15px; }
+          .card-title { color: var(--dim-color); font-size: 12px; margin-bottom: 10px; display: block; }
+          .row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dotted #333; padding-bottom: 4px; }
+          .label { font-weight: bold; }
+          .value { color: #fff; }
+          .status-ok { color: var(--text-color); font-weight: bold; }
+          .status-err { color: var(--alert-color); font-weight: bold; blink: 1s; }
+          
+          /* ASCII ART */
+          .ascii { white-space: pre; font-size: 10px; color: var(--dim-color); margin-bottom: 20px; line-height: 10px; text-align: center;}
+          
+          /* Footer & Blink */
+          .footer { margin-top: 30px; font-size: 12px; color: #555; text-align: right; }
+          .blink { animation: blinker 1s linear infinite; }
+          @keyframes blinker { 50% { opacity: 0; } }
+          
+          /* Scanline animation */
+          @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="terminal">
+          <div class="ascii">
+      ██╗   ██╗ ██████╗  ██████╗ ██████╗ ██████╗ 
+      ██║   ██║██╔═══██╗██╔════╝██╔═══██╗██╔══██╗
+      ██║   ██║██║   ██║██║     ███████║██████╔╝
+      ╚██╗ ██╔╝██║   ██║██║     ██╔═══██║██╔══██╗
+       ╚████╔╝ ╚██████╔╝╚██████╗██║   ██║██████╔╝
+        ╚═══╝   ╚═════╝  ╚═════╝╚═╝   ╚═╝╚═════╝ 
+          SYSTEM INITIALIZED... ACCESS GRANTED
+          </div>
+
+          <h1>🚀 SYSTEM STATUS REPORT</h1>
+
+          <div class="grid">
+            <div class="card">
+              <span class="card-title">[ SYSTEM_INTEGRITY ]</span>
+              <div class="row"><span class="label">STATUS:</span> <span class="value status-ok">${data.status}</span></div>
+              <div class="row"><span class="label">PLATFORM:</span> <span class="value">${data.system.platform}</span></div>
+              <div class="row"><span class="label">PORT:</span> <span class="value">${data.system.port}</span></div>
+              <div class="row"><span class="label">PROTOCOL:</span> <span class="value">${data.system.protocol}</span></div>
+              <div class="row"><span class="label">ENV:</span> <span class="value">${data.system.environment}</span></div>
+            </div>
+
+            <div class="card">
+              <span class="card-title">[ NETWORK_UPLINK ]</span>
+              <div class="row"><span class="label">DATABASE:</span> <span class="value">${data.connectivity.database.includes('Connected') ? '<span class="status-ok">ONLINE ✅</span>' : '<span class="status-err">OFFLINE ❌</span>'}</span></div>
+              <div class="row"><span class="label">USER COUNT:</span> <span class="value">${data.connectivity.total_users}</span></div>
+              <div class="row"><span class="label">CORS POLICY:</span> <span class="value">ACTIVE (Universal)</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="card-title">[ SECURITY_PROTOCOLS ]</span>
+            <div class="row"><span class="label">DB CONNECTION STRING:</span> <span class="value">${data.configuration_checks.database_url}</span></div>
+            <div class="row"><span class="label">GOOGLE OAUTH:</span> <span class="value">${data.configuration_checks.google_oauth}</span></div>
+            <div class="row"><span class="label">JWT SECRET:</span> <span class="value">${data.configuration_checks.jwt_secret}</span></div>
+          </div>
+
+          <div style="margin-top: 20px; border: 1px solid var(--text-color); padding: 10px;">
+            <span class="blink">█</span> ${data.message}
+          </div>
+
+          <div class="footer">
+            TIMESTAMP: ${data.timestamp} | SERVER_ID: ${Math.random().toString(36).substring(7).toUpperCase()}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // 3. Trả về HTML thay vì JSON
+    res.send(html);
   }
 }
 
@@ -1002,12 +902,55 @@ export class AppModule {}
 ================================================
 FILE: apps/backend/src/app.service.ts
 ================================================
+// apps/backend/src/app.service.ts
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from './prisma/prisma.service';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+  constructor(private prisma: PrismaService) {}
+
+  async getHealthCheck() {
+    // 1. Kiểm tra kết nối Database (Supabase)
+    let dbStatus = 'Disconnected ❌';
+    let userCount = 0;
+    try {
+      // Thử query nhẹ đếm số user để xem DB sống không
+      userCount = await this.prisma.user.count();
+      dbStatus = 'Connected (Supabase PostgreSQL) ✅';
+    } catch (error) {
+      dbStatus = `Error: ${error.message} ❌`;
+    }
+
+    // 2. Kiểm tra môi trường
+    const isProduction = process.env.NODE_ENV === 'production';
+    const protocol = isProduction ? 'https (Render Managed)' : 'https (Local Certificate)';
+
+    // 3. Kiểm tra các Config quan trọng
+    const checks = {
+      database_url: process.env.DATABASE_URL ? 'Configured ✅' : 'Missing ❌',
+      google_oauth: (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ? 'Ready ✅' : 'Missing Keys ⚠️',
+      jwt_secret: process.env.JWT_SECRET ? 'Set ✅' : 'Missing (Auth will fail) ❌',
+    };
+
+    // 4. Trả về báo cáo chi tiết
+    return {
+      status: '🚀 Backend is OPERATIONAL',
+      timestamp: new Date().toISOString(),
+      system: {
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 5001,
+        protocol: protocol,
+        platform: isProduction ? 'Render Cloud' : 'Localhost Windows',
+      },
+      connectivity: {
+        database: dbStatus,
+        total_users: userCount,
+        cors_policy: 'Allow All (Frontend & Extension Compatible) ✅',
+      },
+      configuration_checks: checks,
+      message: 'Sẵn sàng phục vụ Frontend (Next.js) và Extension!',
+    };
   }
 }
 
@@ -1019,33 +962,23 @@ FILE: apps/backend/src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface'; // 👈 1. Import interface này
 import * as fs from 'fs';
 import * as path from 'path';
 
 async function bootstrap() {
-  let httpsOptions = null;
+  // 👇 2. Khai báo kiểu rõ ràng: là HttpsOptions HOẶC undefined (không dùng null)
+  let httpsOptions: HttpsOptions | undefined = undefined;
 
-  // 👇 CHỈ load chứng chỉ SSL khi KHÔNG PHẢI là Production
-  // Render sẽ tự động set NODE_ENV='production'
   const isProduction = process.env.NODE_ENV === 'production';
 
   if (!isProduction) {
     try {
-      const keyPath = path.join(
-        __dirname,
-        '..',
-        'certificates',
-        'localhost-key.pem',
-      );
-      const certPath = path.join(
-        __dirname,
-        '..',
-        'certificates',
-        'localhost.pem',
-      );
+      const keyPath = path.join(__dirname, '..', 'certificates', 'localhost-key.pem');
+      const certPath = path.join(__dirname, '..', 'certificates', 'localhost.pem');
 
-      // Kiểm tra file có tồn tại không trước khi đọc để tránh lỗi
       if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        // 👇 3. Lúc này gán object vào biến là hợp lệ
         httpsOptions = {
           key: fs.readFileSync(keyPath),
           cert: fs.readFileSync(certPath),
@@ -1057,13 +990,13 @@ async function bootstrap() {
     }
   }
 
-  // 👇 Nếu có httpsOptions thì truyền vào, không thì thôi (chạy HTTP)
+  // 👇 4. Truyền thẳng biến vào (vì nó đã là undefined nếu là production)
   const app = await NestFactory.create(AppModule, {
-    httpsOptions: isProduction ? undefined : httpsOptions,
+    httpsOptions, 
   });
 
   app.enableCors({
-    origin: true, // Hoặc điền domain Vercel của bạn vào đây: ["https://your-frontend.vercel.app"]
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -1078,14 +1011,10 @@ async function bootstrap() {
 
   const port = process.env.PORT || 5001;
   await app.listen(port);
-
-  // Log ra để biết đang chạy mode nào
-  console.log(
-    `🚀 Backend running on ${isProduction ? 'HTTP (Render managed SSL)' : 'HTTPS'} port ${port}`,
-  );
+  
+  console.log(`🚀 Backend running on ${isProduction ? 'HTTP (Render managed SSL)' : 'HTTPS'} port ${port}`);
 }
 bootstrap();
-
 
 
 ================================================
@@ -1426,7 +1355,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
-      callbackURL: 'http://localhost:5000/auth/google/callback',
+      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL') || 'http://localhost:5001/auth/google/callback',
       scope: ['email', 'profile'],
     } as StrategyOptions); // 👈 Thêm "as StrategyOptions"
   }
@@ -2209,7 +2138,7 @@ FILE: apps/extension/config.js
 // apps/extension/config.js
 
 // 👇 CÔNG TẮC TỔNG: Đổi true/false ở đây
-const IS_DEV_MODE = true;
+const IS_DEV_MODE = false;
 
 const APP_CONFIG = {
   // Backend
@@ -2220,7 +2149,7 @@ const APP_CONFIG = {
   // Frontend
   FRONTEND_URL: IS_DEV_MODE
     ? "https://localhost:3001"
-    : "https://c2025-12-09-full-app-english.vercel.app",
+    : "https://localhost:3001",
 };
 
 // Log ra để biết đang chạy môi trường nào
@@ -2273,6 +2202,7 @@ FILE: apps/extension/manifest.json
     "https://www.googleapis.com/*",
     "https://api.unsplash.com/*",
     "https://*.cognitiveservices.azure.com/*",
+    "https://*.onrender.com/*",
     "http://localhost:3000/*",
     "https://localhost:3001/*",
     "http://localhost:5001/*"
