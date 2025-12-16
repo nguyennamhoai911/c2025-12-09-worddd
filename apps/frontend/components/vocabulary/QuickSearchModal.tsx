@@ -197,8 +197,8 @@ export default function QuickSearchModal({
                             id: 'temp', 
                             word: searchText,
                             userId: '',
-                            createdAt: new Date(),
-                            updatedAt: new Date()
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
                           }, e);
                         }}
                         className="p-2 hover:bg-green-100 rounded-full transition-colors"
