@@ -23,7 +23,11 @@ Directory structure:
         │   │   ├── app.controller.ts
         │   │   ├── app.module.ts
         │   │   ├── app.service.ts
+        │   │   ├── logging.interceptor.ts
         │   │   ├── main.ts
+        │   │   ├── common/
+        │   │   │   └── interceptors/
+        │   │   │       └── performance.interceptor.ts
         │   │   ├── modules/
         │   │   │   ├── auth/
         │   │   │   │   ├── auth.controller.ts
@@ -80,6 +84,7 @@ Directory structure:
         │       ├── lookup-ui.js
         │       ├── main.js
         │       ├── messager.js
+        │       ├── metrics.js
         │       ├── native-core.js
         │       ├── native-ui.js
         │       ├── shortcuts.js
@@ -132,6 +137,7 @@ Directory structure:
             │       ├── useVocabModals.ts
             │       └── .gitkeep
             └── lib/
+                ├── api-metrics.ts
                 └── api.ts
 
 ================================================
@@ -874,6 +880,7 @@ FILE: apps/backend/src/app.module.ts
 ================================================
 // apps/backend/src/app.module.ts
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -881,6 +888,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
+import { PerformanceInterceptor } from './common/interceptors/performance.interceptor';
 
 @Module({
   imports: [
@@ -893,7 +901,14 @@ import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
     VocabularyModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // 👇 Đăng ký Performance Interceptor globally
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PerformanceInterceptor,
+    },
+  ],
 })
 export class AppModule {}
 
@@ -957,19 +972,27 @@ export class AppService {
 
 
 ================================================
+FILE: apps/backend/src/logging.interceptor.ts
+================================================
+[Binary file]
+
+
+================================================
 FILE: apps/backend/src/main.ts
 ================================================
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface'; // 👈 1. Import interface này
+import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface'; // 👈 
+// 1. Import interface này
+import { LoggingInterceptor } from './logging.interceptor';
 import * as fs from 'fs';
 import * as path from 'path';
 
 async function bootstrap() {
   // 👇 2. Khai báo kiểu rõ ràng: là HttpsOptions HOẶC undefined (không dùng null)
   let httpsOptions: HttpsOptions | undefined = undefined;
-
+  
   const isProduction = process.env.NODE_ENV === 'production';
 
   if (!isProduction) {
@@ -994,7 +1017,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions, 
   });
-
+  app.useGlobalInterceptors(new LoggingInterceptor());
   app.enableCors({
     origin: true,
     credentials: true,
@@ -1015,6 +1038,44 @@ async function bootstrap() {
   console.log(`🚀 Backend running on ${isProduction ? 'HTTP (Render managed SSL)' : 'HTTPS'} port ${port}`);
 }
 bootstrap();
+
+
+================================================
+FILE: apps/backend/src/common/interceptors/performance.interceptor.ts
+================================================
+// apps/backend/src/common/interceptors/performance.interceptor.ts
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+@Injectable()
+export class PerformanceInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const t2_start = performance.now(); // 🕒 Bắt đầu T2 (Server processing)
+
+    return next.handle().pipe(
+      tap((data) => {
+        const t2_end = performance.now(); // 🏁 Kết thúc T2
+        const t2_duration = (t2_end - t2_start).toFixed(2); // ms
+
+        const response = context.switchToHttp().getResponse();
+        
+        // 👇 THÊM HEADER: Server processing time
+        response.setHeader('x-server-time', t2_duration);
+        
+        // Log chi tiết (nếu cần debug)
+        const request = context.switchToHttp().getRequest();
+        console.log(`⏱️ [${request.method} ${request.url}] Server time: ${t2_duration}ms`);
+      }),
+    );
+  }
+}
+
 
 
 ================================================
@@ -2058,9 +2119,26 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  constructor() {
+    super({
+      log: [{ emit: 'event', level: 'query' }], // Bắt buộc dòng này để log query
+    });
+  }
+
   async onModuleInit() {
     await this.$connect();
     console.log('✅ DB Connected via Prisma');
+    
+    // @ts-ignore
+    this.$on('query', (e: any) => {
+      // 🕒 T3: Thời gian query thực thi
+      const t3_db_ms = e.duration;
+      
+      // Chỉ in ra nếu query chậm hơn 100ms (Bỏ qua các query nhanh)
+      if (t3_db_ms > 100) {
+        console.log(`🔥 SLOW DB [T3: ${t3_db_ms}ms] Query: ${e.query}`);
+      }
+    });
   }
 
   async onModuleDestroy() {
@@ -2169,7 +2247,7 @@ FILE: apps/extension/config.js
 // apps/extension/config.js
 
 // 👇 CÔNG TẮC TỔNG: Đổi true/false ở đây
-const IS_DEV_MODE = false;
+const IS_DEV_MODE = true;
 
 const APP_CONFIG = {
   // Backend
@@ -5231,6 +5309,53 @@ FILE: apps/extension/content-scripts/main.js
 FILE: apps/extension/content-scripts/messager.js
 ================================================
 [Empty file]
+
+
+================================================
+FILE: apps/extension/content-scripts/metrics.js
+================================================
+// apps/extension/content-scripts/metrics.js
+// Hàm dùng để đo lường hiệu suất API call từ Extension
+
+export const measureApiCall = async (apiName, apiCallFn) => {
+  const t1_start = performance.now(); // 🕒 Bắt đầu T1
+
+  try {
+    const response = await apiCallFn();
+
+    const t1_end = performance.now(); // 🏁 Kết thúc T1
+    const t1_total_ms = (t1_end - t1_start).toFixed(2);
+
+    // Lấy T2 từ Header mà Backend gửi về
+    const t2_server_ms = parseFloat(
+      response.headers?.get?.("x-server-time") || "0"
+    );
+
+    // Tính độ trễ mạng (Network Latency)
+    const network_latency = (parseFloat(t1_total_ms) - t2_server_ms).toFixed(2);
+
+    console.group(`📊 METRICS: ${apiName}`);
+    console.log(`1️⃣ Tổng thời gian (T1): ${t1_total_ms} ms`);
+    console.log(`2️⃣ Server xử lý (T2):   ${t2_server_ms} ms`);
+    console.log(`3️⃣ Độ trễ mạng (Net):   ${network_latency} ms`);
+
+    // KẾT LUẬN TỰ ĐỘNG
+    if (parseFloat(network_latency) > 1000) {
+      console.warn("👉 CHẬM DO MẠNG (Internet/Wifi)");
+    } else if (t2_server_ms > 500) {
+      console.warn("👉 CHẬM DO BACKEND (Code/DB)");
+    } else {
+      console.log("✅ Tốc độ ổn định");
+    }
+    console.groupEnd();
+
+    return response;
+  } catch (error) {
+    console.error(`❌ API Error: ${apiName}`, error);
+    throw error;
+  }
+};
+
 
 
 ================================================
@@ -9868,6 +9993,55 @@ export default useVocabModals;
 FILE: apps/frontend/hooks/vocabulary/.gitkeep
 ================================================
 [Empty file]
+
+
+================================================
+FILE: apps/frontend/lib/api-metrics.ts
+================================================
+// apps/frontend/lib/api-metrics.ts
+// Hàm dùng để đo lường hiệu suất API call
+
+export const measureApiCall = async (
+  apiName: string,
+  apiCallFn: () => Promise<any>
+) => {
+  const t1_start = performance.now(); // 🕒 Bắt đầu T1
+
+  try {
+    const response = await apiCallFn();
+
+    const t1_end = performance.now(); // 🏁 Kết thúc T1
+    const t1_total_ms = (t1_end - t1_start).toFixed(2);
+
+    // Lấy T2 từ Header mà Backend gửi về
+    // Lưu ý: Tên header trong axios thường viết thường hết
+    const t2_server_ms = parseFloat(response.headers['x-server-time'] || '0');
+
+    // Tính độ trễ mạng (Network Latency)
+    const network_latency = (parseFloat(t1_total_ms) - t2_server_ms).toFixed(2);
+
+    console.group(`📊 METRICS: ${apiName}`);
+    console.log(`1️⃣ Tổng thời gian (T1): ${t1_total_ms} ms`);
+    console.log(`2️⃣ Server xử lý (T2):   ${t2_server_ms} ms`);
+    console.log(`3️⃣ Độ trễ mạng (Net):   ${network_latency} ms`);
+
+    // KẾT LUẬN TỰ ĐỘNG
+    if (parseFloat(network_latency) > 1000) {
+      console.warn('👉 CHẬM DO MẠNG (Internet/Wifi)');
+    } else if (t2_server_ms > 500) {
+      console.warn('👉 CHẬM DO BACKEND (Code/DB)');
+    } else {
+      console.log('✅ Tốc độ ổn định');
+    }
+    console.groupEnd();
+
+    return response;
+  } catch (error) {
+    console.error(`❌ API Error: ${apiName}`, error);
+    throw error;
+  }
+};
+
 
 
 ================================================

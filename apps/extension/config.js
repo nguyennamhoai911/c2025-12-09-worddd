@@ -1,7 +1,7 @@
 // apps/extension/config.js
 
 // 👇 CÔNG TẮC TỔNG: Đổi true/false ở đây
-const IS_DEV_MODE = false;
+const IS_DEV_MODE = true;
 
 const APP_CONFIG = {
   // Backend
