@@ -49,9 +49,18 @@ async function speakWithEdgeTTS(text) {
 }
 
 // --- 2. BACKEND API (SAVE VOCAB) ---
+// apps/extension/content-scripts/lookup-services.js
+
+// --- 2. BACKEND API (SAVE VOCAB) ---
 async function apiSaveVocabulary(data) {
+  // 👇 1. LOG CHECK CONFIG
+  console.log(
+    `%c[EXT-DEBUG] 🚀 Starting Save...`,
+    "color: cyan; font-weight: bold"
+  );
+  console.log(`[EXT-DEBUG] Backend URL:`, BACKEND_URL);
+
   try {
-    // Chuẩn bị dữ liệu
     const meaning =
       typeof data.translation === "string"
         ? data.translation
@@ -76,20 +85,41 @@ async function apiSaveVocabulary(data) {
       isStarred: false,
     };
 
-    // Gọi API với credentials để lấy cookie token
+    // 👇 2. LOG REQUEST
+    console.log(`[EXT-DEBUG] Payload:`, payload);
+    console.log(`[EXT-DEBUG] Sending request to: ${BACKEND_URL}/vocabulary`);
+
     const response = await fetch(`${BACKEND_URL}/vocabulary`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      credentials: "include", // Quan trọng để gửi cookie xác thực
+      credentials: "include",
     });
 
+    // 👇 3. LOG RESPONSE STATUS
+    console.log(`[EXT-DEBUG] Response Status:`, response.status);
+
     if (!response.ok) {
-      if (response.status === 401) throw new Error("Chưa đăng nhập App");
-      throw new Error("Lỗi kết nối Server");
+      const errText = await response.text();
+      console.error(`[EXT-DEBUG] Server Error Body:`, errText); // Xem server trả về lỗi gì
+
+      if (response.status === 401) throw new Error("Chưa đăng nhập (401)");
+      if (response.status === 403) throw new Error("Bị chặn quyền (403)");
+      throw new Error(`Lỗi Server: ${response.status}`);
     }
-    return await response.json();
+
+    const json = await response.json();
+    console.log(`[EXT-DEBUG] Success Data:`, json);
+    return json;
   } catch (error) {
+    // 👇 4. LOG NETWORK ERROR (Quan trọng nhất)
+    console.error(`[EXT-DEBUG] 🔥 FATAL ERROR:`, error);
+
+    if (error.message.includes("Failed to fetch")) {
+      console.warn(
+        `[EXT-DEBUG] 👉 Gợi ý: Có thể do lỗi SSL, CORS, hoặc chưa add host_permissions trong manifest.`
+      );
+    }
     throw error;
   }
 }

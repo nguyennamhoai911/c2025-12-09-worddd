@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -16,8 +24,21 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    return this.authService.login(body.email, body.password);
+  async login(
+    @Body() body: { email: string; password: string },
+    @Res({ passthrough: true }) res: Response // 👈 Inject Response vào đây
+  ) {
+    const result = await this.authService.login(body.email, body.password);
+    
+    // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: true, // Bắt buộc true vì Render chạy HTTPS
+      sameSite: 'none', // Bắt buộc 'none' để Extension (trang khác) đọc được
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+    });
+
+    return result;
   }
 
   @Get('google')
@@ -30,7 +51,16 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user);
+    
+    // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
+    // Frontend URL trên Vercel (hoặc Localhost nếu đang dev)
     const frontendUrl = `http://localhost:3000/auth/callback?token=${result.token}`;
     return res.redirect(frontendUrl);
   }
