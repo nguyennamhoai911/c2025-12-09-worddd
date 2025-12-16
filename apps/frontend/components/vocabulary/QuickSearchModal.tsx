@@ -196,7 +196,7 @@ export default function QuickSearchModal({
                           handleOpenAssessment({ 
                             id: 'temp', 
                             word: searchText,
-                            userId: '',
+                            // userId: '',
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString()
                           }, e);
