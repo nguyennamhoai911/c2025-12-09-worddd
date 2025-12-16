@@ -69,6 +69,7 @@ Directory structure:
         │       └── jest-e2e.json
         ├── extension/
         │   ├── background.js
+        │   ├── config.js
         │   ├── content.js
         │   ├── manifest.json
         │   ├── popup.css
@@ -123,14 +124,16 @@ Directory structure:
             │       └── VocabTable.tsx
             ├── contexts/
             │   └── AuthContext.tsx
-            └── hooks/
-                └── vocabulary/
-                    ├── usePronunciationAssessment.ts
-                    ├── usePronunciationAssessmentWithExtension.ts
-                    ├── useQuickSearch.ts
-                    ├── useVocabData.ts
-                    ├── useVocabModals.ts
-                    └── .gitkeep
+            ├── hooks/
+            │   └── vocabulary/
+            │       ├── usePronunciationAssessment.ts
+            │       ├── usePronunciationAssessmentWithExtension.ts
+            │       ├── useQuickSearch.ts
+            │       ├── useVocabData.ts
+            │       ├── useVocabModals.ts
+            │       └── .gitkeep
+            └── lib/
+                └── api.ts
 
 ================================================
 FILE: AI_CONTEXT.md
@@ -624,6 +627,7 @@ FILE: apps/backend/package.json
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "prebuild": "npx prisma generate",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -1019,21 +1023,47 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 async function bootstrap() {
-  // 1. Đọc chứng chỉ SSL (Do mkcert tạo)
-  // Đảm bảo file localhost-key.pem và localhost.pem đang nằm trong folder 'certificates'
-  const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname, '..', 'certificates', 'localhost-key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, '..', 'certificates', 'localhost.pem')),
-  };
+  let httpsOptions = null;
 
-  // 2. Khởi tạo App với HTTPS options
+  // 👇 CHỈ load chứng chỉ SSL khi KHÔNG PHẢI là Production
+  // Render sẽ tự động set NODE_ENV='production'
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (!isProduction) {
+    try {
+      const keyPath = path.join(
+        __dirname,
+        '..',
+        'certificates',
+        'localhost-key.pem',
+      );
+      const certPath = path.join(
+        __dirname,
+        '..',
+        'certificates',
+        'localhost.pem',
+      );
+
+      // Kiểm tra file có tồn tại không trước khi đọc để tránh lỗi
+      if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        httpsOptions = {
+          key: fs.readFileSync(keyPath),
+          cert: fs.readFileSync(certPath),
+        };
+        console.log('🔒 Using Local HTTPS Certificates');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not load SSL certs, falling back to HTTP');
+    }
+  }
+
+  // 👇 Nếu có httpsOptions thì truyền vào, không thì thôi (chạy HTTP)
   const app = await NestFactory.create(AppModule, {
-    httpsOptions, 
+    httpsOptions: isProduction ? undefined : httpsOptions,
   });
 
-  // Enable CORS (Để Frontend port 3000/3001 và Extension gọi được)
   app.enableCors({
-    origin: true, 
+    origin: true, // Hoặc điền domain Vercel của bạn vào đây: ["https://your-frontend.vercel.app"]
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -1046,12 +1076,16 @@ async function bootstrap() {
     }),
   );
 
-  // 3. Lấy Port từ file .env (5001)
   const port = process.env.PORT || 5001;
   await app.listen(port);
-  console.log(`🚀 Backend running directly on https://localhost:${port} (Supabase Connected)`);
+
+  // Log ra để biết đang chạy mode nào
+  console.log(
+    `🚀 Backend running on ${isProduction ? 'HTTP (Render managed SSL)' : 'HTTPS'} port ${port}`,
+  );
 }
 bootstrap();
+
 
 
 ================================================
@@ -2170,6 +2204,33 @@ function createNextAlarm() {
 
 
 ================================================
+FILE: apps/extension/config.js
+================================================
+// apps/extension/config.js
+
+// 👇 CÔNG TẮC TỔNG: Đổi true/false ở đây
+const IS_DEV_MODE = true;
+
+const APP_CONFIG = {
+  // Backend
+  API_URL: IS_DEV_MODE
+    ? "https://localhost:5001"
+    : "https://vocab-backend-aveq.onrender.com",
+
+  // Frontend
+  FRONTEND_URL: IS_DEV_MODE
+    ? "https://localhost:3001"
+    : "https://c2025-12-09-full-app-english.vercel.app",
+};
+
+// Log ra để biết đang chạy môi trường nào
+console.log(
+  `🚀 Extension Mode: ${IS_DEV_MODE ? "DEV (Local)" : "PROD (Server)"}`
+);
+
+
+
+================================================
 FILE: apps/extension/content.js
 ================================================
 [Binary file]
@@ -2183,11 +2244,7 @@ FILE: apps/extension/manifest.json
   "name": "Vocabulary Coach & App Connector",
   "version": "2.0",
   "description": "Full App Integration: Iframe, TTS, Azure Speech & Flashcards",
-  "permissions": [
-    "storage",
-    "microphone",
-    "alarms"
-  ],
+  "permissions": ["storage", "microphone", "alarms"],
   "background": {
     "service_worker": "background.js"
   },
@@ -2198,15 +2255,14 @@ FILE: apps/extension/manifest.json
     {
       "matches": ["<all_urls>"],
       "js": [
-      "content-scripts/lookup-services.js",
+        "config.js",
+        "content-scripts/lookup-services.js",
         "content-scripts/lookup-ui.js",
-        "content-scripts/native-ui.js",    
-        "content-scripts/native-core.js",  
+        "content-scripts/native-ui.js",
+        "content-scripts/native-core.js",
         "content-scripts/lookup-main.js"
       ],
-      "css": [
-        "popup.css"
-      ]
+      "css": ["popup.css"]
     }
   ],
   "host_permissions": [
@@ -2217,7 +2273,7 @@ FILE: apps/extension/manifest.json
     "https://www.googleapis.com/*",
     "https://api.unsplash.com/*",
     "https://*.cognitiveservices.azure.com/*",
-    "http://localhost:3000/*", 
+    "http://localhost:3000/*",
     "https://localhost:3001/*",
     "http://localhost:5001/*"
   ],
@@ -2228,6 +2284,7 @@ FILE: apps/extension/manifest.json
     }
   ]
 }
+
 
 
 ================================================
@@ -4236,7 +4293,7 @@ FILE: apps/extension/content-scripts/lookup-services.js
 // MODULE: SERVICES (API, Audio, Caching)
 // =======================================================================
 
-const BACKEND_URL = "https://localhost:5001";
+const BACKEND_URL = APP_CONFIG.API_URL;
 let isSoundEnabled = true;
 
 // --- 1. SETTINGS & AUDIO ---
@@ -6373,8 +6430,7 @@ export const createOverlay = () => {
 
   // 3. Load trang Vocabulary của Frontend vào
   // Thêm param ?openSearch=true để React biết đường mở Popup ngay lập tức
-  iframeElement.src =
-    "https://localhost:3001/vocabulary?openSearch=true&iframeMode=true";
+  iframeElement.src = `${APP_CONFIG.FRONTEND_URL}/vocabulary?openSearch=true&iframeMode=true`;
   iframeElement.allow = "microphone; camera"; // Quan trọng: Cho phép dùng Mic trong Iframe
 
   document.body.appendChild(iframeElement);
@@ -6916,6 +6972,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_URL } from '@/lib/api'; // Import API_URL
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -6942,8 +6999,8 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth
-    window.location.href = 'https://localhost:5001/auth/google';
+    // ✅ Redirect to backend Google OAuth using dynamic API_URL
+    window.location.href = `${API_URL}/auth/google`;
   };
 
   return (
@@ -8723,134 +8780,7 @@ export default function VocabTable({
 ================================================
 FILE: apps/frontend/contexts/AuthContext.tsx
 ================================================
-// apps/frontend/contexts/AuthContext.tsx
-'use client';
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Load token from localStorage or cookie on mount
-  useEffect(() => {
-    let savedToken = localStorage.getItem('token');
-    
-    // Nếu không có trong localStorage, thử lấy từ cookie
-    if (!savedToken) {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(c => c.trim().startsWith('token='));
-      if (tokenCookie) {
-        savedToken = tokenCookie.split('=')[1];
-        // Lưu lại vào localStorage để sync
-        localStorage.setItem('token', savedToken);
-      }
-    }
-    
-    if (savedToken) {
-      setToken(savedToken);
-      fetchUser(savedToken);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Fetch user info
-  const fetchUser = async (authToken: string) => {
-    try {
-      const response = await axios.get('https://localhost:5001/auth/me', {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      setUser(response.data);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      localStorage.removeItem('token');
-      // Xóa cookie cũ
-      document.cookie = 'token=; path=/; max-age=0; SameSite=None; Secure'; 
-      setToken(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Login
-  const login = async (email: string, password: string) => {
-    const response = await axios.post('https://localhost:5001/auth/login', {
-      email,
-      password,
-    });
-    const { token: newToken, user: newUser } = response.data;
-    
-    localStorage.setItem('token', newToken);
-    
-    // 👇 QUAN TRỌNG: Thêm SameSite=None; Secure để Extension dùng được Cookie này
-    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=None; Secure`;
-    
-    setToken(newToken);
-    setUser(newUser);
-  };
-
-  // Register
-  const register = async (email: string, password: string, name?: string) => {
-    const response = await axios.post('https://localhost:5001/auth/register', {
-      email,
-      password,
-      name,
-    });
-    const { token: newToken, user: newUser } = response.data;
-    
-    localStorage.setItem('token', newToken);
-    
-    // 👇 QUAN TRỌNG: Thêm SameSite=None; Secure
-    document.cookie = `token=${newToken}; path=/; max-age=604800; SameSite=None; Secure`;
-    
-    setToken(newToken);
-    setUser(newUser);
-  };
-
-  // Logout
-  const logout = () => {
-    localStorage.removeItem('token');
-    // Xóa cookie
-    document.cookie = 'token=; path=/; max-age=0; SameSite=None; Secure';
-    setToken(null);
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+[Binary file]
 
 
 ================================================
@@ -8858,7 +8788,8 @@ FILE: apps/frontend/hooks/vocabulary/usePronunciationAssessment.ts
 ================================================
 
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api for backend
+import axios from "axios"; // Keep for Azure API
 import { VocabItem } from "./useVocabData";
 import { VocabFormData } from "./useVocabModals";
 
@@ -9045,8 +8976,8 @@ const usePronunciationAssessment = (
         setAssessmentResult({ AccuracyScore: score, Words: result.Words });
 
         if (recordingVocabItem.id !== "temp") {
-          await axios.patch(
-            `https://localhost:5001/vocabulary/${recordingVocabItem.id}/score`,
+          await api.patch(
+            `/vocabulary/${recordingVocabItem.id}/score`,
             { score: Math.round(score) },
             { headers: { Authorization: `Bearer ${token}` } }
           );
@@ -9126,7 +9057,8 @@ FILE: apps/frontend/hooks/vocabulary/usePronunciationAssessmentWithExtension.ts
 // Dùng cho iframe mode - gọi extension để record thay vì dùng trực tiếp getUserMedia
 
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api for backend
+import axios from "axios"; // For external APIs if needed
 
 export interface AssessmentResult {
   AccuracyScore: number;
@@ -9270,8 +9202,8 @@ const usePronunciationAssessmentWithExtension = (token: string | null) => {
       formData.append("audio", audioBlob, "recording.webm");
       formData.append("referenceText", word);
 
-      const response = await axios.post(
-        "https://localhost:5001/vocabulary/pronunciation-assessment",
+      const response = await api.post(
+        "/vocabulary/pronunciation-assessment",
         formData,
         {
           headers: {
@@ -9310,7 +9242,7 @@ export default usePronunciationAssessmentWithExtension;
 FILE: apps/frontend/hooks/vocabulary/useQuickSearch.ts
 ================================================
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api
 import { useSearchParams, usePathname } from "next/navigation";
 import { VocabItem } from "./useVocabData";
 
@@ -9388,7 +9320,7 @@ const useQuickSearch = (
     }
     setIsSearching(true);
     try {
-      const res = await axios.get("https://localhost:5001/vocabulary", {
+      const res = await api.get("/vocabulary", {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page: 1,
@@ -9431,7 +9363,7 @@ FILE: apps/frontend/hooks/vocabulary/useVocabData.ts
 ================================================
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api
 
 // --- INTERFACES ---
 export interface VocabItem {
@@ -9516,7 +9448,7 @@ const useVocabData = (token: string | null) => {
           sortOrder: currentSort.direction,
         };
         if (starred) params.isStarred = "true";
-        const res = await axios.get("https://localhost:5001/vocabulary", {
+        const res = await api.get("/vocabulary", {
           headers: { Authorization: `Bearer ${token}` },
           params: params,
         });
@@ -9570,8 +9502,8 @@ const useVocabData = (token: string | null) => {
     setVocabs(toggleFunc);
 
     try {
-      await axios.patch(
-        `https://localhost:5001/vocabulary/${id}`,
+      await api.patch(
+        `/vocabulary/${id}`,
         { isStarred: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -9600,8 +9532,8 @@ const useVocabData = (token: string | null) => {
         )
       );
       
-      await axios.patch(
-        `https://localhost:5001/vocabulary/${vocab.id}`,
+      await api.patch(
+        `/vocabulary/${vocab.id}`,
         { occurrence: newOccurrence },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -9672,7 +9604,8 @@ FILE: apps/frontend/hooks/vocabulary/useVocabModals.ts
 ================================================
 
 import { useState, useRef } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api for backend calls
+import axios from "axios"; // Keep for external APIs (DictionaryAPI, Translate)
 import { VocabItem } from "./useVocabData";
 
 export interface VocabFormData {
@@ -9708,8 +9641,8 @@ const useVocabModals = (
   const triggerInteraction = async (vocab: VocabItem) => {
     try {
       const newOccurrence = (vocab.occurrence || 0) + 1;
-      await axios.patch(
-        `https://localhost:5001/vocabulary/${vocab.id}`,
+      await api.patch(
+        `/vocabulary/${vocab.id}`,
         { occurrence: newOccurrence },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -9817,14 +9750,14 @@ const useVocabModals = (
     }
     try {
       if (selectedVocab) {
-        await axios.patch(
-          `https://localhost:5001/vocabulary/${selectedVocab.id}`,
+        await api.patch(
+          `/vocabulary/${selectedVocab.id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.post(
-          "https://localhost:5001/vocabulary",
+        await api.post(
+          "/vocabulary",
           { ...formData, isStarred: false },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -9840,7 +9773,7 @@ const useVocabModals = (
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this word?")) return;
     try {
-      await axios.delete(`https://localhost:5001/vocabulary/${id}`, {
+      await api.delete(`/vocabulary/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchVocabs();
@@ -9859,8 +9792,8 @@ const useVocabModals = (
     formData.append("file", file);
     try {
       setIsUploading(true);
-      await axios.post(
-        "https://localhost:5001/vocabulary/import/csv",
+      await api.post(
+        "/vocabulary/import/csv",
         formData,
         {
           headers: {
@@ -9905,4 +9838,25 @@ export default useVocabModals;
 FILE: apps/frontend/hooks/vocabulary/.gitkeep
 ================================================
 [Empty file]
+
+
+================================================
+FILE: apps/frontend/lib/api.ts
+================================================
+// apps/frontend/lib/api.ts
+import axios from 'axios';
+
+// 1. Lấy địa chỉ từ biến môi trường (Ưu tiên) hoặc mặc định về Localhost
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:5001';
+
+// 2. Tạo một instance axios dùng chung cho cả app
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // Tự động gửi cookie (token) đi kèm
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export default api;
 
