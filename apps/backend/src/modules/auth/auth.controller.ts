@@ -26,10 +26,10 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() body: { email: string; password: string },
-    @Res({ passthrough: true }) res: Response // 👈 Inject Response vào đây
+    @Res({ passthrough: true }) res: Response, // 👈 Inject Response vào đây
   ) {
     const result = await this.authService.login(body.email, body.password);
-    
+
     // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
     res.cookie('token', result.token, {
       httpOnly: true,
@@ -51,7 +51,7 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user);
-    
+
     // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
     res.cookie('token', result.token, {
       httpOnly: true,
