@@ -198,7 +198,10 @@ export default function QuickSearchModal({
                             word: searchText,
                             // userId: '',
                             createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
+                            updatedAt: new Date().toISOString(),
+                            occurrence: 0,
+                            isStarred: false,
+                            pronunciationScores: [],
                           }, e);
                         }}
                         className="p-2 hover:bg-green-100 rounded-full transition-colors"
