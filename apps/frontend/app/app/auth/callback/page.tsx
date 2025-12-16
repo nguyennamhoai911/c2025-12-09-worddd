@@ -1,33 +1,48 @@
+// apps/frontend/app/auth/callback/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react'; // 👈 Import Suspense
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function GoogleCallbackPage() {
+// 1. Tạo component con để xử lý logic searchParams
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get('token');
-
     if (token) {
-      // Save token
+      // Lưu token và điều hướng về trang chủ hoặc dashboard
       localStorage.setItem('token', token);
       
-      // Redirect to vocabulary page
-      router.push('/vocabulary');
+      // Gọi hàm login từ context nếu cần để cập nhật state user
+      // login(token); 
+      
+      // Redirect về trang chủ
+      router.push('/');
     } else {
-      // If no token, redirect to login
+      // Nếu không có token, quay về login
       router.push('/login');
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, login]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p>Processing login...</p>
+        <h2 className="text-2xl font-bold mb-2">Đang xử lý đăng nhập...</h2>
+        <p>Vui lòng chờ trong giây lát.</p>
       </div>
     </div>
+  );
+}
+
+// 2. Component chính bọc Suspense
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

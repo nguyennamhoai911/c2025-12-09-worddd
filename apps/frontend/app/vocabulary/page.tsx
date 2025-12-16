@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -16,7 +16,7 @@ import AssessmentModal from "@/components/vocabulary/AssessmentModal";
 import QuickSearchModal from "@/components/vocabulary/QuickSearchModal";
 import { StarIcon } from "@/components/Icons";
 
-export default function VocabularyPage() {
+function VocabularyContent() {
   const { token, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -276,5 +276,15 @@ export default function VocabularyPage() {
         </>
       )}
     </div>
+  );
+}
+// ... (Cuối file)
+
+export default function VocabularyPage() {
+  return (
+    // Fallback là giao diện hiển thị trong lúc chờ đọc URL (thường rất nhanh)
+    <Suspense fallback={<div className="p-4 text-center">Loading vocabulary...</div>}>
+      <VocabularyContent />
+    </Suspense>
   );
 }
