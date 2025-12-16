@@ -36,6 +36,6 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 function createNextAlarm() {
   // Setup alarm chạy sau 12 giây
-  chrome.alarms.create("vocab_review", { when: Date.now() + 12000 });
+  chrome.alarms.create("vocab_review", { when: Date.now() + 300000 });
   console.log("⏳ Next alarm scheduled in 12s...");
 }

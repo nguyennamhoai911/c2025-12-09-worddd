@@ -1,14 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface'; // 👈 1. Import interface này
+import { HttpsOptions } from '@nestjs/common/interfaces/external/https-options.interface'; // 👈 
+// 1. Import interface này
+import { LoggingInterceptor } from './logging.interceptor';
 import * as fs from 'fs';
 import * as path from 'path';
 
 async function bootstrap() {
   // 👇 2. Khai báo kiểu rõ ràng: là HttpsOptions HOẶC undefined (không dùng null)
   let httpsOptions: HttpsOptions | undefined = undefined;
-
+  
   const isProduction = process.env.NODE_ENV === 'production';
 
   if (!isProduction) {
@@ -33,7 +35,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions, 
   });
-
+  app.useGlobalInterceptors(new LoggingInterceptor());
   app.enableCors({
     origin: true,
     credentials: true,

@@ -1020,7 +1020,15 @@ bootstrap();
 ================================================
 FILE: apps/backend/src/modules/auth/auth.controller.ts
 ================================================
-import { Controller, Post, Body, Get, UseGuards, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -1038,8 +1046,21 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    return this.authService.login(body.email, body.password);
+  async login(
+    @Body() body: { email: string; password: string },
+    @Res({ passthrough: true }) res: Response, // 👈 Inject Response vào đây
+  ) {
+    const result = await this.authService.login(body.email, body.password);
+
+    // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: true, // Bắt buộc true vì Render chạy HTTPS
+      sameSite: 'none', // Bắt buộc 'none' để Extension (trang khác) đọc được
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+    });
+
+    return result;
   }
 
   @Get('google')
@@ -1053,6 +1074,15 @@ export class AuthController {
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user);
 
+    // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Frontend URL trên Vercel (hoặc Localhost nếu đang dev)
     const frontendUrl = `http://localhost:3000/auth/callback?token=${result.token}`;
     return res.redirect(frontendUrl);
   }
@@ -1063,6 +1093,7 @@ export class AuthController {
     return this.authService.getUserById(req.user.id);
   }
 }
+
 
 
 ================================================
@@ -2126,7 +2157,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 function createNextAlarm() {
   // Setup alarm chạy sau 12 giây
-  chrome.alarms.create("vocab_review", { when: Date.now() + 12000 });
+  chrome.alarms.create("vocab_review", { when: Date.now() + 300000 });
   console.log("⏳ Next alarm scheduled in 12s...");
 }
 
@@ -2149,7 +2180,7 @@ const APP_CONFIG = {
   // Frontend
   FRONTEND_URL: IS_DEV_MODE
     ? "https://localhost:3001"
-    : "https://localhost:3001",
+    : "https://c2025-12-09-full-app-english.vercel.app",
 };
 
 // Log ra để biết đang chạy môi trường nào
@@ -4270,9 +4301,18 @@ async function speakWithEdgeTTS(text) {
 }
 
 // --- 2. BACKEND API (SAVE VOCAB) ---
+// apps/extension/content-scripts/lookup-services.js
+
+// --- 2. BACKEND API (SAVE VOCAB) ---
 async function apiSaveVocabulary(data) {
+  // 👇 1. LOG CHECK CONFIG
+  console.log(
+    `%c[EXT-DEBUG] 🚀 Starting Save...`,
+    "color: cyan; font-weight: bold"
+  );
+  console.log(`[EXT-DEBUG] Backend URL:`, BACKEND_URL);
+
   try {
-    // Chuẩn bị dữ liệu
     const meaning =
       typeof data.translation === "string"
         ? data.translation
@@ -4297,20 +4337,41 @@ async function apiSaveVocabulary(data) {
       isStarred: false,
     };
 
-    // Gọi API với credentials để lấy cookie token
+    // 👇 2. LOG REQUEST
+    console.log(`[EXT-DEBUG] Payload:`, payload);
+    console.log(`[EXT-DEBUG] Sending request to: ${BACKEND_URL}/vocabulary`);
+
     const response = await fetch(`${BACKEND_URL}/vocabulary`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      credentials: "include", // Quan trọng để gửi cookie xác thực
+      credentials: "include",
     });
 
+    // 👇 3. LOG RESPONSE STATUS
+    console.log(`[EXT-DEBUG] Response Status:`, response.status);
+
     if (!response.ok) {
-      if (response.status === 401) throw new Error("Chưa đăng nhập App");
-      throw new Error("Lỗi kết nối Server");
+      const errText = await response.text();
+      console.error(`[EXT-DEBUG] Server Error Body:`, errText); // Xem server trả về lỗi gì
+
+      if (response.status === 401) throw new Error("Chưa đăng nhập (401)");
+      if (response.status === 403) throw new Error("Bị chặn quyền (403)");
+      throw new Error(`Lỗi Server: ${response.status}`);
     }
-    return await response.json();
+
+    const json = await response.json();
+    console.log(`[EXT-DEBUG] Success Data:`, json);
+    return json;
   } catch (error) {
+    // 👇 4. LOG NETWORK ERROR (Quan trọng nhất)
+    console.error(`[EXT-DEBUG] 🔥 FATAL ERROR:`, error);
+
+    if (error.message.includes("Failed to fetch")) {
+      console.warn(
+        `[EXT-DEBUG] 👉 Gợi ý: Có thể do lỗi SSL, CORS, hoặc chưa add host_permissions trong manifest.`
+      );
+    }
     throw error;
   }
 }
@@ -6852,43 +6913,69 @@ export default function Home() {
 ================================================
 FILE: apps/frontend/app/admin/users/page.tsx
 ================================================
-[Empty file]
+import React from 'react';
+
+const AdminUsersPage = () => {
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
+      <p>Chức năng đang phát triển...</p>
+    </div>
+  );
+};
+
+export default AdminUsersPage;
 
 
 ================================================
 FILE: apps/frontend/app/app/auth/callback/page.tsx
 ================================================
+// apps/frontend/app/auth/callback/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react'; // 👈 Import Suspense
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function GoogleCallbackPage() {
+// 1. Tạo component con để xử lý logic searchParams
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
 
   useEffect(() => {
     const token = searchParams.get('token');
-
     if (token) {
-      // Save token
+      // Lưu token và điều hướng về trang chủ hoặc dashboard
       localStorage.setItem('token', token);
       
-      // Redirect to vocabulary page
-      router.push('/vocabulary');
+      // Gọi hàm login từ context nếu cần để cập nhật state user
+      // login(token); 
+      
+      // Redirect về trang chủ
+      router.push('/');
     } else {
-      // If no token, redirect to login
+      // Nếu không có token, quay về login
       router.push('/login');
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, login]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p>Processing login...</p>
+        <h2 className="text-2xl font-bold mb-2">Đang xử lý đăng nhập...</h2>
+        <p>Vui lòng chờ trong giây lát.</p>
       </div>
     </div>
+  );
+}
+
+// 2. Component chính bọc Suspense
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
 
@@ -7134,7 +7221,7 @@ FILE: apps/frontend/app/vocabulary/page.tsx
 ================================================
 "use client";
 
-import { useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -7150,7 +7237,7 @@ import AssessmentModal from "@/components/vocabulary/AssessmentModal";
 import QuickSearchModal from "@/components/vocabulary/QuickSearchModal";
 import { StarIcon } from "@/components/Icons";
 
-export default function VocabularyPage() {
+function VocabularyContent() {
   const { token, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -7299,7 +7386,7 @@ export default function VocabularyPage() {
         }}
         onCreate={() => handleOpenCreateModal(quickSearchText)}
         hasExactMatch={hasExactMatch}
-        searchInputRef={searchInputRef}
+        searchInputRef={searchInputRef as React.RefObject<HTMLInputElement>}
         handleSpeak={handleSpeak}
         handleOpenAssessment={handleOpenAssessment}
         triggerInteraction={triggerInteraction}
@@ -7410,6 +7497,16 @@ export default function VocabularyPage() {
         </>
       )}
     </div>
+  );
+}
+// ... (Cuối file)
+
+export default function VocabularyPage() {
+  return (
+    // Fallback là giao diện hiển thị trong lúc chờ đọc URL (thường rất nhanh)
+    <Suspense fallback={<div className="p-4 text-center">Loading vocabulary...</div>}>
+      <VocabularyContent />
+    </Suspense>
   );
 }
 
@@ -7919,9 +8016,12 @@ export default function QuickSearchModal({
                           handleOpenAssessment({ 
                             id: 'temp', 
                             word: searchText,
-                            userId: '',
-                            createdAt: new Date(),
-                            updatedAt: new Date()
+                            // userId: '',
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            occurrence: 0,
+                            isStarred: false,
+                            pronunciationScores: [],
                           }, e);
                         }}
                         className="p-2 hover:bg-green-100 rounded-full transition-colors"
