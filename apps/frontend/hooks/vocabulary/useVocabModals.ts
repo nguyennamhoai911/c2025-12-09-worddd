@@ -1,6 +1,7 @@
 
 import { useState, useRef } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api for backend calls
+import axios from "axios"; // Keep for external APIs (DictionaryAPI, Translate)
 import { VocabItem } from "./useVocabData";
 
 export interface VocabFormData {
@@ -36,8 +37,8 @@ const useVocabModals = (
   const triggerInteraction = async (vocab: VocabItem) => {
     try {
       const newOccurrence = (vocab.occurrence || 0) + 1;
-      await axios.patch(
-        `https://localhost:5001/vocabulary/${vocab.id}`,
+      await api.patch(
+        `/vocabulary/${vocab.id}`,
         { occurrence: newOccurrence },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -145,14 +146,14 @@ const useVocabModals = (
     }
     try {
       if (selectedVocab) {
-        await axios.patch(
-          `https://localhost:5001/vocabulary/${selectedVocab.id}`,
+        await api.patch(
+          `/vocabulary/${selectedVocab.id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.post(
-          "https://localhost:5001/vocabulary",
+        await api.post(
+          "/vocabulary",
           { ...formData, isStarred: false },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -168,7 +169,7 @@ const useVocabModals = (
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this word?")) return;
     try {
-      await axios.delete(`https://localhost:5001/vocabulary/${id}`, {
+      await api.delete(`/vocabulary/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchVocabs();
@@ -187,8 +188,8 @@ const useVocabModals = (
     formData.append("file", file);
     try {
       setIsUploading(true);
-      await axios.post(
-        "https://localhost:5001/vocabulary/import/csv",
+      await api.post(
+        "/vocabulary/import/csv",
         formData,
         {
           headers: {

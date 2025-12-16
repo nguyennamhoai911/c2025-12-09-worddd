@@ -2,7 +2,8 @@
 // Dùng cho iframe mode - gọi extension để record thay vì dùng trực tiếp getUserMedia
 
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api for backend
+import axios from "axios"; // For external APIs if needed
 
 export interface AssessmentResult {
   AccuracyScore: number;
@@ -146,8 +147,8 @@ const usePronunciationAssessmentWithExtension = (token: string | null) => {
       formData.append("audio", audioBlob, "recording.webm");
       formData.append("referenceText", word);
 
-      const response = await axios.post(
-        "https://localhost:5001/vocabulary/pronunciation-assessment",
+      const response = await api.post(
+        "/vocabulary/pronunciation-assessment",
         formData,
         {
           headers: {

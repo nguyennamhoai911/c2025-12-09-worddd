@@ -2,7 +2,7 @@
 // MODULE: SERVICES (API, Audio, Caching)
 // =======================================================================
 
-const BACKEND_URL = "https://localhost:5001";
+const BACKEND_URL = APP_CONFIG.API_URL;
 let isSoundEnabled = true;
 
 // --- 1. SETTINGS & AUDIO ---

@@ -22,8 +22,7 @@ export const createOverlay = () => {
 
   // 3. Load trang Vocabulary của Frontend vào
   // Thêm param ?openSearch=true để React biết đường mở Popup ngay lập tức
-  iframeElement.src =
-    "https://localhost:3001/vocabulary?openSearch=true&iframeMode=true";
+  iframeElement.src = `${APP_CONFIG.FRONTEND_URL}/vocabulary?openSearch=true&iframeMode=true`;
   iframeElement.allow = "microphone; camera"; // Quan trọng: Cho phép dùng Mic trong Iframe
 
   document.body.appendChild(iframeElement);

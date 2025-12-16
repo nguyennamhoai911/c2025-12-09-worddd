@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api for backend
+import axios from "axios"; // Keep for Azure API
 import { VocabItem } from "./useVocabData";
 import { VocabFormData } from "./useVocabModals";
 
@@ -187,8 +188,8 @@ const usePronunciationAssessment = (
         setAssessmentResult({ AccuracyScore: score, Words: result.Words });
 
         if (recordingVocabItem.id !== "temp") {
-          await axios.patch(
-            `https://localhost:5001/vocabulary/${recordingVocabItem.id}/score`,
+          await api.patch(
+            `/vocabulary/${recordingVocabItem.id}/score`,
             { score: Math.round(score) },
             { headers: { Authorization: `Bearer ${token}` } }
           );

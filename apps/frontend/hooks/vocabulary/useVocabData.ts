@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api
 
 // --- INTERFACES ---
 export interface VocabItem {
@@ -85,7 +85,7 @@ const useVocabData = (token: string | null) => {
           sortOrder: currentSort.direction,
         };
         if (starred) params.isStarred = "true";
-        const res = await axios.get("https://localhost:5001/vocabulary", {
+        const res = await api.get("/vocabulary", {
           headers: { Authorization: `Bearer ${token}` },
           params: params,
         });
@@ -139,8 +139,8 @@ const useVocabData = (token: string | null) => {
     setVocabs(toggleFunc);
 
     try {
-      await axios.patch(
-        `https://localhost:5001/vocabulary/${id}`,
+      await api.patch(
+        `/vocabulary/${id}`,
         { isStarred: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -169,8 +169,8 @@ const useVocabData = (token: string | null) => {
         )
       );
       
-      await axios.patch(
-        `https://localhost:5001/vocabulary/${vocab.id}`,
+      await api.patch(
+        `/vocabulary/${vocab.id}`,
         { occurrence: newOccurrence },
         { headers: { Authorization: `Bearer ${token}` } }
       );

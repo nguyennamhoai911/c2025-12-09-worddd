@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/lib/api'; // Import api
 
 interface User {
   id: string;
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user info
   const fetchUser = async (authToken: string) => {
     try {
-      const response = await axios.get('https://localhost:5001/auth/me', {
+      const response = await api.get('/auth/me', {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setUser(response.data);
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Login
   const login = async (email: string, password: string) => {
-    const response = await axios.post('https://localhost:5001/auth/login', {
+    const response = await api.post('/auth/login', {
       email,
       password,
     });
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Register
   const register = async (email: string, password: string, name?: string) => {
-    const response = await axios.post('https://localhost:5001/auth/register', {
+    const response = await api.post('/auth/register', {
       email,
       password,
       name,

@@ -3,11 +3,7 @@
   "name": "Vocabulary Coach & App Connector",
   "version": "2.0",
   "description": "Full App Integration: Iframe, TTS, Azure Speech & Flashcards",
-  "permissions": [
-    "storage",
-    "microphone",
-    "alarms"
-  ],
+  "permissions": ["storage", "microphone", "alarms"],
   "background": {
     "service_worker": "background.js"
   },
@@ -18,15 +14,14 @@
     {
       "matches": ["<all_urls>"],
       "js": [
-      "content-scripts/lookup-services.js",
+        "config.js",
+        "content-scripts/lookup-services.js",
         "content-scripts/lookup-ui.js",
-        "content-scripts/native-ui.js",    
-        "content-scripts/native-core.js",  
+        "content-scripts/native-ui.js",
+        "content-scripts/native-core.js",
         "content-scripts/lookup-main.js"
       ],
-      "css": [
-        "popup.css"
-      ]
+      "css": ["popup.css"]
     }
   ],
   "host_permissions": [
@@ -37,7 +32,7 @@
     "https://www.googleapis.com/*",
     "https://api.unsplash.com/*",
     "https://*.cognitiveservices.azure.com/*",
-    "http://localhost:3000/*", 
+    "http://localhost:3000/*",
     "https://localhost:3001/*",
     "http://localhost:5001/*"
   ],

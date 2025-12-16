@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_URL } from '@/lib/api'; // Import API_URL
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -30,8 +31,8 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth
-    window.location.href = 'https://localhost:5001/auth/google';
+    // ✅ Redirect to backend Google OAuth using dynamic API_URL
+    window.location.href = `${API_URL}/auth/google`;
   };
 
   return (

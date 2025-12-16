@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import api from "@/lib/api"; // Import api
 import { useSearchParams, usePathname } from "next/navigation";
 import { VocabItem } from "./useVocabData";
 
@@ -77,7 +77,7 @@ const useQuickSearch = (
     }
     setIsSearching(true);
     try {
-      const res = await axios.get("https://localhost:5001/vocabulary", {
+      const res = await api.get("/vocabulary", {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page: 1,
