@@ -1,0 +1,1757 @@
+Directory structure:
+└── frontend/
+    ├── README.md
+    ├── eslint.config.mjs
+    ├── next.config.ts
+    ├── package.json
+    ├── postcss.config.js
+    ├── postcss.config.mjs
+    ├── tailwind.config.ts
+    ├── tsconfig.json
+    ├── app/
+    │   ├── globals.css
+    │   ├── layout.tsx
+    │   ├── page.module.css
+    │   ├── page.tsx
+    │   ├── admin/
+    │   │   └── users/
+    │   │       └── page.tsx
+    │   ├── app/
+    │   │   └── auth/
+    │   │       └── callback/
+    │   │           └── page.tsx
+    │   ├── login/
+    │   │   └── page.tsx
+    │   ├── register/
+    │   │   └── page.tsx
+    │   └── vocabulary/
+    │       └── page.tsx
+    ├── components/
+    │   ├── Icons.tsx
+    │   └── vocabulary/
+    │       ├── AssessmentModal.tsx
+    │       ├── QuickSearchModal.tsx
+    │       ├── VocabFormModal.tsx
+    │       └── VocabTable.tsx
+    ├── contexts/
+    │   └── AuthContext.tsx
+    ├── hooks/
+    │   └── vocabulary/
+    │       ├── usePronunciationAssessment.ts
+    │       ├── usePronunciationAssessmentWithExtension.ts
+    │       ├── useQuickSearch.ts
+    │       ├── useVocabData.ts
+    │       ├── useVocabModals.ts
+    │       └── .gitkeep
+    └── lib/
+        ├── api-metrics.ts
+        └── api.ts
+
+================================================
+FILE: README.md
+================================================
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+================================================
+FILE: eslint.config.mjs
+================================================
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+
+
+
+================================================
+FILE: next.config.ts
+================================================
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  reactCompiler: true,
+  async rewrites() {
+    return [
+      {
+        source: '/vocabulary/search',
+        destination: '/vocabulary?openSearch=true',
+      },
+    ];
+  },
+};
+
+export default nextConfig;
+
+
+================================================
+FILE: package.json
+================================================
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "next": "16.0.8",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.17",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.22",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.8",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5"
+  }
+}
+
+
+
+================================================
+FILE: postcss.config.js
+================================================
+module.exports = {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+}
+
+
+================================================
+FILE: postcss.config.mjs
+================================================
+/** @type {import('postcss-load-config').Config} */
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {}, // 👈 Đổi dòng này
+    autoprefixer: {},
+  },
+};
+
+export default config;
+
+
+
+================================================
+FILE: tailwind.config.ts
+================================================
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+
+================================================
+FILE: tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+
+
+
+================================================
+FILE: app/globals.css
+================================================
+@import "tailwindcss";
+
+
+
+================================================
+FILE: app/layout.tsx
+================================================
+import type { Metadata } from "next";
+import './globals.css'
+import { AuthProvider } from "../contexts/AuthContext";
+
+export const metadata: Metadata = {
+  title: "Vocabulary App",
+  description: "Learn English vocabulary",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
+
+
+================================================
+FILE: app/page.module.css
+================================================
+.page {
+  --background: #fafafa;
+  --foreground: #fff;
+
+  --text-primary: #000;
+  --text-secondary: #666;
+
+  --button-primary-hover: #383838;
+  --button-secondary-hover: #f2f2f2;
+  --button-secondary-border: #ebebeb;
+
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-geist-sans);
+  background-color: var(--background);
+}
+
+.main {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 800px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  background-color: var(--foreground);
+  padding: 120px 60px;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 24px;
+}
+
+.intro h1 {
+  max-width: 320px;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 48px;
+  letter-spacing: -2.4px;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.intro p {
+  max-width: 440px;
+  font-size: 18px;
+  line-height: 32px;
+  text-wrap: balance;
+  color: var(--text-secondary);
+}
+
+.intro a {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.ctas {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  max-width: 440px;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.ctas a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 128px;
+  border: 1px solid transparent;
+  transition: 0.2s;
+  cursor: pointer;
+  width: fit-content;
+  font-weight: 500;
+}
+
+a.primary {
+  background: var(--text-primary);
+  color: var(--background);
+  gap: 8px;
+}
+
+a.secondary {
+  border-color: var(--button-secondary-border);
+}
+
+/* Enable hover only on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  a.primary:hover {
+    background: var(--button-primary-hover);
+    border-color: transparent;
+  }
+
+  a.secondary:hover {
+    background: var(--button-secondary-hover);
+    border-color: transparent;
+  }
+}
+
+@media (max-width: 600px) {
+  .main {
+    padding: 48px 24px;
+  }
+
+  .intro {
+    gap: 16px;
+  }
+
+  .intro h1 {
+    font-size: 32px;
+    line-height: 40px;
+    letter-spacing: -1.92px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .logo {
+    filter: invert();
+  }
+
+  .page {
+    --background: #000;
+    --foreground: #000;
+
+    --text-primary: #ededed;
+    --text-secondary: #999;
+
+    --button-primary-hover: #ccc;
+    --button-secondary-hover: #1a1a1a;
+    --button-secondary-border: #1a1a1a;
+  }
+}
+
+
+
+================================================
+FILE: app/page.tsx
+================================================
+import Image from "next/image";
+import styles from "./page.module.css";
+
+export default function Home() {
+  return (
+    <div className={styles.page}>
+      <main className={styles.main}>
+        <Image
+          className={styles.logo}
+          src="/next.svg"
+          alt="Next.js logo"
+          width={100}
+          height={20}
+          priority
+        />
+        <div className={styles.intro}>
+          <h1>To get started, edit the page.tsx file.</h1>
+          <p>
+            Looking for a starting point or more instructions? Head over to{" "}
+            <a
+              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Templates
+            </a>{" "}
+            or the{" "}
+            <a
+              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Learning
+            </a>{" "}
+            center.
+          </p>
+        </div>
+        <div className={styles.ctas}>
+          <a
+            className={styles.primary}
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className={styles.logo}
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={16}
+              height={16}
+            />
+            Deploy Now
+          </a>
+          <a
+            className={styles.secondary}
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Documentation
+          </a>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+
+
+================================================
+FILE: app/admin/users/page.tsx
+================================================
+import React from 'react';
+
+const AdminUsersPage = () => {
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
+      <p>Chức năng đang phát triển...</p>
+    </div>
+  );
+};
+
+export default AdminUsersPage;
+
+
+================================================
+FILE: app/app/auth/callback/page.tsx
+================================================
+// apps/frontend/app/auth/callback/page.tsx
+'use client';
+
+import { useEffect, Suspense } from 'react'; // 👈 Import Suspense
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+
+// 1. Tạo component con để xử lý logic searchParams
+function AuthCallbackContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login } = useAuth();
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      // Lưu token và điều hướng về trang chủ hoặc dashboard
+      localStorage.setItem('token', token);
+      
+      // Gọi hàm login từ context nếu cần để cập nhật state user
+      // login(token); 
+      
+      // Redirect về trang chủ
+      router.push('/');
+    } else {
+      // Nếu không có token, quay về login
+      router.push('/login');
+    }
+  }, [searchParams, router, login]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-2">Đang xử lý đăng nhập...</h2>
+        <p>Vui lòng chờ trong giây lát.</p>
+      </div>
+    </div>
+  );
+}
+
+// 2. Component chính bọc Suspense
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <AuthCallbackContent />
+    </Suspense>
+  );
+}
+
+
+================================================
+FILE: app/login/page.tsx
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 1293: character maps to <undefined>
+
+
+================================================
+FILE: app/register/page.tsx
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x9d in position 1134: character maps to <undefined>
+
+
+================================================
+FILE: app/vocabulary/page.tsx
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 1090: character maps to <undefined>
+
+
+================================================
+FILE: components/Icons.tsx
+================================================
+import React from "react";
+
+export const StarIcon = ({ filled, className }: { filled: boolean; className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? "0" : "2"} strokeLinecap="round" strokeLinejoin="round" className={className} width="24" height="24">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+);
+
+export const SpeakerIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+  </svg>
+);
+
+export const MicrophoneIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+    <line x1="12" y1="19" x2="12" y2="23"></line>
+    <line x1="8" y1="23" x2="16" y2="23"></line>
+  </svg>
+);
+
+
+================================================
+FILE: components/vocabulary/AssessmentModal.tsx
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 3456: character maps to <undefined>
+
+
+================================================
+FILE: components/vocabulary/QuickSearchModal.tsx
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 4339: character maps to <undefined>
+
+
+================================================
+FILE: components/vocabulary/VocabFormModal.tsx
+================================================
+
+import React from "react";
+import { MicrophoneIcon, SpeakerIcon } from "@/components/Icons";
+import { VocabFormData } from "@/hooks/vocabulary/useVocabModals";
+import { VocabItem } from "@/hooks/vocabulary/useVocabData";
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData: VocabFormData;
+  setInitialData: (data: VocabFormData) => void;
+  isEditMode: boolean;
+  onSave: () => void;
+  onDelete: (() => void) | undefined;
+  isAutoFilling: boolean;
+  fetchAutoFillData: (word: string) => Promise<Partial<VocabFormData> | null>;
+  handleOpenAssessment: (item: VocabFormData, e?: React.MouseEvent) => void;
+  handleSpeak: (text: string, e?: React.MouseEvent) => void;
+  selectedVocab: VocabItem | null;
+}
+
+export default function VocabFormModal({
+  isOpen,
+  onClose,
+  initialData: formData,
+  setInitialData: setFormData,
+  isEditMode,
+  onSave,
+  onDelete,
+  isAutoFilling,
+  fetchAutoFillData,
+  handleOpenAssessment,
+  handleSpeak,
+  selectedVocab,
+}: Props) {
+  if (!isOpen) return null;
+
+  const handleAutoFill = async () => {
+    if (!isEditMode) {
+      const autoData = await fetchAutoFillData(formData.word);
+      if (autoData) {
+        setFormData({ ...formData, ...autoData });
+      }
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-[150] flex items-center justify-center p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bg-indigo-600 p-6 text-white flex justify-between items-start shrink-0">
+          <div className="w-full">
+            <div className="text-xs uppercase tracking-wider opacity-80 mb-2">
+              {isEditMode ? "Editing Vocabulary" : "Create New Vocabulary"}
+            </div>
+            <div className="flex items-center gap-3 w-full">
+              <input
+                value={formData.word || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, word: e.target.value })
+                }
+                onBlur={handleAutoFill}
+                className="bg-transparent text-4xl font-bold text-white placeholder-white/50 outline-none w-full border-b border-white/20 pb-1 focus:border-white transition-colors"
+                placeholder="Word..."
+                autoFocus={!isEditMode}
+              />
+
+              {isAutoFilling && (
+                <div className="text-xs text-indigo-200 animate-pulse ml-2 whitespace-nowrap">
+                  âœ¨ Auto-filling...
+                </div>
+              )}
+
+              {formData.word && (
+                <>
+                  <button
+                    onClick={(e) => handleOpenAssessment(formData, e)}
+                    className="p-2 bg-white/20 rounded-full hover:bg-green-500 text-white transition-colors"
+                  >
+                    <MicrophoneIcon className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={(e) => handleSpeak(formData.word, e)}
+                    className="p-2 bg-white/20 rounded-full hover:bg-white/30 text-white"
+                  >
+                    <SpeakerIcon className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white text-2xl font-bold ml-4"
+          >
+            âœ•
+          </button>
+        </div>
+        <div className="p-6 space-y-5 overflow-y-auto relative">
+          {isAutoFilling && (
+            <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+                Pronunciation
+              </label>
+              <input
+                value={formData.pronunciation || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    pronunciation: e.target.value,
+                  })
+                }
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
+                placeholder="/.../"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+                Part Of Speech
+              </label>
+              <select
+                value={formData.partOfSpeech || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, partOfSpeech: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+              >
+                <option value="">-- Select --</option>
+                <option value="noun">Noun</option>
+                <option value="verb">Verb</option>
+                <option value="adjective">Adjective</option>
+                <option value="adverb">Adverb</option>
+                <option value="phrase">Phrase</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+              Meaning
+            </label>
+            <textarea
+              value={formData.meaning || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, meaning: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none min-h-[80px] text-lg font-medium text-gray-800"
+              placeholder="NghÄ©a cá»§a tá»«..."
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+              Example
+            </label>
+            <textarea
+              value={formData.example || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, example: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50 italic text-gray-600"
+              placeholder="VÃ­ dá»¥..."
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+                Topic
+              </label>
+              <input
+                value={formData.topic || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, topic: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="IT, Travel..."
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">
+                Related Words
+              </label>
+              <input
+                value={formData.relatedWords || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, relatedWords: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder="Synonyms..."
+              />
+            </div>
+          </div>
+        </div>
+        <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-between items-center shrink-0">
+          {selectedVocab ? (
+            <div className="text-xs text-gray-400">
+              Updated: {new Date(selectedVocab.updatedAt).toLocaleString()}
+            </div>
+          ) : (
+            <div></div>
+          )}
+          <div className="flex gap-3">
+            {isEditMode && onDelete && (
+              <button
+                onClick={onDelete}
+                className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200"
+              >
+                Delete
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-600 hover:bg-gray-200 px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onSave}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-md transform active:scale-95 transition-all"
+            >
+              {isEditMode ? "Save Changes" : "Create Word"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+================================================
+FILE: components/vocabulary/VocabTable.tsx
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 12374: character maps to <undefined>
+
+
+================================================
+FILE: contexts/AuthContext.tsx
+================================================
+[Binary file]
+
+
+================================================
+FILE: hooks/vocabulary/usePronunciationAssessment.ts
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 7481: character maps to <undefined>
+
+
+================================================
+FILE: hooks/vocabulary/usePronunciationAssessmentWithExtension.ts
+================================================
+// Hook mới: usePronunciationAssessmentWithExtension.ts
+// Dùng cho iframe mode - gọi extension để record thay vì dùng trực tiếp getUserMedia
+
+import { useState, useEffect, useRef } from "react";
+import api from "@/lib/api"; // Import api for backend
+import axios from "axios"; // For external APIs if needed
+
+export interface AssessmentResult {
+  AccuracyScore: number;
+  Words: Array<{
+    Word: string;
+    AccuracyScore: number;
+    Phonemes?: Array<{
+      Phoneme: string;
+      AccuracyScore: number;
+    }>;
+  }>;
+}
+
+// Detect if running in iframe
+const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
+const usePronunciationAssessmentWithExtension = (token: string | null) => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
+  const [assessmentError, setAssessmentError] = useState("");
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const [userAudioUrl, setUserAudioUrl] = useState<string | null>(null);
+  
+  const currentWordRef = useRef<string>("");
+
+  useEffect(() => {
+    if (!isInIframe) return;
+
+    // Listen for messages from extension
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      const { type, audioData, mimeType, error } = event.data;
+
+      if (type === 'RECORDING_STARTED') {
+        setIsRecording(true);
+      }
+
+      if (type === 'RECORDING_COMPLETE') {
+        setIsRecording(false);
+        
+        // Convert base64 to blob
+        const byteCharacters = atob(audioData);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        
+        // Create audio URL for playback
+        const url = URL.createObjectURL(blob);
+        setUserAudioUrl(url);
+        
+        // Send to backend for assessment
+        sendAudioForAssessment(blob, currentWordRef.current);
+      }
+
+      if (type === 'RECORDING_ERROR') {
+        setIsRecording(false);
+        setAssessmentError(error || "Microphone access denied");
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const startRecording = (word: string) => {
+    currentWordRef.current = word;
+    setAssessmentResult(null);
+    setAssessmentError("");
+    setUserAudioUrl(null);
+
+    if (isInIframe) {
+      // Request extension to start recording
+      window.parent.postMessage({ type: 'START_RECORDING' }, '*');
+    } else {
+      // Fallback to direct recording (when not in iframe)
+      startDirectRecording(word);
+    }
+  };
+
+  const stopRecording = () => {
+    if (isInIframe) {
+      // Request extension to stop recording
+      window.parent.postMessage({ type: 'STOP_RECORDING' }, '*');
+    } else {
+      // Fallback to direct recording
+      stopDirectRecording();
+    }
+  };
+
+  // Fallback direct recording for non-iframe mode
+  let mediaRecorder: MediaRecorder | null = null;
+  let audioChunks: Blob[] = [];
+
+  const startDirectRecording = async (word: string) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        const url = URL.createObjectURL(audioBlob);
+        setUserAudioUrl(url);
+        await sendAudioForAssessment(audioBlob, word);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Microphone error:", error);
+      setAssessmentError("Cannot access microphone");
+    }
+  };
+
+  const stopDirectRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const sendAudioForAssessment = async (audioBlob: Blob, word: string) => {
+    if (!token || !word) return;
+
+    setIsProcessingAudio(true);
+    setAssessmentError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+      formData.append("referenceText", word);
+
+      const response = await api.post(
+        "/vocabulary/pronunciation-assessment",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setAssessmentResult(response.data);
+    } catch (error: any) {
+      console.error("Assessment error:", error);
+      setAssessmentError(
+        error.response?.data?.message || "Assessment failed"
+      );
+    } finally {
+      setIsProcessingAudio(false);
+    }
+  };
+
+  return {
+    isRecording,
+    assessmentResult,
+    assessmentError,
+    isProcessingAudio,
+    userAudioUrl,
+    startRecording,
+    stopRecording,
+  };
+};
+
+export default usePronunciationAssessmentWithExtension;
+
+
+================================================
+FILE: hooks/vocabulary/useQuickSearch.ts
+================================================
+import { useState, useRef, useEffect } from "react";
+import api from "@/lib/api"; // Import api
+import { useSearchParams, usePathname } from "next/navigation";
+import { VocabItem } from "./useVocabData";
+
+const useQuickSearch = (
+  token: string | null,
+  handleOpenCreateModal: (word: string) => void
+) => {
+  const [showSearch, setShowSearch] = useState(false);
+  const [quickSearchText, setQuickSearchText] = useState("");
+  const [quickSearchResults, setQuickSearchResults] = useState<VocabItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const quickSearchDebounce = useRef<NodeJS.Timeout | null>(null);
+
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const isSearchPath = pathname?.endsWith("/search");
+    const hasSearchParam = searchParams.get("openSearch") === "true";
+
+    if (isSearchPath || hasSearchParam) {
+      setShowSearch(true);
+      setQuickSearchText("");
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [pathname, searchParams]);
+
+  useEffect(() => {
+    let lastKeyPressTime = 0;
+    const handleKeyDown = (e: KeyboardEvent) => {
+        const target = e.target as HTMLElement;
+        const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+        if (isInputFocused && !showSearch) return;
+
+
+      if (e.code === "Space") {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastKeyPressTime < 300) {
+          e.preventDefault();
+          setShowSearch(true);
+          setQuickSearchText("");
+          setQuickSearchResults([]);
+          setTimeout(() => searchInputRef.current?.focus(), 100);
+        }
+        lastKeyPressTime = currentTime;
+      }
+      if (e.code === "Escape") {
+        setShowSearch(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showSearch]);
+
+  const handleQuickSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const text = e.target.value;
+    setQuickSearchText(text);
+    if (quickSearchDebounce.current) clearTimeout(quickSearchDebounce.current);
+    quickSearchDebounce.current = setTimeout(
+      () => performQuickSearch(text),
+      300
+    );
+  };
+
+  const performQuickSearch = async (text: string) => {
+    if (!token || !text.trim()) {
+      setQuickSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await api.get("/vocabulary", {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: 1,
+          limit: 5,
+          search: text,
+          sortBy: "word",
+          sortOrder: "asc",
+        },
+      });
+      setQuickSearchResults(res.data.data);
+    } catch (error) {
+      console.error("Quick search error", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const hasExactMatch = quickSearchResults.some(
+    (item) => item.word.toLowerCase() === quickSearchText.trim().toLowerCase()
+  );
+
+  return {
+    showSearch,
+    setShowSearch,
+    quickSearchText,
+    setQuickSearchText,
+    quickSearchResults,
+    isSearching,
+    searchInputRef,
+    hasExactMatch,
+    handleQuickSearchChange,
+  };
+};
+
+export default useQuickSearch;
+
+
+================================================
+FILE: hooks/vocabulary/useVocabData.ts
+================================================
+
+import { useState, useCallback, useEffect, useRef } from "react";
+import api from "@/lib/api"; // Import api
+
+// --- INTERFACES ---
+export interface VocabItem {
+  id: string;
+  word: string;
+  topic?: string | null;
+  partOfSpeech?: string | null;
+  pronunciation?: string | null;
+  meaning?: string | null;
+  example?: string | null;
+  relatedWords?: string | null;
+  occurrence: number;
+  isStarred: boolean;
+  pronunciationScores: number[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FilterState {
+  word: string;
+  topic: string;
+  partOfSpeech: string;
+  meaning: string;
+}
+
+export interface SortState {
+  key: string;
+  direction: "asc" | "desc";
+}
+
+const useVocabData = (token: string | null) => {
+  const [vocabs, setVocabs] = useState<VocabItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
+
+  const [filters, setFilters] = useState<FilterState>({
+    word: "",
+    topic: "",
+    partOfSpeech: "",
+    meaning: "",
+  });
+
+  const [sortConfig, setSortConfig] = useState<SortState>({
+    key: "updatedAt",
+    direction: "desc",
+  });
+
+  const [columnOrder, setColumnOrder] = useState<string[]>([
+    "star",
+    "updatedAt",
+    "topic",
+    "word",
+    "pronunciation",
+    "meaning",
+    "example",
+    "relatedWords",
+    "occurrence",
+    "score",
+    "actions",
+  ]);
+  const [draggedCol, setDraggedCol] = useState<string | null>(null);
+
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchVocabs = useCallback(
+    async (
+      pageNum = 1,
+      currentFilters = filters,
+      currentSort = sortConfig,
+      starred = showStarredOnly
+    ) => {
+      if (!token) return;
+      setLoading(true);
+      try {
+        const params: any = {
+          page: pageNum,
+          limit: 20,
+          ...currentFilters,
+          sortBy: currentSort.key,
+          sortOrder: currentSort.direction,
+        };
+        if (starred) params.isStarred = "true";
+        const res = await api.get("/vocabulary", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: params,
+        });
+        setVocabs(res.data.data);
+        setTotalPages(res.data.meta.lastPage);
+        setPage(res.data.meta.page);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token, filters, sortConfig, showStarredOnly]
+  );
+
+  useEffect(() => {
+    fetchVocabs();
+  }, [fetchVocabs]);
+  
+  const handleFilterChange = (field: keyof FilterState, value: string) => {
+    const newFilters = { ...filters, [field]: value };
+    setFilters(newFilters);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(
+      () => fetchVocabs(1, newFilters, sortConfig),
+      500
+    );
+  };
+
+  const handleSort = (key: string) => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc")
+      direction = "desc";
+    const newSortConfig = { key, direction };
+    setSortConfig(newSortConfig);
+    fetchVocabs(1, filters, newSortConfig);
+  };
+
+  const handleToggleStar = async (
+    id: string,
+    currentStatus: boolean,
+    e?: React.MouseEvent
+  ) => {
+    if (e) e.stopPropagation();
+    
+    // Optimistic update
+    const toggleFunc = (list: VocabItem[]) =>
+    list.map((item) =>
+      item.id === id ? { ...item, isStarred: !currentStatus } : item
+    );
+    setVocabs(toggleFunc);
+
+    try {
+      await api.patch(
+        `/vocabulary/${id}`,
+        { isStarred: !currentStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error("Failed to star", error);
+      // Revert on failure
+      setVocabs((prev) => 
+        prev.map((item) =>
+          item.id === id ? { ...item, isStarred: currentStatus } : item
+        )
+      );
+    }
+  };
+
+  const triggerInteraction = async (vocab: VocabItem) => {
+    try {
+      const newOccurrence = (vocab.occurrence || 0) + 1;
+      const newTime = new Date().toISOString();
+      
+      // Optimistic update
+      setVocabs((prev) =>
+        prev.map((v) =>
+          v.id === vocab.id
+            ? { ...v, occurrence: newOccurrence, updatedAt: newTime }
+            : v
+        )
+      );
+      
+      await api.patch(
+        `/vocabulary/${vocab.id}`,
+        { occurrence: newOccurrence },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (e) {
+      console.error("Interaction update failed", e);
+       // Revert on failure
+       setVocabs((prev) =>
+       prev.map((v) =>
+         v.id === vocab.id
+           ? { ...v, occurrence: vocab.occurrence, updatedAt: vocab.updatedAt }
+           : v
+       )
+     );
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, colId: string) => {
+    setDraggedCol(colId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, colId: string) => {
+    e.preventDefault();
+    if (!draggedCol || draggedCol === colId) return;
+    const newOrder = [...columnOrder];
+    const draggedIdx = newOrder.indexOf(draggedCol);
+    const targetIdx = newOrder.indexOf(colId);
+    if (draggedIdx !== -1 && targetIdx !== -1) {
+      newOrder.splice(draggedIdx, 1);
+      newOrder.splice(targetIdx, 0, draggedCol);
+      setColumnOrder(newOrder);
+    }
+  };
+  
+  const handleDragEnd = () => {
+    setDraggedCol(null);
+  };
+
+  return {
+    vocabs,
+    loading,
+    page,
+    setPage,
+    totalPages,
+    showStarredOnly,
+    setShowStarredOnly,
+    filters,
+    sortConfig,
+    columnOrder,
+    draggedCol,
+    fetchVocabs,
+    handleFilterChange,
+    handleSort,
+    handleToggleStar,
+    triggerInteraction,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+  };
+};
+
+export default useVocabData;
+
+
+
+================================================
+FILE: hooks/vocabulary/useVocabModals.ts
+================================================
+
+import { useState, useRef } from "react";
+import api from "@/lib/api"; // Import api for backend calls
+import axios from "axios"; // Keep for external APIs (DictionaryAPI, Translate)
+import { VocabItem } from "./useVocabData";
+
+export interface VocabFormData {
+  word: string;
+  meaning: string;
+  example: string;
+  topic: string;
+  partOfSpeech: string;
+  relatedWords: string;
+  pronunciation: string;
+}
+
+const useVocabModals = (
+  token: string | null,
+  fetchVocabs: (page?: number) => void
+) => {
+  const [selectedVocab, setSelectedVocab] = useState<VocabItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [formData, setFormData] = useState<VocabFormData>({
+    word: "",
+    meaning: "",
+    example: "",
+    topic: "",
+    partOfSpeech: "",
+    relatedWords: "",
+    pronunciation: "",
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const triggerInteraction = async (vocab: VocabItem) => {
+    try {
+      const newOccurrence = (vocab.occurrence || 0) + 1;
+      await api.patch(
+        `/vocabulary/${vocab.id}`,
+        { occurrence: newOccurrence },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (e) {
+      console.error("Interaction update failed", e);
+    }
+  };
+
+  const handleRowClick = (vocab: VocabItem) => {
+    setSelectedVocab(vocab);
+    setFormData({
+      word: vocab.word,
+      meaning: vocab.meaning || "",
+      example: vocab.example || "",
+      topic: vocab.topic || "",
+      partOfSpeech: vocab.partOfSpeech || "",
+      relatedWords: vocab.relatedWords || "",
+      pronunciation: vocab.pronunciation || "",
+    });
+    setIsModalOpen(true);
+    triggerInteraction(vocab);
+  };
+
+  const fetchAutoFillData = async (word: string) => {
+    if (!word) return null;
+    setIsAutoFilling(true);
+    try {
+      const dictPromise = axios
+        .get(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+        .catch(() => null);
+
+      const translatePromise = axios
+        .get(
+          `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
+            word
+          )}`
+        )
+        .catch(() => null);
+
+      const [dictRes, transRes] = await Promise.all([
+        dictPromise,
+        translatePromise,
+      ]);
+
+      let newData: Partial<VocabFormData> = { word: word };
+
+      if (dictRes && dictRes.data && dictRes.data[0]) {
+        const entry = dictRes.data[0];
+        if (entry.phonetic) newData.pronunciation = entry.phonetic;
+        else if (entry.phonetics && entry.phonetics.length > 0) {
+          const p = entry.phonetics.find((x: any) => x.text && x.audio);
+          newData.pronunciation = p ? p.text : entry.phonetics[0].text;
+        }
+        if (entry.meanings && entry.meanings.length > 0) {
+          const meaning = entry.meanings[0];
+          newData.partOfSpeech = meaning.partOfSpeech;
+          if (meaning.definitions) {
+            const defWithExample = meaning.definitions.find(
+              (d: any) => d.example
+            );
+            if (defWithExample) newData.example = defWithExample.example;
+          }
+        }
+      }
+
+      if (transRes && transRes.data && transRes.data[0]) {
+        const translatedText = transRes.data[0]
+          .map((item: any) => item[0])
+          .join("");
+        newData.meaning = translatedText;
+      }
+      return newData;
+    } catch (error) {
+      console.error("Auto-fill error:", error);
+      return null;
+    } finally {
+      setIsAutoFilling(false);
+    }
+  };
+
+  const handleOpenCreateModal = async (initialWord = "") => {
+    setSelectedVocab(null);
+    setIsModalOpen(true);
+    setFormData({
+      word: initialWord,
+      meaning: "",
+      example: "",
+      topic: "",
+      partOfSpeech: "",
+      relatedWords: "",
+      pronunciation: "",
+    });
+    if (initialWord) {
+      const autoData = await fetchAutoFillData(initialWord);
+      if (autoData) {
+        setFormData((prev) => ({ ...prev, ...autoData }));
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    if (!token || !formData.word) {
+      alert("Word is required!");
+      return;
+    }
+    try {
+      if (selectedVocab) {
+        await api.patch(
+          `/vocabulary/${selectedVocab.id}`,
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await api.post(
+          "/vocabulary",
+          { ...formData, isStarred: false },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      setIsModalOpen(false);
+      fetchVocabs();
+    } catch (error) {
+      console.error("Save failed", error);
+      alert("Failed to save.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this word?")) return;
+    try {
+      await api.delete(`/vocabulary/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchVocabs();
+      setIsModalOpen(false);
+    } catch (e) {
+      alert("Failed");
+    }
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !token) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      setIsUploading(true);
+      await api.post(
+        "/vocabulary/import/csv",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      alert("Import success!");
+      fetchVocabs(1);
+    } catch (error) {
+      alert("Import failed!");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return {
+    selectedVocab,
+    isModalOpen,
+    setIsModalOpen,
+    isAutoFilling,
+    formData,
+    setFormData,
+    fileInputRef,
+    isUploading,
+    handleRowClick,
+    handleOpenCreateModal,
+    handleSave,
+    handleDelete,
+    handleFileChange,
+    fetchAutoFillData,
+  };
+};
+
+export default useVocabModals;
+
+
+
+================================================
+FILE: hooks/vocabulary/.gitkeep
+================================================
+[Empty file]
+
+
+================================================
+FILE: lib/api-metrics.ts
+================================================
+// apps/frontend/lib/api-metrics.ts
+// Hàm dùng để đo lường hiệu suất API call
+
+export const measureApiCall = async (
+  apiName: string,
+  apiCallFn: () => Promise<any>
+) => {
+  const t1_start = performance.now(); // 🕒 Bắt đầu T1
+
+  try {
+    const response = await apiCallFn();
+
+    const t1_end = performance.now(); // 🏁 Kết thúc T1
+    const t1_total_ms = (t1_end - t1_start).toFixed(2);
+
+    // Lấy T2 từ Header mà Backend gửi về
+    // Lưu ý: Tên header trong axios thường viết thường hết
+    const t2_server_ms = parseFloat(response.headers['x-server-time'] || '0');
+
+    // Tính độ trễ mạng (Network Latency)
+    const network_latency = (parseFloat(t1_total_ms) - t2_server_ms).toFixed(2);
+
+    console.group(`📊 METRICS: ${apiName}`);
+    console.log(`1️⃣ Tổng thời gian (T1): ${t1_total_ms} ms`);
+    console.log(`2️⃣ Server xử lý (T2):   ${t2_server_ms} ms`);
+    console.log(`3️⃣ Độ trễ mạng (Net):   ${network_latency} ms`);
+
+    // KẾT LUẬN TỰ ĐỘNG
+    if (parseFloat(network_latency) > 1000) {
+      console.warn('👉 CHẬM DO MẠNG (Internet/Wifi)');
+    } else if (t2_server_ms > 500) {
+      console.warn('👉 CHẬM DO BACKEND (Code/DB)');
+    } else {
+      console.log('✅ Tốc độ ổn định');
+    }
+    console.groupEnd();
+
+    return response;
+  } catch (error) {
+    console.error(`❌ API Error: ${apiName}`, error);
+    throw error;
+  }
+};
+
+
+
+================================================
+FILE: lib/api.ts
+================================================
+// apps/frontend/lib/api.ts
+import axios from 'axios';
+
+// 1. Lấy địa chỉ từ biến môi trường (Ưu tiên) hoặc mặc định về Localhost
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:5001';
+
+// 2. Tạo một instance axios dùng chung cho cả app
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // Tự động gửi cookie (token) đi kèm
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export default api;
+

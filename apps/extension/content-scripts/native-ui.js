@@ -93,7 +93,16 @@ window.NativeUI = (function () {
     root = document.createElement("div");
     root.id = "vocab-root";
     document.body.appendChild(root);
-
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .vocab-mode-switch { display: flex; align-items: center; background: #f1f3f4; border-radius: 6px; padding: 2px; margin-right: 8px; border: 1px solid #e0e0e0; }
+      .mode-btn { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; color: #5f6368; transition: all 0.2s; user-select: none; }
+      .mode-btn.active { background: #fff; color: #1a73e8; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+      .google-trans-box { background: #f8f9fa; border-bottom: 1px solid #f1f3f4; padding: 10px 16px; margin-bottom: 5px; }
+      .google-main-text { font-size: 15px; color: #202124; font-weight: 500; }
+      .google-sub-text { font-size: 11px; color: #5f6368; margin-top: 2px; }
+    `;
+    root.appendChild(style);
     // 1. Search Wrapper
     searchWrapper = document.createElement("div");
     searchWrapper.id = "vocab-search-wrapper";
@@ -101,8 +110,8 @@ window.NativeUI = (function () {
         <div id="vocab-search-modal">
             <div class="vocab-header" id="vocab-drag-handle">
                 <div class="vocab-input-affix">
-                    <span style="font-size:20px">${ICONS.search}</span>
-                    <input class="vocab-search-input" id="native-search-input" placeholder="Type to search or create..." autocomplete="off">
+                    <div id="vocab-mode-container"></div>
+                    <input class="vocab-search-input" id="native-search-input" placeholder="Search..." autocomplete="off">
                 </div>
             </div>
             <div id="vocab-modal-body" class="vocab-body"></div>
@@ -321,212 +330,157 @@ window.NativeUI = (function () {
 
   // ... (Các phần trên giữ nguyên) ...
 
-  // --- [UPDATED] RENDER SEARCH MODAL ---
   function renderSearchModal(keyword, dbResults, apiData, handlers) {
     init();
     searchWrapper.style.display = "block";
 
     const input = document.getElementById("native-search-input");
     const body = document.getElementById("vocab-modal-body");
+    const modeContainer = document.getElementById("vocab-mode-container");
     const mode = handlers.mode || "EN";
     const userTyped = handlers.rawInput || "";
 
-    // 1. CẬP NHẬT UI THEO MODE (Placeholder & Icon)
-    const placeholder =
-      mode === "VI"
-        ? "Nhập tiếng Việt để dịch & tra cứu..."
-        : "Type English to search or create...";
-    input.setAttribute("placeholder", placeholder);
+    // 1. RENDER TOGGLE SWITCH
+    modeContainer.innerHTML = `
+      <div class="vocab-mode-switch">
+        <div class="mode-btn ${
+          mode === "EN" ? "active" : ""
+        }" id="btn-mode-en">🇬🇧 Anh</div>
+        <div class="mode-btn ${
+          mode === "VI" ? "active" : ""
+        }" id="btn-mode-vi">🇻🇳 Việt</div>
+      </div>
+    `;
+    document.getElementById("btn-mode-en").onclick = (e) => {
+      e.stopPropagation();
+      handlers.onModeChange("EN");
+    };
+    document.getElementById("btn-mode-vi").onclick = (e) => {
+      e.stopPropagation();
+      handlers.onModeChange("VI");
+    };
 
-    // Thêm visual indicator cho mode (Nếu muốn)
-    // Ví dụ đổi màu icon kính lúp: Xanh (EN) - Đỏ (VI)
-    const iconSpan = document.querySelector(".vocab-input-affix span");
-    if (iconSpan) {
-      iconSpan.innerHTML =
-        mode === "VI"
-          ? '<span style="font-size:14px; font-weight:800; color:#e53935;">VI</span>'
-          : ICONS.search;
-    }
-
-    // 2. LOGIC INPUT VALUE
-    // Nếu là active element (đang gõ) -> Không đụng vào value
-    // Nếu mới mở (userTyped rỗng) -> Reset
+    // 2. INPUT HANDLING
+    input.setAttribute(
+      "placeholder",
+      mode === "VI" ? "Nhập tiếng Việt..." : "Type English..."
+    );
     if (document.activeElement !== input) {
       input.value = userTyped;
       input.focus();
     }
-
-    // Logic bind event input (như cũ)
+    // Bind events (giữ nguyên logic cũ để tránh mất event listener)
     if (!input.dataset.hasEvent) {
       input.oninput = (e) => handlers.onInput(e.target.value);
       input.addEventListener("keydown", (e) => {
-        e.stopPropagation(); // Chặn Notion cướp phím
-        if (e.key === "Enter") {
-          handlers.onEnter(input.value);
-        }
+        e.stopPropagation();
+        if (e.key === "Enter") handlers.onEnter(input.value);
       });
-      // Chặn sự kiện lan ra ngoài để copy/paste ngon lành
-      ["paste", "copy", "cut", "selectstart"].forEach((evt) => {
-        input.addEventListener(evt, (e) => e.stopPropagation());
-      });
+      ["paste", "copy", "cut", "selectstart"].forEach((evt) =>
+        input.addEventListener(evt, (e) => e.stopPropagation())
+      );
       input.dataset.hasEvent = "true";
     }
 
+    // 3. RENDER CONTENT
     let html = "";
 
-    // 👇 CREATE NEW ITEM
-    // Lưu ý: 'keyword' ở đây là từ Tiếng Anh (đã dịch từ VI hoặc nguyên gốc EN)
-    const exactMatch = dbResults.find(
-      (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
-    );
-
-    if (keyword && !exactMatch) {
-      const trans = apiData?.trans || {};
-
-      // Xác định nghĩa hiển thị:
-      // - Nếu Mode VI: Hiển thị input gốc ("xin chào")
-      // - Nếu Mode EN: Hiển thị kết quả dịch ("Translating...")
-      const displayMeaning =
-        handlers.mode === "VI"
-          ? handlers.rawInput
-          : trans.wordMeaning || "Translating...";
-
-      const pronun = apiData?.phonetics?.us || "";
-
-      // Tạo tiêu đề phụ dựa trên mode
-      const subTitle =
-        handlers.mode === "VI"
-          ? `English match: "${keyword}"` // Cho người dùng biết từ tiếng Anh tương ứng
-          : "New Word";
-
+    // A. GOOGLE TRANSLATE (Ưu tiên hiển thị trước)
+    if (apiData && apiData.trans) {
+      const mainMean =
+        typeof apiData.trans === "string"
+          ? apiData.trans
+          : apiData.trans.wordMeaning;
       html += `
-        <div class="vocab-list-item vocab-create-item" id="open-create-form">
-            <div class="vocab-list-left">
-                <div class="vocab-word-row">
-                    <span class="vocab-word-text">${keyword}</span> <span class="vocab-tag tag-green">${subTitle}</span>
-                    <span class="vocab-pronun">${pronun}</span>
+        <div class="google-trans-box">
+             <div style="display:flex; justify-content:space-between;">
+                <div>
+                    <div class="google-main-text">${mainMean}</div>
+                    <div class="google-sub-text">Google Translate (${
+                      mode === "VI" ? "VI ➝ EN" : "Auto"
+                    })</div>
+                    <div style="font-size:12px; color:#1a73e8;">${
+                      apiData.phonetics?.us || ""
+                    }</div>
                 </div>
-                <div class="vocab-word-meta">${displayMeaning}</div>
-                <div style="font-size:11px; color:#1890ff; margin-top:2px;">
-                    Press Enter to save to database
+                <div style="display:flex; gap:5px;">
+                     <button class="action-btn-circle" id="btn-create-auto">${
+                       ICONS.mark
+                     }</button>
+                     <button class="action-btn-circle" onclick="window.NativeUI.speak('${mainMean.replace(
+                       /'/g,
+                       "\\'"
+                     )}')">${ICONS.sound}</button>
                 </div>
-            </div>
-            
-            <div class="vocab-actions" style="opacity: 1; transform: none;">
-                <button id="add-listen" class="action-btn-circle btn-sound" title="Listen">
-                    ${ICONS.sound}
-                </button>
-                <button id="add-mic" class="action-btn-circle btn-mic" title="Practice">
-                    ${ICONS.mic}
-                </button>
-            </div>
-        </div>
-        <div style="height:1px; background:#f0f0f0; margin: 0 20px;"></div>
-      `;
+             </div>
+        </div>`;
     }
 
-    // 👇 2. RESULTS LIST
-    if (dbResults.length > 0) {
+    // B. DATABASE RESULTS
+    if (dbResults && dbResults.length > 0) {
       dbResults.forEach((item, idx) => {
         html += `
-            <div class="vocab-list-item" id="vocab-item-${idx}">
-                <div class="vocab-list-left">
-                    <div class="vocab-word-row">
-                        <span class="vocab-word-text">${item.word}</span>
-                        ${
-                          item.partOfSpeech
-                            ? `<span class="vocab-tag">${item.partOfSpeech}</span>`
-                            : ""
-                        }
-                        ${
-                          item.topic
-                            ? `<span class="vocab-tag tag-blue">${item.topic}</span>`
-                            : ""
-                        }
-                        <span style="font-size:10px; color:#ccc; margin-left:5px;">(${
-                          item.occurrence || 0
-                        })</span>
+            <div class="vocab-list-item" id="item-${item.id}">
+                <div style="flex:1">
+                    <div class="vocab-word-text" style="${
+                      item.word.toLowerCase() === keyword.toLowerCase()
+                        ? "color:#1a73e8"
+                        : ""
+                    }">
+                        ${item.word} ${
+          item.partOfSpeech
+            ? `<span class="vocab-tag">${item.partOfSpeech}</span>`
+            : ""
+        }
                     </div>
                     <div class="vocab-word-meta">${item.meaning || ""}</div>
                 </div>
                 <div class="vocab-actions">
-                    <button class="action-btn-circle btn-listen" title="Listen">
-                        ${ICONS.sound}
-                    </button>
-                    <button class="action-btn-circle btn-mic" title="Practice">
-                        ${ICONS.mic}
-                    </button>
+                    <button class="action-btn-circle btn-sound" id="btn-speak-${
+                      item.id
+                    }">${ICONS.sound}</button>
+                    <button class="action-btn-circle btn-mic" id="btn-mic-${
+                      item.id
+                    }">${ICONS.mic}</button>
                 </div>
             </div>`;
       });
-    } else if (!keyword) {
-      html += `<div style="text-align:center; padding:40px; color:#999; font-size:14px;">Type any word to search or create...</div>`;
+    } else if (!apiData && keyword) {
+      html += `<div style="padding:20px; text-align:center; color:#999;">Đang tìm kiếm...</div>`;
     }
 
     body.innerHTML = html;
 
-    // --- RE-BIND EVENTS (FIX LỖI CLICK) ---
-    // Sử dụng stopPropagation để không bị kích hoạt click vào row cha
-
-    // 1. Bind cho Create New Box
-    if (keyword && !exactMatch) {
-      const btnListen = document.getElementById("add-listen");
-      if (btnListen) {
-        btnListen.onclick = (e) => {
-          e.stopPropagation(); // Chặn lan ra ngoài
-          handlers.onSpeak(keyword);
-        };
-      }
-
-      const btnMic = document.getElementById("add-mic");
-      if (btnMic) {
-        btnMic.onclick = (e) => {
-          e.stopPropagation(); // Chặn lan ra ngoài
-          if (handlers.onMicPractice) handlers.onMicPractice(keyword);
-        };
-      }
-
-      const createBox = document.getElementById("open-create-form");
-      if (createBox) {
-        createBox.onclick = () => handlers.onOpenCreate(keyword);
-      }
-    }
-
-    // 2. Bind cho List Results
-    dbResults.forEach((item, idx) => {
-      const itemEl = document.getElementById(`vocab-item-${idx}`);
-      if (!itemEl) return;
-
-      // 👇 SỰ KIỆN CLICK VÀO DÒNG (ROW CLICK)
-      itemEl.onclick = (e) => {
-        // Nếu click vào nút con (loa/mic) thì bỏ qua, để sự kiện nút con xử lý
-        if (e.target.closest("button")) return;
-
-        // 1. Tăng count & Update time
-        if (handlers.onInteract) handlers.onInteract(item);
-
-        // 2. Mở Popup chỉnh sửa (Edit Mode)
-        handlers.onEdit(item);
+    // 4. BIND EVENTS CHO LIST ITEM (Sau khi gán innerHTML)
+    if (document.getElementById("btn-create-auto")) {
+      document.getElementById("btn-create-auto").onclick = (e) => {
+        e.stopPropagation();
+        handlers.onOpenCreate(
+          apiData.trans.wordMeaning || apiData.trans || keyword
+        );
       };
-
-      // 👇 NÚT LOA
-      const btnListen = itemEl.querySelector(".btn-listen");
-      if (btnListen)
-        btnListen.onclick = (e) => {
-          e.stopPropagation();
-          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
-          handlers.onSpeak(item.word);
-        };
-
-      // 👇 NÚT MIC
-      const btnMic = itemEl.querySelector(".btn-mic");
-      if (btnMic)
-        btnMic.onclick = (e) => {
-          e.stopPropagation();
-          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
-          if (handlers.onMic) handlers.onMic(item);
-        };
-    });
+    }
+    if (dbResults) {
+      dbResults.forEach((item) => {
+        const row = document.getElementById(`item-${item.id}`);
+        if (row) {
+          row.onclick = () => {
+            handlers.onInteract(item);
+            handlers.onEdit(item);
+          };
+          document.getElementById(`btn-speak-${item.id}`).onclick = (e) => {
+            e.stopPropagation();
+            handlers.onInteract(item);
+            handlers.onSpeak(item.word);
+          };
+          document.getElementById(`btn-mic-${item.id}`).onclick = (e) => {
+            e.stopPropagation();
+            handlers.onInteract(item);
+            handlers.onMic(item);
+          };
+        }
+      });
+    }
   }
 
   // ... (Các hàm khác giữ nguyên) ...

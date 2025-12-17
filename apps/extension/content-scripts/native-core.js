@@ -4,11 +4,8 @@ window.NativeCore = (function () {
   let debounceTimer = null;
   let latestQuery = "";
   let currentMode = "EN";
-
   let lastDbResults = [];
-
-  const VIETNAMESE_REGEX =
-    /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+  let currentApiData = null; // Cache kết quả Translate
 
   // --- HELPER: TÍNH ĐIỂM ƯU TIÊN (Ranking) ---
   function sortResultsByRelevance(items, keyword, mode) {
@@ -213,20 +210,21 @@ window.NativeCore = (function () {
   // --- 5. INPUT & HANDLERS ---
   function handleInput(text) {
     latestQuery = text;
-    const detectedMode = VIETNAMESE_REGEX.test(text) ? "VI" : "EN";
-    currentMode = detectedMode;
-
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       runSearch(text.trim());
-    }, 400);
+    }, 300); // Giảm delay xuống 300ms cho cảm giác nhanh hơn
   }
-
+  function setMode(newMode) {
+    if (currentMode === newMode) return;
+    currentMode = newMode;
+    runSearch(latestQuery, true); // Search lại ngay với mode mới
+  }
   async function handleEnter(text) {
     const rawInput = text.trim();
     if (!rawInput) return;
-    if (debounceTimer) clearTimeout(debounceTimer);
 
+    // 1. Ưu tiên mở từ có trong DB
     const exactMatch = lastDbResults.find(
       (i) => i.word.toLowerCase() === rawInput.toLowerCase()
     );
@@ -235,129 +233,75 @@ window.NativeCore = (function () {
       return;
     }
 
-    // Logic xử lý Enter nhanh (khi chưa render)
-    // Tự động detect và xử lý y như runSearch nhưng bỏ qua bước render list
-    const isVietnamese = VIETNAMESE_REGEX.test(rawInput);
-    if (isVietnamese) {
-      const englishWord = await translateViToEn(rawInput);
-      if (englishWord) {
-        const existing = await apiCheckVocabulary(englishWord);
-        if (existing) onEdit(existing);
-        else onOpenCreate(englishWord, rawInput);
-      } else {
-        onOpenCreate(rawInput, "");
-      }
-    } else {
-      const existing = await apiCheckVocabulary(rawInput);
-      if (existing) onEdit(existing);
-      else onOpenCreate(rawInput, "");
-    }
+    // 2. Nếu không, mở form tạo mới (Dùng từ đã dịch nếu có)
+    const wordToCreate =
+      currentApiData && currentApiData.trans
+        ? typeof currentApiData.trans === "string"
+          ? currentApiData.trans
+          : currentApiData.trans.wordMeaning
+        : rawInput;
+
+    onOpenCreate(wordToCreate, currentMode === "VI" ? rawInput : "");
+  }
+
+  // Cập nhật trong hàm gọi renderSearchModal cũ (hoặc tạo hàm getHandlers riêng nếu bạn refactor):
+  function getHandlers() {
+    return {
+      mode: currentMode,
+      rawInput: latestQuery,
+      onInput: handleInput,
+      onEnter: handleEnter,
+      onModeChange: setMode, // 👈 Quan trọng: Truyền hàm này xuống UI
+      onSpeak: (t) => speakWithEdgeTTS(t),
+      onOpenCreate: (w, m) => onOpenCreate(w, m),
+      onEdit: onEdit,
+      onMic: onOpenAssessment,
+      onInteract: handleInteraction,
+    };
   }
 
   // 👇 [UPDATED] RUN SEARCH VỚI LOGIC RANKING MỚI
-  async function runSearch(rawInput, forceMode = null) {
-    const runMode = forceMode || currentMode;
-    const currentRunQuery = rawInput;
-
-    try {
-      let searchKeyword = rawInput; // Từ dùng để Search DB
-      let displayKeyword = rawInput; // Từ dùng để hiển thị đề xuất Create
-      let impliedMeaning = "";
-      let translatedEnglish = "";
-
-      // === BƯỚC 1: XỬ LÝ VIETNAMESE ===
-      if (runMode === "VI" && rawInput.trim()) {
-        // A. Dịch sang Anh để lấy từ chuẩn cho "Create New"
-        translatedEnglish = await translateViToEn(rawInput);
-
-        // B. NHƯNG Search DB thì dùng Tiếng Việt (rawInput)
-        // Lý do: Để tìm ra những từ có nghĩa chứa "tạo" (create, make, generate...)
-        searchKeyword = rawInput;
-
-        if (translatedEnglish) {
-          displayKeyword = translatedEnglish.toLowerCase().trim();
-          impliedMeaning = rawInput;
-        }
-      }
-
-      // === BƯỚC 2: SEARCH DATABASE ===
-      // Lưu ý: searchKeyword ở đây là VI (nếu mode VI) hoặc EN (nếu mode EN)
-      // Backend API search cả cột word và meaning nên tìm kiểu gì cũng ra.
-      let dbResults = await apiSearchVocabulary(searchKeyword);
-
-      if (latestQuery.trim() !== currentRunQuery) return;
-
-      // === BƯỚC 3: SMART FALLBACK (Cho ca khó không dấu) ===
-      // ... (Logic fallback cũ nếu cần, ở đây ta tập trung vào Ranking) ...
-
-      // === BƯỚC 4: SẮP XẾP KẾT QUẢ (RANKING) ===
-      // Sắp xếp lại dbResults dựa trên độ khớp với rawInput
-      dbResults = sortResultsByRelevance(dbResults, rawInput, runMode);
-      lastDbResults = dbResults; // Lưu lại cho handleEnter
-
-      // === BƯỚC 5: CHUẨN BỊ DATA CHO CREATE NEW ===
-      let apiData = null;
-
-      // Kiểm tra xem từ Tiếng Anh (sau khi dịch) đã có trong DB chưa?
-      // (Chỉ áp dụng cho Mode VI để tránh tạo trùng)
-      let exactMatchInDb = null;
-      if (runMode === "VI" && translatedEnglish) {
-        // Tìm trong list kết quả xem có ông nào word == translatedEnglish không
-        exactMatchInDb = dbResults.find(
-          (i) => i.word.toLowerCase() === translatedEnglish.toLowerCase()
-        );
-      } else {
-        exactMatchInDb = dbResults.find(
-          (i) => i.word.toLowerCase() === displayKeyword.toLowerCase()
-        );
-      }
-
-      // Nếu chưa có, chuẩn bị data để gợi ý tạo mới
-      if (!exactMatchInDb && displayKeyword) {
-        const phonetics = await getPhoneticForText(displayKeyword);
-        let trans = null;
-
-        if (runMode === "EN") {
-          trans = await getTranslation(displayKeyword);
-        } else {
-          // Mode VI
-          const googleData = await getTranslation(displayKeyword);
-          trans = { wordMeaning: impliedMeaning, dict: googleData?.dict || [] };
-        }
-
-        if (latestQuery.trim() !== currentRunQuery) return;
-        if (trans) apiData = { trans, phonetics };
-      }
-
-      // === BƯỚC 6: RENDER ===
-      // Lưu ý: displayKeyword là từ Tiếng Anh (để hiện ở dòng Create New)
-      window.NativeUI.renderSearchModal(displayKeyword, dbResults, apiData, {
-        onInput: handleInput,
-        onEnter: handleEnter,
-        onSpeak: (t) => speakWithEdgeTTS(t),
-        onOpenCreate: (word) =>
-          onOpenCreate(word, runMode === "VI" ? impliedMeaning : ""),
-        onEdit: onEdit,
-        onMic: onOpenAssessment,
-        onMicPractice: (keyword) =>
-          onOpenAssessment({
-            word: keyword,
-            id: null,
-            pronunciation: apiData?.phonetics?.us || "",
-          }),
-
-        // 👇 THÊM HÀM NÀY XUỐNG UI
-        onInteract: handleInteraction,
-
-        onMark: (item) => {
-          /*...*/
-        },
-        mode: runMode,
-        rawInput: rawInput,
-      });
-    } catch (e) {
-      console.error("Search error:", e);
+  async function runSearch(rawInput, forceRefresh = false) {
+    if (!rawInput) {
+      window.NativeUI.renderSearchModal("", [], null, getHandlers());
+      return;
     }
+    if (forceRefresh) {
+      lastDbResults = [];
+      currentApiData = null;
+    }
+
+    const runQuery = rawInput;
+
+    // TASK 1: Google Translate (Chạy độc lập)
+    if (currentMode === "VI") {
+      translateViToEn(runQuery).then(async (res) => {
+        if (latestQuery !== runQuery) return; // Query đã cũ -> Bỏ qua
+        if (res) {
+          const phonetics = await getPhoneticForText(res);
+          currentApiData = { trans: res, phonetics };
+          renderUI(); // Render ngay khi có kết quả dịch
+        }
+      });
+    } else {
+      currentApiData = null; // Mode EN không cần dịch Việt->Anh
+    }
+
+    // TASK 2: Database Search (Chạy độc lập)
+    apiSearchVocabulary(runQuery).then((results) => {
+      if (latestQuery !== runQuery) return;
+      lastDbResults = results; // Có thể thêm hàm sortResultsByRelevance ở đây nếu muốn
+      renderUI(); // Render ngay khi có kết quả DB
+    });
+  }
+
+  function renderUI() {
+    window.NativeUI.renderSearchModal(
+      latestQuery,
+      lastDbResults,
+      currentApiData,
+      getHandlers()
+    );
   }
 
   // 👇 [NEW] HÀM CẬP NHẬT COUNT & TIME (INTERACTION)

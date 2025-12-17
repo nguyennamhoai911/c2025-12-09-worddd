@@ -1,0 +1,1814 @@
+Directory structure:
+└── extension/
+    ├── background.js
+    ├── config.js
+    ├── content.js
+    ├── manifest.json
+    ├── popup.css
+    ├── popup.html
+    ├── popup.js
+    └── content-scripts/
+        ├── lookup-main.js
+        ├── lookup-services.js
+        ├── lookup-ui.js
+        ├── main.js
+        ├── messager.js
+        ├── metrics.js
+        ├── native-core.js
+        ├── native-ui.js
+        ├── shortcuts.js
+        └── ui.js
+
+================================================
+FILE: background.js
+================================================
+// apps/extension/background.js
+
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("✅ Extension Installed/Reloaded");
+  createNextAlarm();
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "vocab_review") {
+    console.log(
+      "⏰ Alarm Triggered: vocab_review at " + new Date().toLocaleTimeString()
+    );
+
+    // 1. Gửi tin nhắn xuống Tab
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs.length === 0) {
+        console.log("⚠️ No active tab found.");
+        return;
+      }
+
+      console.log(`📡 Sending message to Tab ID: ${tabs[0].id}`);
+      chrome.tabs
+        .sendMessage(tabs[0].id, { action: "SHOW_FLASHCARD" })
+        .catch((err) =>
+          console.log(
+            "❌ Could not send message (Content Script not ready?):",
+            err
+          )
+        );
+    });
+
+    // 2. Tạo Alarm tiếp theo (Recursive)
+    createNextAlarm();
+  }
+});
+
+function createNextAlarm() {
+  // Setup alarm chạy sau 12 giây
+  chrome.alarms.create("vocab_review", { when: Date.now() + 300000 });
+  console.log("⏳ Next alarm scheduled in 12s...");
+}
+
+
+
+================================================
+FILE: config.js
+================================================
+// apps/extension/config.js
+
+// 👇 CÔNG TẮC TỔNG: Đổi true/false ở đây
+const IS_DEV_MODE = true;
+
+const APP_CONFIG = {
+  // Backend
+  API_URL: IS_DEV_MODE
+    ? "https://localhost:5001"
+    : "https://vocab-backend-aveq.onrender.com",
+
+  // Frontend
+  FRONTEND_URL: IS_DEV_MODE
+    ? "https://localhost:3001"
+    : "https://c2025-12-09-full-app-english.vercel.app",
+};
+
+// Log ra để biết đang chạy môi trường nào
+console.log(
+  `🚀 Extension Mode: ${IS_DEV_MODE ? "DEV (Local)" : "PROD (Server)"}`
+);
+
+
+
+================================================
+FILE: content.js
+================================================
+[Binary file]
+
+
+================================================
+FILE: manifest.json
+================================================
+{
+  "manifest_version": 3,
+  "name": "Vocabulary Coach & App Connector",
+  "version": "2.0",
+  "description": "Full App Integration: Iframe, TTS, Azure Speech & Flashcards",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage", "microphone", "alarms"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "config.js",
+        "content-scripts/lookup-services.js",
+        "content-scripts/lookup-ui.js",
+        "content-scripts/native-ui.js",
+        "content-scripts/native-core.js",
+        "content-scripts/lookup-main.js"
+      ],
+      "css": ["popup.css"]
+    }
+  ],
+  "host_permissions": [
+    "https://translate.google.com/*",
+    "https://translate.googleapis.com/*",
+    "https://commons.wikimedia.org/*",
+    "https://api.duckduckgo.com/*",
+    "https://www.googleapis.com/*",
+    "https://api.unsplash.com/*",
+    "https://*.cognitiveservices.azure.com/*",
+    "https://*.onrender.com/*",
+    "http://localhost:3000/*",
+    "https://localhost:3001/*",
+    "http://localhost:5001/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
+
+
+
+================================================
+FILE: popup.css
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 5187: character maps to <undefined>
+
+
+================================================
+FILE: popup.html
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in position 4519: character maps to <undefined>
+
+
+================================================
+FILE: popup.js
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x81 in position 1262: character maps to <undefined>
+
+
+================================================
+FILE: content-scripts/lookup-main.js
+================================================
+// =======================================================================
+// MODULE: MAIN CONTROLLER (Entry Point)
+// =======================================================================
+
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let lastRecordedBlob = null;
+
+// 1. Handle Mark Click
+async function onMarkClick(btnElement, statusElement, data) {
+  if (!data) return;
+  btnElement.disabled = true;
+  btnElement.style.opacity = "0.7";
+  btnElement.style.transform = "scale(0.9)";
+  statusElement.innerHTML = '<span style="color:#2196F3">⏳ Đang lưu...</span>';
+
+  try {
+    await apiSaveVocabulary(data);
+    btnElement.style.background = "#4CAF50";
+    btnElement.style.boxShadow = "0 4px 0 #388E3C";
+    statusElement.innerHTML =
+      '<span style="color:#4CAF50;">✅ Đã lưu vào sổ từ!</span>';
+    await saveToHistory(data.text, data);
+  } catch (err) {
+    btnElement.style.background = "#FF9800";
+    if (err.message.includes("Chưa đăng nhập")) {
+      statusElement.innerHTML =
+        '<span style="color:#F44336">⚠️ Vui lòng đăng nhập App!</span>';
+    } else {
+      statusElement.innerHTML = `<span style="color:#F44336">❌ Lỗi: ${err.message}</span>`;
+    }
+  } finally {
+    btnElement.disabled = false;
+    btnElement.style.opacity = "1";
+    btnElement.style.transform = "scale(1)";
+  }
+}
+
+// 2. Handle Mic Click
+async function handleMicClick(referenceText, btnElement, existingVocab) {
+  if (!isRecording) {
+    try {
+      if (!navigator.mediaDevices) {
+        alert("Mic not supported");
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const resultDiv = document.getElementById("assessment-result");
+        if (resultDiv)
+          resultDiv.innerHTML =
+            '<div style="font-size:12px; color:#ddd; text-align:center;">⏳ Processing...</div>';
+        try {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          lastRecordedBlob = audioBlob;
+          if (audioBlob.size < 1000) throw new Error("No audio detected.");
+
+          // 1. Gọi Azure lấy điểm (Code cũ)
+          const result = await assessPronunciation(audioBlob, referenceText);
+
+          // 👇 [NEW CODE] Tự động lưu điểm và thời gian nếu từ đã tồn tại
+          if (
+            existingVocab &&
+            existingVocab.id &&
+            result.NBest &&
+            result.NBest[0]
+          ) {
+            const score = result.NBest[0].AccuracyScore;
+
+            // Gọi API lưu điểm ngầm (không cần await để UI phản hồi nhanh)
+            apiAddScore(existingVocab.id, score).then((success) => {
+              if (success) console.log("✅ Score & Time synced to DB!");
+            });
+
+            // Cập nhật lại UI Badge điểm ngay lập tức (Optional - Visual feedback)
+            // Bạn có thể update lại biến existingVocab.pronunciationScores local ở đây nếu muốn
+          }
+          // 👆 [END NEW CODE]
+
+          renderAssessmentResult(result, resultDiv, referenceText, {
+            playUserAudio: () => {
+              const u = URL.createObjectURL(lastRecordedBlob);
+              new Audio(u).play();
+            },
+            speakEdge: speakWithEdgeTTS,
+          });
+        } catch (err) {
+          if (resultDiv)
+            resultDiv.innerHTML = `<div style="color:#ff5252; text-align:center;">❌ ${err.message}</div>`;
+        } finally {
+          stream.getTracks().forEach((t) => t.stop());
+        }
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      btnElement.classList.add("recording");
+    } catch (err) {
+      alert("Mic Error: " + err.message);
+    }
+  } else {
+    if (mediaRecorder) mediaRecorder.stop();
+    isRecording = false;
+    btnElement.classList.remove("recording");
+  }
+}
+
+// 3. Main Event Listener
+document.addEventListener("keydown", async (e) => {
+  if (e.key === "Shift") {
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+
+    if (selectedText) {
+      let contextText = "";
+      try {
+        if (selection.anchorNode && selection.anchorNode.parentElement) {
+          const parentText = selection.anchorNode.parentElement.innerText;
+          const idx = parentText.indexOf(selectedText);
+          if (idx !== -1) {
+            contextText = parentText
+              .substring(
+                Math.max(0, idx - 100),
+                Math.min(parentText.length, idx + selectedText.length + 100)
+              )
+              .trim()
+              .replace(/\s+/g, " ");
+          }
+        }
+      } catch (err) {}
+      if (contextText.length > 200)
+        contextText = "..." + contextText.substring(0, 200) + "...";
+
+      const rect = selection.getRangeAt(0).getBoundingClientRect();
+      const popup = createPopup();
+      isPopupOpen = true;
+
+      const topPos =
+        rect.top + window.scrollY - 450 < window.scrollY
+          ? rect.bottom + window.scrollY + 10
+          : rect.top + window.scrollY - 450;
+      const leftPos =
+        rect.left + window.scrollX + 350 > window.innerWidth
+          ? window.innerWidth - 360
+          : rect.left + window.scrollX;
+
+      popup.style.top = `${topPos}px`;
+      popup.style.left = `${leftPos}px`;
+      popup.innerHTML =
+        '<div class="tts-content"><div class="tts-loading">⏳ Đang phân tích...</div></div>';
+      popup.style.display = "block";
+
+      speakWithEdgeTTS(selectedText);
+
+      let data = await getFromCache(selectedText);
+      if (!data) {
+        const isLong = selectedText.split(/\s+/).length > 5;
+        const [translation, images] = await Promise.all([
+          getTranslation(selectedText, contextText),
+          isLong ? [] : getImages(selectedText),
+        ]);
+        data = {
+          translation,
+          phonetics: await getPhoneticForText(selectedText),
+          images,
+          text: selectedText,
+          contextText,
+        };
+        if (translation) await saveToCache(selectedText, data);
+      } else if (contextText && !data.contextMeaning) {
+        const tr = await getTranslation(selectedText, contextText);
+        if (tr) data.translation = tr;
+      }
+
+      // 👇 [UPDATE] Logic kiểm tra DB
+      let existingVocab = null;
+      try {
+        existingVocab = await apiCheckVocabulary(selectedText);
+      } catch (e) {}
+
+      // Gộp thông tin existing vào data
+      data.existing = existingVocab; // 👈 Thêm cái này để UI biết
+
+      renderPopupContent(data, isSoundEnabled, {
+        toggleSound: toggleSoundState,
+        closePopup,
+        speakEdge: speakWithEdgeTTS,
+        handleMic: (referenceText, btnElement) =>
+          handleMicClick(referenceText, btnElement, existingVocab),
+        handleMark: (btn, status) => onMarkClick(btn, status, data),
+      });
+    } else if (isPopupOpen) {
+      closePopup();
+    }
+  } else if (e.key === "Escape" && isPopupOpen) {
+    closePopup();
+  }
+});
+
+// 4. Flashcard Listener
+// 4. Flashcard Listener
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if (request.action === "SHOW_FLASHCARD") {
+    console.log("📩 Received SHOW_FLASHCARD message");
+
+    try {
+      // Step 1: Lấy danh sách từ Starred từ Backend
+      const list = await apiGetStarredVocabulary();
+
+      if (list && list.length > 0) {
+        // Step 2: Lấy index hiện tại từ Storage (Logic Xoay Vòng)
+        const storageData = await chrome.storage.local.get([
+          "flashcardCurrentIndex",
+        ]);
+        let currentIndex = storageData.flashcardCurrentIndex || 0;
+
+        // Validate: Nếu index vượt quá độ dài list (do xóa bớt từ), reset về 0
+        if (currentIndex >= list.length) {
+          currentIndex = 0;
+        }
+
+        // Pick từ theo thứ tự
+        const selectedItem = list[currentIndex];
+        console.log(
+          `🔄 Rotational Pick [${currentIndex + 1}/${list.length}]:`,
+          selectedItem.word
+        );
+
+        // Step 3: Tính toán Index tiếp theo và Lưu lại ngay
+        const nextIndex = (currentIndex + 1) % list.length; // Quay vòng về 0 nếu hết list
+        await chrome.storage.local.set({ flashcardCurrentIndex: nextIndex });
+
+        // Step 4: Map Data
+        const flashcardItem = {
+          word: selectedItem.word,
+          data: {
+            translation: selectedItem.meaning || "No definition",
+            pronunciation: selectedItem.pronunciation || "",
+            partOfSpeech: selectedItem.partOfSpeech || "",
+            images: [],
+          },
+        };
+
+        // Step 5: Show UI (Giữ nguyên logic cũ)
+        showFlashcard(flashcardItem, {
+          speakEdge: speakWithEdgeTTS,
+
+          // Mic Logic
+          onMic: () => {
+            if (window.NativeUI) {
+              window.NativeUI.renderAssessmentModal(
+                {
+                  ...selectedItem,
+                  pronunciation: selectedItem.pronunciation || "",
+                },
+                {
+                  onSpeak: (t) => speakWithEdgeTTS(t),
+                  onRecord: async (onSuccess, onError) => {
+                    try {
+                      const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: true,
+                      });
+                      const mediaRecorder = new MediaRecorder(stream);
+                      const chunks = [];
+                      mediaRecorder.ondataavailable = (e) =>
+                        chunks.push(e.data);
+                      mediaRecorder.onstop = async () => {
+                        const blob = new Blob(chunks, { type: "audio/webm" });
+                        window.lastRecordedBlob = blob;
+                        try {
+                          const result = await assessPronunciation(
+                            blob,
+                            selectedItem.word
+                          );
+                          if (
+                            selectedItem.id &&
+                            result.NBest &&
+                            result.NBest[0]
+                          ) {
+                            apiAddScore(
+                              selectedItem.id,
+                              result.NBest[0].AccuracyScore
+                            );
+                          }
+                          if (result.NBest) onSuccess(result.NBest[0]);
+                          else onError("No result");
+                        } catch (err) {
+                          onError(err.message);
+                        }
+                        stream.getTracks().forEach((t) => t.stop());
+                      };
+                      mediaRecorder.start();
+                      window.currentRecorder = mediaRecorder;
+                    } catch (e) {
+                      onError("Mic Error: " + e.message);
+                    }
+                  },
+                  onStop: () => {
+                    if (window.currentRecorder) window.currentRecorder.stop();
+                  },
+                  onPlayback: () => {
+                    if (window.lastRecordedBlob) {
+                      const url = URL.createObjectURL(window.lastRecordedBlob);
+                      new Audio(url).play();
+                    }
+                  },
+                }
+              );
+            }
+          },
+
+          // Edit Logic
+          onEdit: () => {
+            if (window.NativeUI) {
+              window.NativeUI.renderFormModal(
+                { ...selectedItem, isEditMode: true },
+                {
+                  onAutoFill: () => null,
+                  onSave: async (d) => {
+                    await apiUpdateVocabulary(d.id, d);
+                  },
+                }
+              );
+            }
+          },
+        });
+      } else {
+        console.log(
+          "⚠️ No starred words found. Please star some words in App."
+        );
+      }
+    } catch (e) {
+      console.error("🔥 Flashcard Error:", e);
+    }
+  }
+});
+
+
+
+================================================
+FILE: content-scripts/lookup-services.js
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x81 in position 3223: character maps to <undefined>
+
+
+================================================
+FILE: content-scripts/lookup-ui.js
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 2314: character maps to <undefined>
+
+
+================================================
+FILE: content-scripts/main.js
+================================================
+[Empty file]
+
+
+================================================
+FILE: content-scripts/messager.js
+================================================
+[Empty file]
+
+
+================================================
+FILE: content-scripts/metrics.js
+================================================
+// apps/extension/content-scripts/metrics.js
+// Hàm dùng để đo lường hiệu suất API call từ Extension
+
+export const measureApiCall = async (apiName, apiCallFn) => {
+  const t1_start = performance.now(); // 🕒 Bắt đầu T1
+
+  try {
+    const response = await apiCallFn();
+
+    const t1_end = performance.now(); // 🏁 Kết thúc T1
+    const t1_total_ms = (t1_end - t1_start).toFixed(2);
+
+    // Lấy T2 từ Header mà Backend gửi về
+    const t2_server_ms = parseFloat(
+      response.headers?.get?.("x-server-time") || "0"
+    );
+
+    // Tính độ trễ mạng (Network Latency)
+    const network_latency = (parseFloat(t1_total_ms) - t2_server_ms).toFixed(2);
+
+    console.group(`📊 METRICS: ${apiName}`);
+    console.log(`1️⃣ Tổng thời gian (T1): ${t1_total_ms} ms`);
+    console.log(`2️⃣ Server xử lý (T2):   ${t2_server_ms} ms`);
+    console.log(`3️⃣ Độ trễ mạng (Net):   ${network_latency} ms`);
+
+    // KẾT LUẬN TỰ ĐỘNG
+    if (parseFloat(network_latency) > 1000) {
+      console.warn("👉 CHẬM DO MẠNG (Internet/Wifi)");
+    } else if (t2_server_ms > 500) {
+      console.warn("👉 CHẬM DO BACKEND (Code/DB)");
+    } else {
+      console.log("✅ Tốc độ ổn định");
+    }
+    console.groupEnd();
+
+    return response;
+  } catch (error) {
+    console.error(`❌ API Error: ${apiName}`, error);
+    throw error;
+  }
+};
+
+
+
+================================================
+FILE: content-scripts/native-core.js
+================================================
+console.log("✅ Native Core Loaded - Smart Ranking Mode");
+
+window.NativeCore = (function () {
+  let debounceTimer = null;
+  let latestQuery = "";
+  let currentMode = "EN";
+
+  let lastDbResults = [];
+
+  const VIETNAMESE_REGEX =
+    /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+
+  // --- HELPER: TÍNH ĐIỂM ƯU TIÊN (Ranking) ---
+  function sortResultsByRelevance(items, keyword, mode) {
+    if (!keyword || items.length === 0) return items;
+    const searchStr = keyword.toLowerCase().trim();
+
+    return items.sort((a, b) => {
+      const scoreA = calculateScore(a, searchStr, mode);
+      const scoreB = calculateScore(b, searchStr, mode);
+      return scoreB - scoreA; // Điểm cao xếp trên
+    });
+  }
+
+  function calculateScore(item, keyword, mode) {
+    let score = 0;
+    // 1. Ưu tiên khớp chính xác từ gốc (Word)
+    if (item.word.toLowerCase() === keyword) return 1000;
+
+    // 2. Logic so sánh Meaning (Cho Mode VI)
+    if (mode === "VI" && item.meaning) {
+      const meaningLower = item.meaning.toLowerCase();
+
+      // Tách nghĩa bằng dấu phẩy, chấm phẩy (Vd: "táo, quả táo; táo tây")
+      const parts = meaningLower.split(/[,;]+/).map((p) => p.trim());
+
+      // Case A: Khớp chính xác 1 segment (Vd: search "táo" khớp segment "táo") -> Ưu tiên cao nhất
+      if (parts.includes(keyword)) {
+        score += 500;
+      }
+      // Case B: Bắt đầu bằng từ khóa (Vd: "táo quân") -> Ưu tiên nhì
+      else if (parts.some((p) => p.startsWith(keyword + " "))) {
+        score += 100;
+      }
+      // Case C: Chỉ chứa từ khóa (Vd: "cấu tạo") -> Ưu tiên thấp
+      else if (meaningLower.includes(keyword)) {
+        score += 10;
+      }
+    }
+    // 3. Logic cho Mode EN (Word match)
+    else if (mode === "EN") {
+      if (item.word.toLowerCase().startsWith(keyword)) score += 100;
+      else if (item.word.toLowerCase().includes(keyword)) score += 10;
+    }
+
+    // Bonus: Điểm trừ nhẹ nếu từ quá dài (để ưu tiên từ ngắn gọn hơn)
+    score -= item.word.length * 0.1;
+
+    return score;
+  }
+
+  // --- 1. LOGIC AUTO-FILL (Giữ nguyên) ---
+  async function fetchAutoFillData(word) {
+    if (!word) return null;
+    try {
+      const dictPromise = fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
+          word
+        )}`
+      )
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      const translatePromise = getTranslation(word);
+      const [dictRes, transRes] = await Promise.all([
+        dictPromise,
+        translatePromise,
+      ]);
+
+      let newData = {};
+      if (dictRes && dictRes[0]) {
+        const entry = dictRes[0];
+        if (entry.phonetic) newData.pronunciation = entry.phonetic;
+        else if (entry.phonetics && entry.phonetics.length > 0) {
+          const p = entry.phonetics.find((x) => x.text && x.audio);
+          newData.pronunciation = p ? p.text : entry.phonetics[0]?.text || "";
+        }
+        if (entry.meanings && entry.meanings.length > 0) {
+          const m = entry.meanings[0];
+          newData.partOfSpeech = m.partOfSpeech;
+          if (m.definitions) {
+            const def = m.definitions.find((d) => d.example);
+            if (def) newData.example = def.example;
+          }
+        }
+      }
+      if (transRes) {
+        const mean =
+          typeof transRes === "string" ? transRes : transRes.wordMeaning;
+        if (mean) newData.meaning = mean;
+      }
+      return newData;
+    } catch (e) {
+      console.error("Autofill error:", e);
+      return null;
+    }
+  }
+
+  // --- 2. HANDLE SAVE ---
+  async function handleSaveVocab(data) {
+    try {
+      if (data.id) {
+        await apiUpdateVocabulary(data.id, data);
+        console.log("✅ Updated successfully");
+      } else {
+        await apiCreateFullVocabulary(data);
+        console.log("✅ Created successfully");
+      }
+      // Reload search, ép kiểu EN để tìm chính xác từ vừa tạo
+      runSearch(data.word, "EN");
+    } catch (e) {
+      alert("Save failed: " + e.message + "\n(Check Login or Network)");
+    }
+  }
+
+  // --- 3. ASSESSMENT HANDLER ---
+  function onOpenAssessment(vocab) {
+    const vocabItem = vocab.id
+      ? vocab
+      : {
+          id: "temp",
+          word: vocab.word,
+          pronunciation: vocab.pronunciation || "",
+        };
+
+    window.NativeUI.renderAssessmentModal(vocabItem, {
+      onSpeak: (text) => speakWithEdgeTTS(text),
+      onRecord: async (onSuccess, onError) => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          const mediaRecorder = new MediaRecorder(stream);
+          const chunks = [];
+          mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            const blob = new Blob(chunks, { type: "audio/webm" });
+            window.lastRecordedBlob = blob;
+            try {
+              const result = await assessPronunciation(blob, vocabItem.word);
+              if (vocabItem.id !== "temp" && result.NBest && result.NBest[0]) {
+                const score = result.NBest[0].AccuracyScore;
+                await apiAddScore(vocabItem.id, score);
+              }
+              if (result.NBest) onSuccess(result.NBest[0]);
+              else onError("No result");
+            } catch (err) {
+              onError(err.message);
+            }
+            stream.getTracks().forEach((t) => t.stop());
+          };
+          mediaRecorder.start();
+          window.currentRecorder = mediaRecorder;
+        } catch (e) {
+          onError("Mic Error: " + e.message);
+        }
+      },
+      onStop: () => {
+        if (window.currentRecorder) window.currentRecorder.stop();
+      },
+      onPlayback: () => {
+        if (window.lastRecordedBlob) {
+          const url = URL.createObjectURL(window.lastRecordedBlob);
+          new Audio(url).play();
+        }
+      },
+    });
+  }
+
+  // --- 4. FORM OPEN HANDLERS ---
+  async function onOpenCreate(englishWord, meaningSuggestion = "") {
+    let initialData = {
+      word: englishWord || "",
+      meaning: meaningSuggestion,
+      isEditMode: false,
+    };
+
+    if (englishWord) {
+      const autoData = await fetchAutoFillData(englishWord);
+      if (autoData) {
+        initialData = { ...initialData, ...autoData };
+        if (meaningSuggestion) initialData.meaning = meaningSuggestion;
+      }
+    }
+    window.NativeUI.renderFormModal(initialData, {
+      onAutoFill: fetchAutoFillData,
+      onSave: handleSaveVocab,
+    });
+  }
+
+  async function onEdit(item) {
+    window.NativeUI.renderFormModal(
+      {
+        ...item,
+        isEditMode: true,
+      },
+      {
+        onAutoFill: fetchAutoFillData,
+        onSave: handleSaveVocab,
+      }
+    );
+  }
+
+  // --- 5. INPUT & HANDLERS ---
+  function handleInput(text) {
+    latestQuery = text;
+    const detectedMode = VIETNAMESE_REGEX.test(text) ? "VI" : "EN";
+    currentMode = detectedMode;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      runSearch(text.trim());
+    }, 400);
+  }
+
+  async function handleEnter(text) {
+    const rawInput = text.trim();
+    if (!rawInput) return;
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    const exactMatch = lastDbResults.find(
+      (i) => i.word.toLowerCase() === rawInput.toLowerCase()
+    );
+    if (exactMatch) {
+      onEdit(exactMatch);
+      return;
+    }
+
+    // Logic xử lý Enter nhanh (khi chưa render)
+    // Tự động detect và xử lý y như runSearch nhưng bỏ qua bước render list
+    const isVietnamese = VIETNAMESE_REGEX.test(rawInput);
+    if (isVietnamese) {
+      const englishWord = await translateViToEn(rawInput);
+      if (englishWord) {
+        const existing = await apiCheckVocabulary(englishWord);
+        if (existing) onEdit(existing);
+        else onOpenCreate(englishWord, rawInput);
+      } else {
+        onOpenCreate(rawInput, "");
+      }
+    } else {
+      const existing = await apiCheckVocabulary(rawInput);
+      if (existing) onEdit(existing);
+      else onOpenCreate(rawInput, "");
+    }
+  }
+
+  // 👇 [UPDATED] RUN SEARCH VỚI LOGIC RANKING MỚI
+  async function runSearch(rawInput, forceMode = null) {
+    const runMode = forceMode || currentMode;
+    const currentRunQuery = rawInput;
+
+    try {
+      let searchKeyword = rawInput; // Từ dùng để Search DB
+      let displayKeyword = rawInput; // Từ dùng để hiển thị đề xuất Create
+      let impliedMeaning = "";
+      let translatedEnglish = "";
+
+      // === BƯỚC 1: XỬ LÝ VIETNAMESE ===
+      if (runMode === "VI" && rawInput.trim()) {
+        // A. Dịch sang Anh để lấy từ chuẩn cho "Create New"
+        translatedEnglish = await translateViToEn(rawInput);
+
+        // B. NHƯNG Search DB thì dùng Tiếng Việt (rawInput)
+        // Lý do: Để tìm ra những từ có nghĩa chứa "tạo" (create, make, generate...)
+        searchKeyword = rawInput;
+
+        if (translatedEnglish) {
+          displayKeyword = translatedEnglish.toLowerCase().trim();
+          impliedMeaning = rawInput;
+        }
+      }
+
+      // === BƯỚC 2: SEARCH DATABASE ===
+      // Lưu ý: searchKeyword ở đây là VI (nếu mode VI) hoặc EN (nếu mode EN)
+      // Backend API search cả cột word và meaning nên tìm kiểu gì cũng ra.
+      let dbResults = await apiSearchVocabulary(searchKeyword);
+
+      if (latestQuery.trim() !== currentRunQuery) return;
+
+      // === BƯỚC 3: SMART FALLBACK (Cho ca khó không dấu) ===
+      // ... (Logic fallback cũ nếu cần, ở đây ta tập trung vào Ranking) ...
+
+      // === BƯỚC 4: SẮP XẾP KẾT QUẢ (RANKING) ===
+      // Sắp xếp lại dbResults dựa trên độ khớp với rawInput
+      dbResults = sortResultsByRelevance(dbResults, rawInput, runMode);
+      lastDbResults = dbResults; // Lưu lại cho handleEnter
+
+      // === BƯỚC 5: CHUẨN BỊ DATA CHO CREATE NEW ===
+      let apiData = null;
+
+      // Kiểm tra xem từ Tiếng Anh (sau khi dịch) đã có trong DB chưa?
+      // (Chỉ áp dụng cho Mode VI để tránh tạo trùng)
+      let exactMatchInDb = null;
+      if (runMode === "VI" && translatedEnglish) {
+        // Tìm trong list kết quả xem có ông nào word == translatedEnglish không
+        exactMatchInDb = dbResults.find(
+          (i) => i.word.toLowerCase() === translatedEnglish.toLowerCase()
+        );
+      } else {
+        exactMatchInDb = dbResults.find(
+          (i) => i.word.toLowerCase() === displayKeyword.toLowerCase()
+        );
+      }
+
+      // Nếu chưa có, chuẩn bị data để gợi ý tạo mới
+      if (!exactMatchInDb && displayKeyword) {
+        const phonetics = await getPhoneticForText(displayKeyword);
+        let trans = null;
+
+        if (runMode === "EN") {
+          trans = await getTranslation(displayKeyword);
+        } else {
+          // Mode VI
+          const googleData = await getTranslation(displayKeyword);
+          trans = { wordMeaning: impliedMeaning, dict: googleData?.dict || [] };
+        }
+
+        if (latestQuery.trim() !== currentRunQuery) return;
+        if (trans) apiData = { trans, phonetics };
+      }
+
+      // === BƯỚC 6: RENDER ===
+      // Lưu ý: displayKeyword là từ Tiếng Anh (để hiện ở dòng Create New)
+      window.NativeUI.renderSearchModal(displayKeyword, dbResults, apiData, {
+        onInput: handleInput,
+        onEnter: handleEnter,
+        onSpeak: (t) => speakWithEdgeTTS(t),
+        onOpenCreate: (word) =>
+          onOpenCreate(word, runMode === "VI" ? impliedMeaning : ""),
+        onEdit: onEdit,
+        onMic: onOpenAssessment,
+        onMicPractice: (keyword) =>
+          onOpenAssessment({
+            word: keyword,
+            id: null,
+            pronunciation: apiData?.phonetics?.us || "",
+          }),
+
+        // 👇 THÊM HÀM NÀY XUỐNG UI
+        onInteract: handleInteraction,
+
+        onMark: (item) => {
+          /*...*/
+        },
+        mode: runMode,
+        rawInput: rawInput,
+      });
+    } catch (e) {
+      console.error("Search error:", e);
+    }
+  }
+
+  // 👇 [NEW] HÀM CẬP NHẬT COUNT & TIME (INTERACTION)
+  async function handleInteraction(item) {
+    if (!item || !item.id) return;
+
+    // Tính toán count mới (tăng 1)
+    const newCount = (item.occurrence || 0) + 1;
+
+    // Update local cache ngay lập tức để UI phản hồi (nếu cần)
+    item.occurrence = newCount;
+
+    try {
+      // Gọi API PATCH trực tiếp để update count
+      // (Backend Prisma sẽ tự động update cột 'updatedAt' thành giờ hiện tại)
+      await fetch(`https://localhost:5001/vocabulary/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ occurrence: newCount }),
+        credentials: "include",
+      });
+      // console.log(`Interact: ${item.word} -> ${newCount}`);
+    } catch (e) {
+      console.error("Interaction update failed", e);
+    }
+  }
+
+  // ... (Phần còn lại: toggle, handleSelection, Event Listeners giữ nguyên) ...
+  function toggle() {
+    latestQuery = "";
+    currentMode = "EN";
+    lastDbResults = [];
+    window.NativeUI.renderSearchModal("", [], null, {
+      onInput: handleInput,
+      onEnter: handleEnter,
+      mode: "EN",
+      rawInput: "",
+    });
+  }
+
+  async function handleSelection() {
+    const sel = window.getSelection().toString().trim();
+    if (!sel) return;
+    const rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
+    speakWithEdgeTTS(sel);
+    const [trans, phonetics] = await Promise.all([
+      getTranslation(sel),
+      getPhoneticForText(sel),
+    ]);
+    if (trans) {
+      window.NativeUI.renderPopup({ text: sel, trans, phonetics }, rect, {
+        onSpeak: (t) => speakWithEdgeTTS(t),
+        onOpenCreate: (w) => onOpenCreate(w),
+      });
+    }
+  }
+
+  return {
+    toggle,
+    handleSelection,
+    handleEnter,
+    handleInteraction,
+    // 👇 EXPOSE HÀM NÀY ĐỂ FLASHCARD GỌI
+    openEdit: onEdit,
+    // 👇 EXPOSE HÀM NÀY ĐỂ FLASHCARD GỌI MIC
+    openAssessment: onOpenAssessment,
+  };
+})();
+
+// Global Listeners
+window.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.code === "KeyQ") {
+    e.preventDefault();
+    window.NativeCore.toggle();
+  }
+});
+window.addEventListener("keyup", (e) => {
+  if (e.key === "Escape") {
+    window.NativeUI.hideAll();
+  }
+});
+
+
+
+================================================
+FILE: content-scripts/native-ui.js
+================================================
+console.log("✅ Native UI Loaded");
+
+window.NativeUI = (function () {
+  let root = null;
+  let searchWrapper = null;
+  let searchModal = null; // 👇 Biến tham chiếu tới Modal
+  let formWrapper = null;
+  let miniPopup = null;
+  let assessWrapper = null; // New wrapper for assessment modal
+
+  // 👇 [UPDATED] BỘ ICON CHUẨN ĐẸP (Lấy từ Shift Popup)
+  const ICONS = {
+    search:
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+    mic: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
+    sound:
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+    mark: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>',
+    close:
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+  };
+
+  // --- 1. HÀM XỬ LÝ KÉO THẢ & LƯU VỊ TRÍ ---
+  function enableDragAndPersist(headerEl, modalEl) {
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    // A. Khôi phục vị trí cũ (nếu có)
+    const savedPos = localStorage.getItem("vocab_widget_pos");
+    if (savedPos) {
+      const { top, left } = JSON.parse(savedPos);
+      // Kiểm tra xem vị trí có bị trôi ra khỏi màn hình không
+      const safeTop = Math.min(Math.max(0, top), window.innerHeight - 50);
+      const safeLeft = Math.min(Math.max(0, left), window.innerWidth - 50);
+
+      modalEl.style.top = safeTop + "px";
+      modalEl.style.left = safeLeft + "px";
+      modalEl.style.transform = "none"; // Bỏ căn giữa mặc định
+    }
+
+    // B. Bắt đầu kéo
+    headerEl.onmousedown = (e) => {
+      // Chỉ kéo khi click vào vùng trống của header (tránh input)
+      if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      // Lấy vị trí hiện tại (tính cả khi đang dùng transform)
+      const rect = modalEl.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+
+      // Xóa transform để chuyển sang dùng top/left tuyệt đối mượt mà
+      modalEl.style.transform = "none";
+      modalEl.style.left = initialLeft + "px";
+      modalEl.style.top = initialTop + "px";
+      modalEl.style.width = rect.width + "px"; // Cố định chiều rộng để không bị co giãn
+    };
+
+    // C. Đang kéo
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault(); // Chặn bôi đen text
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      modalEl.style.left = `${initialLeft + dx}px`;
+      modalEl.style.top = `${initialTop + dy}px`;
+    };
+
+    // D. Thả chuột (Lưu vị trí)
+    const onMouseUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+
+      // Lưu vào LocalStorage
+      const pos = {
+        top: parseInt(modalEl.style.top || 0),
+        left: parseInt(modalEl.style.left || 0),
+      };
+      localStorage.setItem("vocab_widget_pos", JSON.stringify(pos));
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }
+
+  function init() {
+    if (document.getElementById("vocab-root")) return;
+    root = document.createElement("div");
+    root.id = "vocab-root";
+    document.body.appendChild(root);
+
+    // 1. Search Wrapper
+    searchWrapper = document.createElement("div");
+    searchWrapper.id = "vocab-search-wrapper";
+    searchWrapper.innerHTML = `
+        <div id="vocab-search-modal">
+            <div class="vocab-header" id="vocab-drag-handle">
+                <div class="vocab-input-affix">
+                    <span style="font-size:20px">${ICONS.search}</span>
+                    <input class="vocab-search-input" id="native-search-input" placeholder="Type to search or create..." autocomplete="off">
+                </div>
+            </div>
+            <div id="vocab-modal-body" class="vocab-body"></div>
+            <div id="vocab-modal-assessment"></div>
+        </div>
+    `;
+    root.appendChild(searchWrapper);
+
+    // 👇 KHỞI TẠO DRAG
+    searchModal = document.getElementById("vocab-search-modal");
+    const dragHandle = document.getElementById("vocab-drag-handle");
+    enableDragAndPersist(dragHandle, searchModal);
+
+    // 2. Full Form Modal Wrapper
+    formWrapper = document.createElement("div");
+    formWrapper.className = "vocab-modal-overlay";
+    formWrapper.style.display = "none";
+    root.appendChild(formWrapper);
+
+    // 3. Mini Popup
+    miniPopup = document.createElement("div");
+    miniPopup.id = "vocab-mini-popup";
+    root.appendChild(miniPopup);
+
+    // 4. Assessment Modal Wrapper
+    if (!document.getElementById("vocab-assess-wrapper")) {
+      assessWrapper = document.createElement("div");
+      assessWrapper.id = "vocab-assess-wrapper";
+      assessWrapper.className = "assess-modal-overlay";
+      assessWrapper.style.display = "none";
+      root.appendChild(assessWrapper);
+
+      assessWrapper.onclick = (e) => {
+        if (e.target === assessWrapper) assessWrapper.style.display = "none";
+      };
+    } else {
+      assessWrapper = document.getElementById("vocab-assess-wrapper");
+    }
+
+    // Close events
+    searchWrapper.onclick = (e) => {
+      if (e.target === searchWrapper) hideAll();
+    };
+    // 👇 [FIX 1]: XÓA hoặc COMMENT dòng này để chặn click ra ngoài bị tắt
+    // formWrapper.onclick = (e) => {
+    //   if (e.target === formWrapper) formWrapper.style.display = "none";
+    // };
+    searchWrapper.addEventListener("keydown", (e) => e.stopPropagation());
+  }
+
+  function hideAll() {
+    if (searchWrapper) searchWrapper.style.display = "none";
+    if (formWrapper) formWrapper.style.display = "none";
+    if (miniPopup) miniPopup.style.display = "none";
+    if (assessWrapper) assessWrapper.style.display = "none";
+    window.speechSynthesis.cancel();
+  }
+
+  function renderFormModal(data, handlers) {
+    init();
+    formWrapper.style.display = "flex";
+    searchWrapper.style.display = "none";
+    miniPopup.style.display = "none";
+
+    const isEdit = data.isEditMode;
+
+    formWrapper.innerHTML = `
+        <div class="vocab-modal-content">
+            <div class="vocab-modal-header">
+                <div style="width:100%">
+                    <div class="vocab-modal-title">${
+                      isEdit ? "Editing Vocabulary" : "Create New Vocabulary"
+                    }</div>
+                    <div style="position:relative">
+                        <textarea 
+                            id="form-word" 
+                            class="vocab-input-large" 
+                            placeholder="Word..." 
+                            rows="1"
+                            ${isEdit ? "readonly" : ""}
+                        >${data.word || ""}</textarea>
+                        <div id="form-autofill-status" class="autofill-loading" style="display:none">✨ Auto-filling...</div>
+                    </div>
+                </div>
+                <button id="form-close" style="background:none; border:none; color:white; cursor:pointer;">${
+                  ICONS.close
+                }</button>
+            </div>
+            <div class="vocab-modal-body">
+                <div class="vocab-grid-2">
+                    <div>
+                        <label class="vocab-label">Pronunciation</label>
+                        <input id="form-pronun" class="vocab-input-field" value="${
+                          data.pronunciation || ""
+                        }" placeholder="/.../">
+                    </div>
+                    <div>
+                        <label class="vocab-label">Part Of Speech</label>
+                        <select id="form-pos" class="vocab-select-field">
+                            <option value="">-- Select --</option>
+                            <option value="noun" ${
+                              data.partOfSpeech === "noun" ? "selected" : ""
+                            }>Noun</option>
+                            <option value="verb" ${
+                              data.partOfSpeech === "verb" ? "selected" : ""
+                            }>Verb</option>
+                            <option value="adjective" ${
+                              data.partOfSpeech === "adjective"
+                                ? "selected"
+                                : ""
+                            }>Adjective</option>
+                            <option value="adverb" ${
+                              data.partOfSpeech === "adverb" ? "selected" : ""
+                            }>Adverb</option>
+                            <option value="phrase" ${
+                              data.partOfSpeech === "phrase" ? "selected" : ""
+                            }>Phrase</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="vocab-label">Meaning</label>
+                    <textarea id="form-meaning" class="vocab-textarea-field" placeholder="Nghĩa của từ...">${
+                      data.meaning || ""
+                    }</textarea>
+                </div>
+                <div>
+                    <label class="vocab-label">Example</label>
+                    <textarea id="form-example" class="vocab-textarea-field" style="background:#f9fafb; font-style:italic;" placeholder="Ví dụ...">${
+                      data.example || ""
+                    }</textarea>
+                </div>
+                <div class="vocab-grid-2">
+                    <div>
+                        <label class="vocab-label">Topic</label>
+                        <input id="form-topic" class="vocab-input-field" value="${
+                          data.topic || ""
+                        }" placeholder="IT, Travel...">
+                    </div>
+                    <div>
+                        <label class="vocab-label">Related Words</label>
+                        <input id="form-related" class="vocab-input-field" value="${
+                          data.relatedWords || ""
+                        }" placeholder="Synonyms...">
+                    </div>
+                </div>
+            </div>
+            <div class="vocab-modal-footer">
+                <button id="form-cancel" class="btn-cancel">Cancel</button>
+                <button id="form-save" class="btn-save">${
+                  isEdit ? "Save Changes" : "Create Word"
+                }</button>
+            </div>
+        </div>
+    `;
+
+    const wordInput = document.getElementById("form-word");
+    const statusDiv = document.getElementById("form-autofill-status");
+
+    // 👇 [FIX 3]: Logic tự động giãn chiều cao (Auto-resize) cho Word Input
+    const adjustHeight = () => {
+      wordInput.style.height = "auto";
+      wordInput.style.height = wordInput.scrollHeight + "px";
+    };
+    wordInput.addEventListener("input", adjustHeight);
+    // Gọi 1 lần lúc init để nó khớp với nội dung ban đầu
+    setTimeout(adjustHeight, 0);
+
+    if (!isEdit) {
+      wordInput.onblur = async () => {
+        const val = wordInput.value.trim();
+        if (val && handlers.onAutoFill) {
+          statusDiv.style.display = "inline-block";
+          const autoData = await handlers.onAutoFill(val);
+          statusDiv.style.display = "none";
+          if (autoData) {
+            if (autoData.pronunciation)
+              document.getElementById("form-pronun").value =
+                autoData.pronunciation;
+            if (autoData.partOfSpeech)
+              document.getElementById("form-pos").value = autoData.partOfSpeech;
+            if (autoData.meaning)
+              document.getElementById("form-meaning").value = autoData.meaning;
+            if (autoData.example)
+              document.getElementById("form-example").value = autoData.example;
+          }
+        }
+      };
+      if (data.word) wordInput.onblur();
+    }
+
+    document.getElementById("form-close").onclick = () => {
+      formWrapper.style.display = "none";
+    };
+    document.getElementById("form-cancel").onclick = () => {
+      formWrapper.style.display = "none";
+    };
+
+    document.getElementById("form-save").onclick = () => {
+      const newData = {
+        id: data.id,
+        word: document.getElementById("form-word").value.trim(),
+        pronunciation: document.getElementById("form-pronun").value.trim(),
+        partOfSpeech: document.getElementById("form-pos").value,
+        meaning: document.getElementById("form-meaning").value.trim(),
+        example: document.getElementById("form-example").value.trim(),
+        topic: document.getElementById("form-topic").value.trim(),
+        relatedWords: document.getElementById("form-related").value.trim(),
+      };
+      handlers.onSave(newData);
+      formWrapper.style.display = "none";
+    };
+
+    if (!isEdit) setTimeout(() => wordInput.focus(), 100);
+  }
+
+  // ... (Các phần trên giữ nguyên) ...
+
+  // --- [UPDATED] RENDER SEARCH MODAL ---
+  function renderSearchModal(keyword, dbResults, apiData, handlers) {
+    init();
+    searchWrapper.style.display = "block";
+
+    const input = document.getElementById("native-search-input");
+    const body = document.getElementById("vocab-modal-body");
+    const mode = handlers.mode || "EN";
+    const userTyped = handlers.rawInput || "";
+
+    // 1. CẬP NHẬT UI THEO MODE (Placeholder & Icon)
+    const placeholder =
+      mode === "VI"
+        ? "Nhập tiếng Việt để dịch & tra cứu..."
+        : "Type English to search or create...";
+    input.setAttribute("placeholder", placeholder);
+
+    // Thêm visual indicator cho mode (Nếu muốn)
+    // Ví dụ đổi màu icon kính lúp: Xanh (EN) - Đỏ (VI)
+    const iconSpan = document.querySelector(".vocab-input-affix span");
+    if (iconSpan) {
+      iconSpan.innerHTML =
+        mode === "VI"
+          ? '<span style="font-size:14px; font-weight:800; color:#e53935;">VI</span>'
+          : ICONS.search;
+    }
+
+    // 2. LOGIC INPUT VALUE
+    // Nếu là active element (đang gõ) -> Không đụng vào value
+    // Nếu mới mở (userTyped rỗng) -> Reset
+    if (document.activeElement !== input) {
+      input.value = userTyped;
+      input.focus();
+    }
+
+    // Logic bind event input (như cũ)
+    if (!input.dataset.hasEvent) {
+      input.oninput = (e) => handlers.onInput(e.target.value);
+      input.addEventListener("keydown", (e) => {
+        e.stopPropagation(); // Chặn Notion cướp phím
+        if (e.key === "Enter") {
+          handlers.onEnter(input.value);
+        }
+      });
+      // Chặn sự kiện lan ra ngoài để copy/paste ngon lành
+      ["paste", "copy", "cut", "selectstart"].forEach((evt) => {
+        input.addEventListener(evt, (e) => e.stopPropagation());
+      });
+      input.dataset.hasEvent = "true";
+    }
+
+    let html = "";
+
+    // 👇 CREATE NEW ITEM
+    // Lưu ý: 'keyword' ở đây là từ Tiếng Anh (đã dịch từ VI hoặc nguyên gốc EN)
+    const exactMatch = dbResults.find(
+      (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
+    );
+
+    if (keyword && !exactMatch) {
+      const trans = apiData?.trans || {};
+
+      // Xác định nghĩa hiển thị:
+      // - Nếu Mode VI: Hiển thị input gốc ("xin chào")
+      // - Nếu Mode EN: Hiển thị kết quả dịch ("Translating...")
+      const displayMeaning =
+        handlers.mode === "VI"
+          ? handlers.rawInput
+          : trans.wordMeaning || "Translating...";
+
+      const pronun = apiData?.phonetics?.us || "";
+
+      // Tạo tiêu đề phụ dựa trên mode
+      const subTitle =
+        handlers.mode === "VI"
+          ? `English match: "${keyword}"` // Cho người dùng biết từ tiếng Anh tương ứng
+          : "New Word";
+
+      html += `
+        <div class="vocab-list-item vocab-create-item" id="open-create-form">
+            <div class="vocab-list-left">
+                <div class="vocab-word-row">
+                    <span class="vocab-word-text">${keyword}</span> <span class="vocab-tag tag-green">${subTitle}</span>
+                    <span class="vocab-pronun">${pronun}</span>
+                </div>
+                <div class="vocab-word-meta">${displayMeaning}</div>
+                <div style="font-size:11px; color:#1890ff; margin-top:2px;">
+                    Press Enter to save to database
+                </div>
+            </div>
+            
+            <div class="vocab-actions" style="opacity: 1; transform: none;">
+                <button id="add-listen" class="action-btn-circle btn-sound" title="Listen">
+                    ${ICONS.sound}
+                </button>
+                <button id="add-mic" class="action-btn-circle btn-mic" title="Practice">
+                    ${ICONS.mic}
+                </button>
+            </div>
+        </div>
+        <div style="height:1px; background:#f0f0f0; margin: 0 20px;"></div>
+      `;
+    }
+
+    // 👇 2. RESULTS LIST
+    if (dbResults.length > 0) {
+      dbResults.forEach((item, idx) => {
+        html += `
+            <div class="vocab-list-item" id="vocab-item-${idx}">
+                <div class="vocab-list-left">
+                    <div class="vocab-word-row">
+                        <span class="vocab-word-text">${item.word}</span>
+                        ${
+                          item.partOfSpeech
+                            ? `<span class="vocab-tag">${item.partOfSpeech}</span>`
+                            : ""
+                        }
+                        ${
+                          item.topic
+                            ? `<span class="vocab-tag tag-blue">${item.topic}</span>`
+                            : ""
+                        }
+                        <span style="font-size:10px; color:#ccc; margin-left:5px;">(${
+                          item.occurrence || 0
+                        })</span>
+                    </div>
+                    <div class="vocab-word-meta">${item.meaning || ""}</div>
+                </div>
+                <div class="vocab-actions">
+                    <button class="action-btn-circle btn-listen" title="Listen">
+                        ${ICONS.sound}
+                    </button>
+                    <button class="action-btn-circle btn-mic" title="Practice">
+                        ${ICONS.mic}
+                    </button>
+                </div>
+            </div>`;
+      });
+    } else if (!keyword) {
+      html += `<div style="text-align:center; padding:40px; color:#999; font-size:14px;">Type any word to search or create...</div>`;
+    }
+
+    body.innerHTML = html;
+
+    // --- RE-BIND EVENTS (FIX LỖI CLICK) ---
+    // Sử dụng stopPropagation để không bị kích hoạt click vào row cha
+
+    // 1. Bind cho Create New Box
+    if (keyword && !exactMatch) {
+      const btnListen = document.getElementById("add-listen");
+      if (btnListen) {
+        btnListen.onclick = (e) => {
+          e.stopPropagation(); // Chặn lan ra ngoài
+          handlers.onSpeak(keyword);
+        };
+      }
+
+      const btnMic = document.getElementById("add-mic");
+      if (btnMic) {
+        btnMic.onclick = (e) => {
+          e.stopPropagation(); // Chặn lan ra ngoài
+          if (handlers.onMicPractice) handlers.onMicPractice(keyword);
+        };
+      }
+
+      const createBox = document.getElementById("open-create-form");
+      if (createBox) {
+        createBox.onclick = () => handlers.onOpenCreate(keyword);
+      }
+    }
+
+    // 2. Bind cho List Results
+    dbResults.forEach((item, idx) => {
+      const itemEl = document.getElementById(`vocab-item-${idx}`);
+      if (!itemEl) return;
+
+      // 👇 SỰ KIỆN CLICK VÀO DÒNG (ROW CLICK)
+      itemEl.onclick = (e) => {
+        // Nếu click vào nút con (loa/mic) thì bỏ qua, để sự kiện nút con xử lý
+        if (e.target.closest("button")) return;
+
+        // 1. Tăng count & Update time
+        if (handlers.onInteract) handlers.onInteract(item);
+
+        // 2. Mở Popup chỉnh sửa (Edit Mode)
+        handlers.onEdit(item);
+      };
+
+      // 👇 NÚT LOA
+      const btnListen = itemEl.querySelector(".btn-listen");
+      if (btnListen)
+        btnListen.onclick = (e) => {
+          e.stopPropagation();
+          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
+          handlers.onSpeak(item.word);
+        };
+
+      // 👇 NÚT MIC
+      const btnMic = itemEl.querySelector(".btn-mic");
+      if (btnMic)
+        btnMic.onclick = (e) => {
+          e.stopPropagation();
+          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
+          if (handlers.onMic) handlers.onMic(item);
+        };
+    });
+  }
+
+  // ... (Các hàm khác giữ nguyên) ...
+
+  function renderPopup(data, rect, handlers) {
+    init();
+    miniPopup.style.display = "block";
+    searchWrapper.style.display = "none";
+    let top = rect.bottom + 10;
+    let left = rect.left;
+    if (top + 200 > window.innerHeight) top = rect.top - 200;
+    miniPopup.style.top = top + "px";
+    miniPopup.style.left = left + "px";
+    const trans = data.trans;
+    const meaning = typeof trans === "string" ? trans : trans.wordMeaning;
+    miniPopup.innerHTML = `
+        <div style="padding:16px;">
+            <div style="font-weight:700; font-size:18px; color:#1890ff; margin-bottom:4px;">${
+              data.text
+            }</div>
+            <div style="color:#888; font-family:monospace; margin-bottom:8px;">${
+              data.phonetics?.us || ""
+            }</div>
+            <div style="margin-bottom:12px; color:#333;">${meaning}</div>
+            <div style="display:flex; gap:8px;">
+                <button id="pp-listen" class="ant-btn ant-btn-icon">${
+                  ICONS.sound
+                }</button>
+                <button id="pp-mic" class="ant-btn ant-btn-icon">${
+                  ICONS.mic
+                }</button>
+                <div style="flex:1"></div>
+                <button id="pp-add" class="ant-btn ant-btn-primary">Add to DB</button>
+            </div>
+            <div id="pp-assessment"></div>
+        </div>
+      `;
+    document.getElementById("pp-listen").onclick = () =>
+      handlers.onSpeak(data.text);
+    document.getElementById("pp-mic").onclick = () =>
+      handleMicClick(data.text, document.getElementById("pp-assessment"));
+    document.getElementById("pp-add").onclick = () => {
+      hideAll();
+      handlers.onOpenCreate(data.text);
+    };
+  }
+
+  // --- [NEW] RENDER ASSESSMENT MODAL ---
+  function renderAssessmentModal(vocab, handlers) {
+    init();
+    assessWrapper.style.display = "flex";
+
+    const renderContent = (result = null, isRecording = false, error = "") => {
+      let scoreHtml = `<div style="color:#e5e7eb; font-size:48px;">?</div>`;
+      let borderColor = "#f3f4f6";
+      let phonemeHtml = "";
+
+      if (result) {
+        const score = Math.round(result.AccuracyScore);
+        borderColor =
+          score >= 80 ? "#4caf50" : score >= 60 ? "#fbc02d" : "#ef4444";
+        scoreHtml = `<div style="color:${borderColor}">${score}</div>`;
+
+        if (result.Words && result.Words[0] && result.Words[0].Phonemes) {
+          phonemeHtml = result.Words[0].Phonemes.map((p) => {
+            const bgClass =
+              p.AccuracyScore >= 80
+                ? "bg-green"
+                : p.AccuracyScore >= 60
+                ? "bg-yellow"
+                : "bg-red";
+            return `<span class="phoneme-badge ${bgClass}" title="${p.AccuracyScore}">${p.Phoneme}</span>`;
+          }).join("");
+        }
+      }
+
+      assessWrapper.innerHTML = `
+            <div class="assess-modal-content">
+                <button id="assess-close" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:20px; cursor:pointer; color:#9ca3af;">✕</button>
+                <div class="assess-word">${vocab.word}</div>
+                <div class="assess-pronun">/${vocab.pronunciation || ""}/</div>
+                <div class="score-circle-container" style="border-color: ${borderColor}">
+                    ${scoreHtml}
+                </div>
+                ${
+                  phonemeHtml
+                    ? `<div class="phoneme-list">${phonemeHtml}</div>`
+                    : ""
+                }
+                <div class="assess-controls">
+                    <button id="btn-listen-sample" class="btn-control btn-speaker" title="Nghe mẫu">
+                       ${ICONS.sound}
+                    </button>
+                    <button id="btn-record-toggle" class="btn-control btn-record ${
+                      isRecording ? "recording" : ""
+                    }">
+                       ${
+                         isRecording
+                           ? '<div style="width:20px; height:20px; background:white; border-radius:4px;"></div>'
+                           : ICONS.mic
+                       }
+                    </button>
+                    <button id="btn-playback-user" class="btn-control btn-playback" title="Nghe lại" ${
+                      !result ? "disabled" : ""
+                    }>
+                       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </button>
+                </div>
+                <div class="assess-status">
+                    ${
+                      isRecording
+                        ? '<span style="color:#ef4444">Listening...</span>'
+                        : error
+                        ? `<span style="color:#ef4444">${error}</span>`
+                        : result
+                        ? vocab.id !== "temp"
+                          ? '<span style="color:#10b981">✅ Score Saved!</span>'
+                          : '<span style="color:#f59e0b">⚠️ Practice Mode (Not Saved)</span>'
+                        : "Click mic to start"
+                    }
+                </div>
+            </div>
+          `;
+
+      document.getElementById("assess-close").onclick = () =>
+        (assessWrapper.style.display = "none");
+      document.getElementById("btn-listen-sample").onclick = () =>
+        handlers.onSpeak(vocab.word);
+
+      document.getElementById("btn-record-toggle").onclick = () => {
+        if (isRecording) handlers.onStop();
+        else
+          handlers.onRecord(
+            (res) => renderContent(res, false),
+            (err) => renderContent(null, false, err)
+          );
+        if (!isRecording) renderContent(null, true);
+      };
+
+      document.getElementById("btn-playback-user").onclick = () =>
+        handlers.onPlayback();
+    };
+
+    renderContent();
+  }
+
+  function renderAssessmentResult(data, container) {
+    if (!data || !data.NBest) {
+      container.innerHTML = `<div style="color:red; text-align:center; padding:10px;">Error</div>`;
+      return;
+    }
+    const result = data.NBest[0];
+    const score = Math.round(result.AccuracyScore);
+    const color = score >= 80 ? "#52c41a" : score >= 60 ? "#faad14" : "#ff4d4f";
+    let html = `...`; // Old assessment result renderer can be deprecated or kept for mini-popups
+    container.innerHTML = html;
+    container.style.display = "block";
+  }
+
+  async function handleMicClick(text, container) {
+    // This logic should now be in native-core.js
+    // It will call renderAssessmentModal instead
+  }
+
+  return {
+    renderSearchModal,
+    renderPopup,
+    renderFormModal,
+    renderAssessmentModal,
+    hideAll,
+  };
+})();
+
+
+
+================================================
+FILE: content-scripts/shortcuts.js
+================================================
+// This file is intentionally left blank to avoid redundant hotkey listeners.
+// The logic has been consolidated into main.js.
+
+
+================================================
+FILE: content-scripts/ui.js
+================================================
+// ui.js
+let iframeElement = null;
+
+export const createOverlay = () => {
+  if (iframeElement) return; // Đã tồn tại thì thôi
+
+  // 1. Tạo Iframe
+  iframeElement = document.createElement("iframe");
+
+  // 2. Style cho Iframe (Full màn hình, đè lên tất cả)
+  Object.assign(iframeElement.style, {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100vw",
+    height: "100vh",
+    border: "none",
+    zIndex: "2147483647", // Max z-index
+    backgroundColor: "rgba(0,0,0,0.5)", // Màu nền tối mờ
+    display: "block",
+  });
+
+  // 3. Load trang Vocabulary của Frontend vào
+  // Thêm param ?openSearch=true để React biết đường mở Popup ngay lập tức
+  iframeElement.src = `${APP_CONFIG.FRONTEND_URL}/vocabulary?openSearch=true&iframeMode=true`;
+  iframeElement.allow = "microphone; camera"; // Quan trọng: Cho phép dùng Mic trong Iframe
+
+  document.body.appendChild(iframeElement);
+
+  // 4. Focus vào iframe để gõ phím được ngay
+  iframeElement.onload = () => {
+    iframeElement.contentWindow.focus();
+  };
+};
+
+export const removeOverlay = () => {
+  if (iframeElement) {
+    iframeElement.remove();
+    iframeElement = null;
+  }
+};
+
+export const toggleOverlay = () => {
+  if (iframeElement) {
+    removeOverlay();
+  } else {
+    createOverlay();
+  }
+};
+
+

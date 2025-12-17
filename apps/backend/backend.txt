@@ -1,0 +1,1956 @@
+Directory structure:
+└── backend/
+    ├── README.md
+    ├── eslint.config.mjs
+    ├── nest-cli.json
+    ├── package.json
+    ├── tree.txt
+    ├── tsconfig.build.json
+    ├── tsconfig.json
+    ├── .prettierrc
+    ├── certificates/
+    │   ├── localhost-key.pem
+    │   └── localhost.pem
+    ├── prisma/
+    │   ├── schema.prisma
+    │   └── migrations/
+    │       ├── migration_lock.toml
+    │       ├── 20251209154448_init_db/
+    │       │   └── migration.sql
+    │       ├── 20251209164346_add_google_auth/
+    │       │   └── migration.sql
+    │       ├── 20251211103703_update_vocab_structure/
+    │       │   └── migration.sql
+    │       ├── 20251211143216_add_is_starred/
+    │       │   └── migration.sql
+    │       └── 20251211170629_add_pronunciation_scores/
+    │           └── migration.sql
+    ├── src/
+    │   ├── app.controller.spec.ts
+    │   ├── app.controller.ts
+    │   ├── app.module.ts
+    │   ├── app.service.ts
+    │   ├── logging.interceptor.ts
+    │   ├── main.ts
+    │   ├── common/
+    │   │   └── interceptors/
+    │   │       └── performance.interceptor.ts
+    │   ├── modules/
+    │   │   ├── auth/
+    │   │   │   ├── auth.controller.ts
+    │   │   │   ├── auth.module.ts
+    │   │   │   ├── auth.service.ts
+    │   │   │   ├── dto/
+    │   │   │   │   ├── create-auth.dto.ts
+    │   │   │   │   └── update-auth.dto.ts
+    │   │   │   ├── entities/
+    │   │   │   │   └── auth.entity.ts
+    │   │   │   ├── guards/
+    │   │   │   │   ├── google-auth.guard.ts
+    │   │   │   │   ├── jwt-auth.guard.ts
+    │   │   │   │   └── local-auth.guard.ts
+    │   │   │   └── strategies/
+    │   │   │       ├── google.strategy.ts
+    │   │   │       ├── jwt.strategy.ts
+    │   │   │       └── local.strategy.ts
+    │   │   ├── users/
+    │   │   │   ├── users.controller.ts
+    │   │   │   ├── users.module.ts
+    │   │   │   ├── users.service.ts
+    │   │   │   ├── dto/
+    │   │   │   │   ├── create-user.dto.ts
+    │   │   │   │   └── update-user.dto.ts
+    │   │   │   └── entities/
+    │   │   │       └── user.entity.ts
+    │   │   └── vocabulary/
+    │   │       ├── vocabulary.controller.ts
+    │   │       ├── vocabulary.module.ts
+    │   │       ├── vocabulary.service.ts
+    │   │       ├── dto/
+    │   │       │   ├── create-vocabulary.dto.ts
+    │   │       │   └── update-vocabulary.dto.ts
+    │   │       └── entities/
+    │   │           └── vocabulary.entity.ts
+    │   └── prisma/
+    │       ├── prisma.module.ts
+    │       └── prisma.service.ts
+    └── test/
+        ├── app.e2e-spec.ts
+        └── jest-e2e.json
+
+================================================
+FILE: README.md
+================================================
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
+
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
+
+  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+    <p align="center">
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
+<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
+<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
+<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
+  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
+    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+</p>
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+
+## Description
+
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+
+## Project setup
+
+```bash
+$ npm install
+```
+
+## Compile and run the project
+
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Run tests
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```
+
+## Deployment
+
+When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+
+If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+
+```bash
+$ npm install -g @nestjs/mau
+$ mau deploy
+```
+
+With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+
+## Resources
+
+Check out a few resources that may come in handy when working with NestJS:
+
+- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
+- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
+- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
+- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
+- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
+- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
+- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
+- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+
+## Support
+
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+
+## Stay in touch
+
+- Author - [Kamil MyÅ›liwiec](https://twitter.com/kammysliwiec)
+- Website - [https://nestjs.com](https://nestjs.com/)
+- Twitter - [@nestframework](https://twitter.com/nestframework)
+
+## License
+
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+
+================================================
+FILE: eslint.config.mjs
+================================================
+// @ts-check
+import eslint from '@eslint/js';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  {
+    ignores: ['eslint.config.mjs'],
+  },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  eslintPluginPrettierRecommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+      },
+      sourceType: 'commonjs',
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      "prettier/prettier": ["error", { endOfLine: "auto" }],
+    },
+  },
+);
+
+
+
+================================================
+FILE: nest-cli.json
+================================================
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true
+  }
+}
+
+
+
+================================================
+FILE: package.json
+================================================
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "prebuild": "npx prisma generate",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/mapped-types": "*",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.0.1",
+    "@prisma/client": "^5.10.2",
+    "@types/passport-local": "^1.0.38",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "csv-parser": "^3.2.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.19.2",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "prisma": "^5.10.2",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+
+
+
+================================================
+FILE: tree.txt
+================================================
+backend
+â”œâ”€â”€ README.md
+â”œâ”€â”€ eslint.config.mjs
+â”œâ”€â”€ nest-cli.json
+â”œâ”€â”€ package-lock.json
+â”œâ”€â”€ package.json
+â”œâ”€â”€ prisma
+â”‚   â””â”€â”€ schema.prisma
+â”œâ”€â”€ src
+â”‚   â”œâ”€â”€ app.controller.spec.ts
+â”‚   â”œâ”€â”€ app.controller.ts
+â”‚   â”œâ”€â”€ app.module.ts
+â”‚   â”œâ”€â”€ app.service.ts
+â”‚   â””â”€â”€ main.ts
+â”œâ”€â”€ test
+â”‚   â”œâ”€â”€ app.e2e-spec.ts
+â”‚   â””â”€â”€ jest-e2e.json
+â”œâ”€â”€ tree.txt
+â”œâ”€â”€ tsconfig.build.json
+â””â”€â”€ tsconfig.json
+
+
+
+================================================
+FILE: tsconfig.build.json
+================================================
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
+
+
+
+================================================
+FILE: tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false
+  }
+}
+
+
+
+================================================
+FILE: .prettierrc
+================================================
+{
+  "singleQuote": true,
+  "trailingComma": "all"
+}
+
+
+
+================================================
+FILE: certificates/localhost-key.pem
+================================================
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDNADwYED/YiApX
+mHjclA2Z/ruibwSxMzPO0zzlF3llfz7gf6PkMMaOb4iADHBRfxvAdgMhb4uZU8JC
+c4s4e6Y8ma/C7FRLAT/uohP4H3jL5EELpEThzFECoN6j5WYvjxTMxFEsU2Y0OwwM
+XhURMpjx85pLt9BDNx4isun0kBydGKnGzK4qoStmQB4Lh9dOjJBXIyQxZ0bYKDcC
+9QiRpeppaQX64VtAygQbRbZDnrPEElOXHeYSYWsENctEUsd83pXeb37LS65iOI53
+OHQrIuz8qFDIEzErcQvKkWkx9aDmMr99C+CAwZi/fMq5FJGPrf5M6hEMPiTi31r0
+dHqG9gfFAgMBAAECggEAPKyWHLUqgGb7UKPDGd4EDJEVbeUX6W5zJgLlYhTJjF3V
++VIt6sr46Y1fRC7qS2SojRUgphPCqJXeyBY0nXoTYJpIKBQUesKa7oEwEd8WvJoJ
+Gm37KS10yKdeXfn2fZsGl/h+4fSpKkpTrZFnANkN5YapI0H7NPmqRLDZh9Xjcicj
+eTi1SsOFqKzPHK/80ujVD4NzvBj27TT4IWWnFpZmVWDPqX7BEX+vNJ5XykWWZyGI
+/y5BUR5tgQmWOk9EStjEAX8lfpLPi6L2SPxXJ6bDytiwS/tMb/9x2Hhx9jlSKui3
+MMKpjeVKiSvP+fQ/+euNBXHUbtZ888kM+LtOCiDMHQKBgQDShDnjAdwk2zgo8l1C
+BuWYfZFGjki8aySlGlYBqrEVotxKXXEhm7+CBRgQbciipfW9VL520NPNjYPQIWWY
+M/o/9YPVYDOqrDALPRAvokyjjZ0L9RqgfoyxuMI0/KolCyQ7UQrfSXzQdKL9bqVq
+P3XmY/Rf7xwMhYEoJG545Za1swKBgQD5SvBBJHTUVeqfCpTR0fHM/d7Yj9qz/zwr
+3ukPlU6/5j/NOuxzIai3KicYosgbllhzdcnehdRSQXrjr2KqJISIqmMGHGrAK+JK
+320y1hKEK2y7y2My4xWORLkePO7GxviUfc56nb1GD/vFew1lw373jHvgbsbLdPPd
+tx2HMASApwKBgBHu/7tt+iINptAeLYGlcsO11r1q+5lJi1qhTrhfoSxVrmyLX0rc
+qMjbxDwKDjCE8NVLNdqLWa/GIXeGkNARhX0TXkK8Kkqc1o7uicV1DxBTzRAqtjT7
+8uJk+e5no9r6AwEmm0WATii39vaeCWtuso2I8FWH2hza9rDDwcF81YTvAoGBAPVw
+fpLkXdIgtNrZBCSAW1zEJn95Qo4tIQTgdv3Mtrfg7bgV526DGSUc71kmC3Z905/5
+vELF6IEDzwYUS0PQqFwVxWDi4YdKrYWh7FU8xwYx6uAKIySax0JHDytiOoSiqWMp
+afz3CL7ORcfsmwgyLfNz8RLKfhcakm8cNoo/EG/JAoGBAK1nBVp+sC+2n/ge1Fo3
+wKIdldV5kIGJHaFqPNuTndgEgzMbuAr0vqclzQGaDuS1iqovHgXuXNHr8yWQIFHg
+2yb2d93pYDjPrh5o4dJsrrpLJzufUv1P93B5BNsILsCcO/F43zyvF8kMMocrrUDx
+M4EZhN1756tA2eNGmccjdYT9
+-----END PRIVATE KEY-----
+
+
+
+================================================
+FILE: certificates/localhost.pem
+================================================
+-----BEGIN CERTIFICATE-----
+MIIElDCCAvygAwIBAgIQLnE8pEEiFfjiYZShYz9NUjANBgkqhkiG9w0BAQsFADCB
+qTEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMT8wPQYDVQQLDDZERVNL
+VE9QLUxKVlM3UktcOTk5OUBERVNLVE9QLUxKVlM3UksgKEhvYWkgTmFtIE5ndXll
+bikxRjBEBgNVBAMMPW1rY2VydCBERVNLVE9QLUxKVlM3UktcOTk5OUBERVNLVE9Q
+LUxKVlM3UksgKEhvYWkgTmFtIE5ndXllbikwHhcNMjUxMjEyMTQ1NzE0WhcNMjgw
+MzEyMTQ1NzE0WjBqMScwJQYDVQQKEx5ta2NlcnQgZGV2ZWxvcG1lbnQgY2VydGlm
+aWNhdGUxPzA9BgNVBAsMNkRFU0tUT1AtTEpWUzdSS1w5OTk5QERFU0tUT1AtTEpW
+UzdSSyAoSG9haSBOYW0gTmd1eWVuKTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+AQoCggEBAM0APBgQP9iICleYeNyUDZn+u6JvBLEzM87TPOUXeWV/PuB/o+Qwxo5v
+iIAMcFF/G8B2AyFvi5lTwkJzizh7pjyZr8LsVEsBP+6iE/gfeMvkQQukROHMUQKg
+3qPlZi+PFMzEUSxTZjQ7DAxeFREymPHzmku30EM3HiKy6fSQHJ0YqcbMriqhK2ZA
+HguH106MkFcjJDFnRtgoNwL1CJGl6mlpBfrhW0DKBBtFtkOes8QSU5cd5hJhawQ1
+y0RSx3zeld5vfstLrmI4jnc4dCsi7PyoUMgTMStxC8qRaTH1oOYyv30L4IDBmL98
+yrkUkY+t/kzqEQw+JOLfWvR0eob2B8UCAwEAAaN2MHQwDgYDVR0PAQH/BAQDAgWg
+MBMGA1UdJQQMMAoGCCsGAQUFBwMBMB8GA1UdIwQYMBaAFA2aGeHX2DmBZI6zbeRs
+WntSBbbFMCwGA1UdEQQlMCOCCWxvY2FsaG9zdIcEfwAAAYcQAAAAAAAAAAAAAAAA
+AAAAATANBgkqhkiG9w0BAQsFAAOCAYEAAzPIuSx9l6ITKMyoj91SBskwaa/gVzLJ
+JiiqBHDzvLpt8RTA8eTS7U45iCOLGI3r65ZY17uK0MeF4mprrDi69kV3+rjgGnXP
+BxFXGBuz/T2YfrsNA3rebLrCQUaBdee9ZLoryK9Mo/J1EdgDRXhipvAY8xv66/wY
+/UuUiotnvBFeTks82+q5Iy30hdAGwvLW6SmWAbfT9tamTb0vlQQGKJZblo+G+A+g
+VJSOb3Zq8DMbG8QU8AMN37wmQJw+U/iBj3KIIh39jOWmJ+oHcJW8OJ6eYwE33cjG
+2PTxsBHkbS8lmw/Cr4n1hGdR0knbQbAFkSMG6dYkyqsL6jgY3XjcBq/osgKofxzN
+cTT2FQmK4uEKBWmu3PBG2MEJP/jWQPRGTJxEjGot1IMmrCZ1FtmQsNdRDDfbjPxl
+wmKqMeV5AC301uBEDRyOXqw2M+u4wX5Yvh7MqJ46y2FgHS+XnsP+yeba7eh3SzYs
+tHyO6uYQqD6J3x9LDzxMopjW5UWbqgRx
+-----END CERTIFICATE-----
+
+
+
+================================================
+FILE: prisma/schema.prisma
+================================================
+// c2025-12-09-full-app-english\apps\backend\prisma\schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// 1. Bảng User (Người dùng)
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String? // 👈 Thêm dấu ? để cho phép Null (User Google không có pass)
+  name     String?
+  avatar   String? // 👈 Thêm trường này để lưu ảnh đại diện từ Google
+  provider String  @default("local") // "local" hoặc "google"
+  googleId String? @unique // ID riêng của Google trả về
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vocabItems VocabItem[]
+
+  @@map("users")
+}
+
+// 2. Bảng VocabItem (Từ vựng)
+// apps/backend/prisma/schema.prisma
+
+model VocabItem {
+  id                  String  @id @default(uuid())
+  // 👇 THÊM DÒNG NÀY: Lưu lịch sử điểm số (PostgreSQL hỗ trợ mảng Int[])
+  pronunciationScores Int[]   @default([])
+  // --- CÁC CỘT KHỚP VỚI EXCEL ---
+  topic               String? // Topic
+  word                String // Word (Bắt buộc)
+  partOfSpeech        String? @map("part_of_speech") // Part of speech
+  pronunciation       String? // Pronunciation
+  meaning             String? // Meaning
+  example             String? // Example
+  relatedWords        String? @map("related_words") // Related words
+  occurrence          Int?    @default(1)
+  isStarred           Boolean @default(false) // 👈 New field: Mặc định là false, đánh dấu thì true
+
+  // --- CÁC CỘT HỆ THỐNG (Bắt buộc phải giữ) ---
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Map cột "Time" trong Excel vào createdAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Xóa các trường cũ không dùng nữa (imageUrl, audioUrl, tags, masteryLevel...)
+  // Hoặc cứ để đó nếu sau này muốn dùng lại, nhưng ở đây mình xóa cho gọn theo ý bạn.
+
+  @@index([userId])
+  @@map("vocab_items")
+}
+
+
+
+================================================
+FILE: prisma/migrations/migration_lock.toml
+================================================
+# Please do not edit this file manually
+# It should be added in your version-control system (i.e. Git)
+provider = "postgresql"
+
+
+================================================
+FILE: prisma/migrations/20251209154448_init_db/migration.sql
+================================================
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "name" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "vocab_items" (
+    "id" TEXT NOT NULL,
+    "word" TEXT NOT NULL,
+    "meaning" TEXT,
+    "context" TEXT,
+    "example" TEXT,
+    "image_url" TEXT,
+    "audio_url" TEXT,
+    "mastery_level" INTEGER NOT NULL DEFAULT 0,
+    "tags" TEXT[],
+    "user_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "vocab_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE INDEX "vocab_items_user_id_idx" ON "vocab_items"("user_id");
+
+-- AddForeignKey
+ALTER TABLE "vocab_items" ADD CONSTRAINT "vocab_items_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+
+
+================================================
+FILE: prisma/migrations/20251209164346_add_google_auth/migration.sql
+================================================
+/*
+  Warnings:
+
+  - A unique constraint covering the columns `[googleId]` on the table `users` will be added. If there are existing duplicate values, this will fail.
+
+*/
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN     "avatar" TEXT,
+ADD COLUMN     "googleId" TEXT,
+ADD COLUMN     "provider" TEXT NOT NULL DEFAULT 'local',
+ALTER COLUMN "password" DROP NOT NULL;
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_googleId_key" ON "users"("googleId");
+
+
+
+================================================
+FILE: prisma/migrations/20251211103703_update_vocab_structure/migration.sql
+================================================
+/*
+  Warnings:
+
+  - You are about to drop the column `audio_url` on the `vocab_items` table. All the data in the column will be lost.
+  - You are about to drop the column `context` on the `vocab_items` table. All the data in the column will be lost.
+  - You are about to drop the column `image_url` on the `vocab_items` table. All the data in the column will be lost.
+  - You are about to drop the column `mastery_level` on the `vocab_items` table. All the data in the column will be lost.
+  - You are about to drop the column `tags` on the `vocab_items` table. All the data in the column will be lost.
+
+*/
+-- AlterTable
+ALTER TABLE "vocab_items" DROP COLUMN "audio_url",
+DROP COLUMN "context",
+DROP COLUMN "image_url",
+DROP COLUMN "mastery_level",
+DROP COLUMN "tags",
+ADD COLUMN     "occurrence" INTEGER DEFAULT 1,
+ADD COLUMN     "part_of_speech" TEXT,
+ADD COLUMN     "pronunciation" TEXT,
+ADD COLUMN     "related_words" TEXT,
+ADD COLUMN     "topic" TEXT;
+
+
+
+================================================
+FILE: prisma/migrations/20251211143216_add_is_starred/migration.sql
+================================================
+-- AlterTable
+ALTER TABLE "vocab_items" ADD COLUMN     "isStarred" BOOLEAN NOT NULL DEFAULT false;
+
+
+
+================================================
+FILE: prisma/migrations/20251211170629_add_pronunciation_scores/migration.sql
+================================================
+-- AlterTable
+ALTER TABLE "vocab_items" ADD COLUMN     "pronunciationScores" INTEGER[] DEFAULT ARRAY[]::INTEGER[];
+
+
+
+================================================
+FILE: src/app.controller.spec.ts
+================================================
+import { Test, TestingModule } from '@nestjs/testing';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+describe('AppController', () => {
+  let appController: AppController;
+
+  beforeEach(async () => {
+    const app: TestingModule = await Test.createTestingModule({
+      controllers: [AppController],
+      providers: [AppService],
+    }).compile();
+
+    appController = app.get<AppController>(AppController);
+  });
+
+  describe('root', () => {
+    it('should return "Hello World!"', () => {
+      expect(appController.getHello()).toBe('Hello World!');
+    });
+  });
+});
+
+
+
+================================================
+FILE: src/app.controller.ts
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 3973: character maps to <undefined>
+
+
+================================================
+FILE: src/app.module.ts
+================================================
+// apps/backend/src/app.module.ts
+import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
+import { PerformanceInterceptor } from './common/interceptors/performance.interceptor';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, // 👈 Quan trọng!
+    }),
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    VocabularyModule,
+  ],
+  controllers: [AppController],
+  providers: [
+    AppService,
+    // 👇 Đăng ký Performance Interceptor globally
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PerformanceInterceptor,
+    },
+  ],
+})
+export class AppModule {}
+
+
+
+================================================
+FILE: src/app.service.ts
+================================================
+// apps/backend/src/app.service.ts
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from './prisma/prisma.service';
+
+@Injectable()
+export class AppService {
+  constructor(private prisma: PrismaService) {}
+
+  async getHealthCheck() {
+    // 1. Kiểm tra kết nối Database (Supabase)
+    let dbStatus = 'Disconnected ❌';
+    let userCount = 0;
+    try {
+      // Thử query nhẹ đếm số user để xem DB sống không
+      userCount = await this.prisma.user.count();
+      dbStatus = 'Connected (Supabase PostgreSQL) ✅';
+    } catch (error) {
+      dbStatus = `Error: ${error.message} ❌`;
+    }
+
+    // 2. Kiểm tra môi trường
+    const isProduction = process.env.NODE_ENV === 'production';
+    const protocol = isProduction ? 'https (Render Managed)' : 'https (Local Certificate)';
+
+    // 3. Kiểm tra các Config quan trọng
+    const checks = {
+      database_url: process.env.DATABASE_URL ? 'Configured ✅' : 'Missing ❌',
+      google_oauth: (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ? 'Ready ✅' : 'Missing Keys ⚠️',
+      jwt_secret: process.env.JWT_SECRET ? 'Set ✅' : 'Missing (Auth will fail) ❌',
+    };
+
+    // 4. Trả về báo cáo chi tiết
+    return {
+      status: '🚀 Backend is OPERATIONAL',
+      timestamp: new Date().toISOString(),
+      system: {
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 5001,
+        protocol: protocol,
+        platform: isProduction ? 'Render Cloud' : 'Localhost Windows',
+      },
+      connectivity: {
+        database: dbStatus,
+        total_users: userCount,
+        cors_policy: 'Allow All (Frontend & Extension Compatible) ✅',
+      },
+      configuration_checks: checks,
+      message: 'Sẵn sàng phục vụ Frontend (Next.js) và Extension!',
+    };
+  }
+}
+
+
+
+================================================
+FILE: src/logging.interceptor.ts
+================================================
+[Binary file]
+
+
+================================================
+FILE: src/main.ts
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in position 1228: character maps to <undefined>
+
+
+================================================
+FILE: src/common/interceptors/performance.interceptor.ts
+================================================
+// apps/backend/src/common/interceptors/performance.interceptor.ts
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+@Injectable()
+export class PerformanceInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const t2_start = performance.now(); // 🕒 Bắt đầu T2 (Server processing)
+
+    return next.handle().pipe(
+      tap((data) => {
+        const t2_end = performance.now(); // 🏁 Kết thúc T2
+        const t2_duration = (t2_end - t2_start).toFixed(2); // ms
+
+        const response = context.switchToHttp().getResponse();
+        
+        // 👇 THÊM HEADER: Server processing time
+        response.setHeader('x-server-time', t2_duration);
+        
+        // Log chi tiết (nếu cần debug)
+        const request = context.switchToHttp().getRequest();
+        console.log(`⏱️ [${request.method} ${request.url}] Server time: ${t2_duration}ms`);
+      }),
+    );
+  }
+}
+
+
+
+================================================
+FILE: src/modules/auth/auth.controller.ts
+================================================
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type { Response } from 'express'; // 👈 Thêm "type"
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  async register(
+    @Body() body: { email: string; password: string; name?: string },
+  ) {
+    return this.authService.register(body.email, body.password, body.name);
+  }
+
+  @Post('login')
+  async login(
+    @Body() body: { email: string; password: string },
+    @Res({ passthrough: true }) res: Response, // 👈 Inject Response vào đây
+  ) {
+    const result = await this.authService.login(body.email, body.password);
+
+    // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: true, // Bắt buộc true vì Render chạy HTTPS
+      sameSite: 'none', // Bắt buộc 'none' để Extension (trang khác) đọc được
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+    });
+
+    return result;
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth() {
+    // Redirects to Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user);
+
+    // 👇 THÊM ĐOẠN NÀY: Gắn Cookie "token"
+    res.cookie('token', result.token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Frontend URL trên Vercel (hoặc Localhost nếu đang dev)
+    const frontendUrl = `http://localhost:3000/auth/callback?token=${result.token}`;
+    return res.redirect(frontendUrl);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMe(@Req() req) {
+    return this.authService.getUserById(req.user.id);
+  }
+}
+
+
+
+================================================
+FILE: src/modules/auth/auth.module.ts
+================================================
+// apps/backend/src/modules/auth/auth.module.ts
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { PrismaModule } from '../../prisma/prisma.module';
+import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
+
+@Module({
+  imports: [
+    PrismaModule,
+    PassportModule,
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET') || 'your-secret-key-change-in-production',
+        signOptions: { expiresIn: '7d' },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
+  exports: [AuthService],
+})
+export class AuthModule {}
+
+
+================================================
+FILE: src/modules/auth/auth.service.ts
+================================================
+// apps/backend/src/modules/auth/auth.service.ts
+
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
+
+  // ========== REGISTER WITH EMAIL/PASSWORD ==========
+  async register(email: string, password: string, name?: string) {
+    // Check if user exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: name || email.split('@')[0], // Default name from email
+        provider: 'local',
+      },
+    });
+
+    // Generate token
+    const token = this.generateToken(user.id, user.email);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      },
+      token,
+    };
+  }
+
+  // ========== LOGIN WITH EMAIL/PASSWORD ==========
+  async login(email: string, password: string) {
+    // Find user
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || !user.password) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Generate token
+    const token = this.generateToken(user.id, user.email);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      },
+      token,
+    };
+  }
+
+  // ========== GOOGLE OAUTH LOGIN ==========
+  async googleLogin(googleUser: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    picture: string;
+    googleId: string;
+  }) {
+    // Check if user exists
+    let user = await this.prisma.user.findUnique({
+      where: { email: googleUser.email },
+    });
+
+    if (!user) {
+      // Create new user from Google
+      user = await this.prisma.user.create({
+        data: {
+          email: googleUser.email,
+          name: `${googleUser.firstName} ${googleUser.lastName}`,
+          avatar: googleUser.picture,
+          provider: 'google',
+          googleId: googleUser.googleId,
+          password: null, // Google users don't have password
+        },
+      });
+    } else if (user.provider === 'local') {
+      // Link Google to existing local account
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          googleId: googleUser.googleId,
+          avatar: googleUser.picture, // Update avatar
+        },
+      });
+    }
+
+    // Generate token
+    const token = this.generateToken(user.id, user.email);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+      },
+      token,
+    };
+  }
+
+  // ========== VALIDATE USER (For Passport) ==========
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (user && user.password) {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (isPasswordValid) {
+        const { password, ...result } = user;
+        return result;
+      }
+    }
+    return null;
+  }
+
+  // ========== GET USER BY ID ==========
+  async getUserById(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        provider: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return user;
+  }
+
+  // ========== HELPER: GENERATE JWT TOKEN ==========
+  private generateToken(userId: string, email: string) {
+    return this.jwtService.sign({
+      sub: userId,
+      email,
+    });
+  }
+}
+
+
+================================================
+FILE: src/modules/auth/dto/create-auth.dto.ts
+================================================
+export class CreateAuthDto {}
+
+
+
+================================================
+FILE: src/modules/auth/dto/update-auth.dto.ts
+================================================
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateAuthDto } from './create-auth.dto';
+
+export class UpdateAuthDto extends PartialType(CreateAuthDto) {}
+
+
+
+================================================
+FILE: src/modules/auth/entities/auth.entity.ts
+================================================
+export class Auth {}
+
+
+
+================================================
+FILE: src/modules/auth/guards/google-auth.guard.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class GoogleAuthGuard extends AuthGuard('google') {}
+
+
+================================================
+FILE: src/modules/auth/guards/jwt-auth.guard.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {}
+
+
+
+================================================
+FILE: src/modules/auth/guards/local-auth.guard.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Injectable()
+export class LocalAuthGuard extends AuthGuard('local') {}
+
+
+
+================================================
+FILE: src/modules/auth/strategies/google.strategy.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy, VerifyCallback, Profile, StrategyOptions } from 'passport-google-oauth20';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  constructor(private configService: ConfigService) {
+    super({
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
+      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
+      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL') || 'http://localhost:5001/auth/google/callback',
+      scope: ['email', 'profile'],
+    } as StrategyOptions); // ðŸ‘ˆ ThÃªm "as StrategyOptions"
+  }
+
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: Profile,
+    done: VerifyCallback,
+  ): Promise<any> {
+    const { name, emails, photos, id } = profile;
+    
+    const user = {
+      email: emails?.[0]?.value || '',
+      firstName: name?.givenName || '',
+      lastName: name?.familyName || '',
+      picture: photos?.[0]?.value || '',
+      googleId: id,
+    };
+
+    done(null, user);
+  }
+}
+
+
+================================================
+FILE: src/modules/auth/strategies/jwt.strategy.ts
+================================================
+// apps/backend/src/modules/auth/strategies/jwt.strategy.ts
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PassportStrategy } from '@nestjs/passport';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(private configService: ConfigService) {
+    super({
+      // ðŸ‘‡ LOGIC Má»šI: Thá»­ láº¥y tá»« Custom Extractor trÆ°á»›c, sau Ä‘Ã³ má»›i thá»­ Header
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        JwtStrategy.extractJWT,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
+      ignoreExpiration: false,
+      secretOrKey: configService.get('JWT_SECRET') || 'your-secret-key-change-in-production',
+    });
+  }
+
+  // HÃ m thá»§ cÃ´ng Ä‘á»ƒ moi Token tá»« Cookie
+  private static extractJWT(req: Request): string | null {
+    // 1. Náº¿u cÃ³ cÃ i cookie-parser
+    if (req.cookies && 'token' in req.cookies && req.cookies.token.length > 0) {
+      return req.cookies.token;
+    }
+    // 2. Náº¿u chÆ°a cÃ i cookie-parser (Parsing thá»§ cÃ´ng tá»« header string)
+    if (req.headers.cookie) {
+       const match = req.headers.cookie.match(/token=([^;]+)/);
+       if (match) return match[1];
+    }
+    return null;
+  }
+
+  async validate(payload: any) {
+    return { 
+      id: payload.sub, 
+      email: payload.email 
+    };
+  }
+}
+
+
+================================================
+FILE: src/modules/auth/strategies/local.strategy.ts
+================================================
+// apps/backend/src/modules/auth/strategies/local.strategy.ts
+import { Strategy } from 'passport-local';
+import { PassportStrategy } from '@nestjs/passport';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthService } from '../auth.service';
+
+@Injectable()
+export class LocalStrategy extends PassportStrategy(Strategy) {
+  constructor(private authService: AuthService) {
+    super({
+      usernameField: 'email', // Máº·c Ä‘á»‹nh lÃ  'username', mÃ¬nh Ä‘á»•i thÃ nh 'email' cho Ä‘Ãºng project
+    });
+  }
+
+  // HÃ m nÃ y sáº½ tá»± Ä‘á»™ng cháº¡y khi user login
+  async validate(email: string, pass: string): Promise<any> {
+    const user = await this.authService.validateUser(email, pass);
+    if (!user) {
+      throw new UnauthorizedException('Sai email hoáº·c máº­t kháº©u');
+    }
+    return user;
+  }
+}
+
+
+
+================================================
+FILE: src/modules/users/users.controller.ts
+================================================
+import { Controller, Post, Body } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+
+  // Tạm thời bỏ các route findAll, findOne, update, remove 
+  // vì Service chưa implement logic đó.
+}
+
+
+================================================
+FILE: src/modules/users/users.module.ts
+================================================
+import { Module } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { UsersController } from './users.controller';
+
+@Module({
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
+})
+export class UsersModule {}
+
+
+
+================================================
+FILE: src/modules/users/users.service.ts
+================================================
+import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { PrismaService } from '../../prisma/prisma.service'; // Import global service
+import * as bcrypt from 'bcrypt';
+
+@Injectable()
+export class UsersService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(createUserDto: CreateUserDto) {
+    const { email, password, name } = createUserDto;
+    // Hash password logic
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+
+    return this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+      },
+    });
+  }
+
+  // Find user for Auth logic
+  async findOneByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
+  }
+}
+
+
+
+================================================
+FILE: src/modules/users/dto/create-user.dto.ts
+================================================
+export class CreateUserDto {
+  email: string;
+  password?: string; // Optional vÃ¬ sau nÃ y cÃ³ thá»ƒ login báº±ng Google
+  name?: string;
+}
+
+
+
+================================================
+FILE: src/modules/users/dto/update-user.dto.ts
+================================================
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateUserDto } from './create-user.dto';
+
+export class UpdateUserDto extends PartialType(CreateUserDto) {}
+
+
+
+================================================
+FILE: src/modules/users/entities/user.entity.ts
+================================================
+export class User {}
+
+
+
+================================================
+FILE: src/modules/vocabulary/vocabulary.controller.ts
+================================================
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  Query,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { VocabularyService } from './vocabulary.service';
+import { CreateVocabularyDto } from './dto/create-vocabulary.dto';
+import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+@Controller('vocabulary')
+@UseGuards(JwtAuthGuard)
+export class VocabularyController {
+  constructor(private readonly vocabularyService: VocabularyService) {}
+  @Patch(':id/score')
+  async addScore(
+    @Request() req,
+    @Param('id') id: string,
+    @Body('score') score: number,
+  ) {
+    return this.vocabularyService.addScore(id, req.user.id, score);
+  }
+  @Get('check')
+  async findByWord(@Request() req, @Query('word') word: string) {
+    return this.vocabularyService.findByWord(req.user.id, word);
+  }
+  @Post()
+  create(@Request() req, @Body() createDto: CreateVocabularyDto) {
+    // ðŸ‘‡ UPDATE: Sá»­ dá»¥ng upsertVocab Ä‘á»ƒ handle logic create hoáº·c update náº¿u Ä‘Ã£ tá»“n táº¡i
+    return this.vocabularyService.upsertVocab(req.user.id, createDto);
+  }
+
+  @Post('import/csv')
+  @UseInterceptors(FileInterceptor('file'))
+  async importCsv(@Request() req, @UploadedFile() file: Express.Multer.File) {
+    return this.vocabularyService.importFromCsv(req.user.id, file);
+  }
+
+  @Get()
+  findAll(
+    @Request() req,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    @Query('search') search: string, // Quick search (tÃ¬m chung)
+    // Filter Params
+    @Query('word') word: string,
+    @Query('topic') topic: string,
+    @Query('partOfSpeech') partOfSpeech: string,
+    @Query('meaning') meaning: string,
+    @Query('isStarred') isStarred: string, // Filter tá»« yÃªu thÃ­ch
+    // Sort Params
+    @Query('sortBy') sortBy: string,
+    @Query('sortOrder') sortOrder: string,
+  ) {
+    const pageNumber = page ? parseInt(page) : 1;
+    const limitNumber = limit ? parseInt(limit) : 20;
+
+    // Gom cÃ¡c filter criteria vÃ o má»™t object
+    const filters = {
+      word,
+      topic,
+      partOfSpeech,
+      meaning,
+      // Convert string 'true' thÃ nh boolean true, ngÆ°á»£c láº¡i lÃ  false/undefined
+      isStarred: isStarred === 'true',
+    };
+
+    // Config sort option
+    const sort = {
+      field: sortBy || 'createdAt',
+      order: (sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc',
+    };
+
+    // Call service vá»›i full arguments
+    return this.vocabularyService.findAll(
+      req.user.id,
+      pageNumber,
+      limitNumber,
+      filters,
+      sort,
+      search,
+    );
+  }
+
+  @Get(':id')
+  findOne(@Request() req, @Param('id') id: string) {
+    return this.vocabularyService.findOne(id, req.user.id);
+  }
+
+  @Patch(':id')
+  update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateVocabularyDto,
+  ) {
+    return this.vocabularyService.update(id, req.user.id, updateDto);
+  }
+
+  @Delete(':id')
+  remove(@Request() req, @Param('id') id: string) {
+    return this.vocabularyService.remove(id, req.user.id);
+  }
+}
+
+
+
+================================================
+FILE: src/modules/vocabulary/vocabulary.module.ts
+================================================
+// apps/backend/src/modules/vocabulary/vocabulary.module.ts
+import { Module } from '@nestjs/common';
+import { VocabularyService } from './vocabulary.service';
+import { VocabularyController } from './vocabulary.controller';
+import { PrismaModule } from '../../prisma/prisma.module';
+
+@Module({
+  imports: [PrismaModule],
+  controllers: [VocabularyController],
+  providers: [VocabularyService],
+})
+export class VocabularyModule {}
+
+
+
+================================================
+FILE: src/modules/vocabulary/vocabulary.service.ts
+================================================
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { CreateVocabularyDto } from './dto/create-vocabulary.dto';
+import { UpdateVocabularyDto } from './dto/update-vocabulary.dto';
+import csv from 'csv-parser';
+import { Readable } from 'stream';
+
+interface VocabFilters {
+  word?: string;
+  topic?: string;
+  partOfSpeech?: string;
+  meaning?: string;
+  isStarred?: boolean;
+}
+
+@Injectable()
+export class VocabularyService {
+  constructor(private prisma: PrismaService) {}
+// 👇 UPDATE: Lưu điểm, tăng lượt tương tác và cập nhật thời gian
+  async addScore(id: string, userId: string, score: number) {
+    const vocab = await this.findOne(id, userId);
+    
+    // Logic mảng điểm (Giữ 10 lần gần nhất)
+    const currentScores = vocab.pronunciationScores || [];
+    const newScores = [...currentScores, score];
+    if (newScores.length > 10) newScores.shift();
+
+    return this.prisma.vocabItem.update({
+      where: { id },
+      data: {
+        pronunciationScores: newScores,
+        occurrence: { increment: 1 }, // Tăng số lần tương tác
+        // updatedAt sẽ tự động được Prisma cập nhật lên giờ hiện tại
+      },
+    });
+  }
+  // 👇 [NEW] Helper tìm từ theo text (không phân biệt hoa thường)
+  async findByWord(userId: string, word: string) {
+    const cleanWord = word.trim();
+    return this.prisma.vocabItem.findFirst({
+      where: {
+        userId,
+        word: { equals: cleanWord, mode: 'insensitive' },
+      },
+    });
+  }
+  // --- 1. SMART UPSERT (LOGIC TRÁNH TRÙNG LẶP) ---
+  async upsertVocab(userId: string, createDto: CreateVocabularyDto) {
+    const cleanWord = createDto.word.trim();
+    console.log(
+      `🔍 Checking existence for word: "${cleanWord}" (User: ${userId})`,
+    );
+
+    // 1. Tìm xem từ đã có chưa (Không phân biệt hoa thường)
+    const existing = await this.prisma.vocabItem.findFirst({
+      where: {
+        userId,
+        word: {
+          equals: cleanWord,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (existing) {
+      console.log(
+        `✅ Word exists (ID: ${existing.id}). Updating count only...`,
+      );
+      // 2a. Nếu có rồi -> Chỉ tăng count & cập nhật time (BỎ TỰ ĐỘNG STAR)
+      return this.prisma.vocabItem.update({
+        where: { id: existing.id },
+        data: {
+          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Không ép star nữa)
+          occurrence: (existing.occurrence || 0) + 1,
+          // Nếu muốn update thêm thông tin thì uncomment dòng dưới:
+          // ...createDto
+        },
+      });
+    } else {
+      console.log(`🆕 Word not found. Creating new entry...`);
+      // 2b. Nếu chưa có -> Tạo mới
+      return this.prisma.vocabItem.create({
+        data: {
+          ...createDto, // 👈 Backend sẽ dùng giá trị isStarred từ Frontend gửi lên (false)
+          word: cleanWord,
+          userId,
+          // isStarred: true, // 👈 ĐÃ XÓA DÒNG NÀY (Để không bị override)
+        },
+      });
+    }
+  }
+
+  // --- GIỮ LẠI HÀM CREATE GỐC ---
+  async create(userId: string, createDto: CreateVocabularyDto) {
+    return this.prisma.vocabItem.create({
+      data: { ...createDto, userId },
+    });
+  }
+
+  // --- 2. FIND ALL ---
+  async findAll(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+    filters: VocabFilters = {},
+    sort: { field: string; order: 'asc' | 'desc' } = {
+      field: 'createdAt',
+      order: 'desc',
+    },
+    search?: string,
+  ) {
+    const skip = (page - 1) * limit;
+    const clean = (text?: string) => text?.trim();
+
+    const whereCondition: Prisma.VocabItemWhereInput = {
+      userId,
+
+      word: filters.word
+        ? { contains: clean(filters.word), mode: 'insensitive' }
+        : undefined,
+      topic: filters.topic
+        ? { contains: clean(filters.topic), mode: 'insensitive' }
+        : undefined,
+      partOfSpeech: filters.partOfSpeech
+        ? { contains: clean(filters.partOfSpeech), mode: 'insensitive' }
+        : undefined,
+      meaning: filters.meaning
+        ? { contains: clean(filters.meaning), mode: 'insensitive' }
+        : undefined,
+      isStarred: filters.isStarred === true ? true : undefined,
+
+      ...(search
+        ? {
+            OR: [
+              { word: { contains: clean(search), mode: 'insensitive' } },
+              { meaning: { contains: clean(search), mode: 'insensitive' } },
+              { topic: { contains: clean(search), mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const orderByInput: Prisma.VocabItemOrderByWithRelationInput[] = [];
+    if (sort.field) orderByInput.push({ [sort.field]: sort.order });
+    orderByInput.push({ id: 'asc' });
+
+    const [items, total] = await Promise.all([
+      this.prisma.vocabItem.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy: orderByInput,
+      }),
+      this.prisma.vocabItem.count({ where: whereCondition }),
+    ]);
+
+    return {
+      data: items,
+      meta: { total, page, lastPage: Math.ceil(total / limit) },
+    };
+  }
+
+  // --- 3. FIND ONE ---
+  async findOne(id: string, userId: string) {
+    const vocab = await this.prisma.vocabItem.findFirst({
+      where: { id, userId },
+    });
+    if (!vocab) throw new NotFoundException('Vocabulary not found');
+    return vocab;
+  }
+
+  // --- 4. UPDATE ---
+  async update(id: string, userId: string, updateDto: UpdateVocabularyDto) {
+    await this.findOne(id, userId);
+    return this.prisma.vocabItem.update({ where: { id }, data: updateDto });
+  }
+
+  // --- 5. REMOVE ---
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
+    return this.prisma.vocabItem.delete({ where: { id } });
+  }
+
+  // --- 6. IMPORT CSV ---
+  async importFromCsv(userId: string, file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('File is required');
+    const results: any[] = [];
+    const stream = Readable.from(file.buffer.toString());
+
+    return new Promise((resolve, reject) => {
+      stream
+        .pipe(csv())
+        .on('data', (data) => results.push(data))
+        .on('end', async () => {
+          let successCount = 0;
+          let errorCount = 0;
+          for (const row of results) {
+            try {
+              await this.upsertVocab(userId, {
+                word: row['Word']?.trim(),
+                topic: row['Topic']?.trim(),
+                partOfSpeech: row['Part of speech']?.trim(),
+                pronunciation: row['Pronunciation']?.trim(),
+                meaning: row['Meaning']?.trim(),
+                example: row['Example']?.trim(),
+                relatedWords: row['Related words']?.trim(),
+                occurrence: row['Occurrence'] ? parseInt(row['Occurrence']) : 1,
+                isStarred: false, // Import CSV cũng mặc định không Star
+              });
+              successCount++;
+            } catch (error) {
+              errorCount++;
+            }
+          }
+          resolve({
+            message: 'Import finished',
+            total: results.length,
+            success: successCount,
+            failed: errorCount,
+          });
+        })
+        .on('error', () => reject(new BadRequestException('Invalid CSV file')));
+    });
+  }
+}
+
+
+
+================================================
+FILE: src/modules/vocabulary/dto/create-vocabulary.dto.ts
+================================================
+import {
+  IsBoolean,
+  IsString,
+  IsOptional,
+  IsInt,
+  Min, // Minimum value
+} from 'class-validator';
+
+export class CreateVocabularyDto {
+  // Field này bắt buộc (Required), phải là String
+  @IsString()
+  word: string;
+
+  // Mấy cái dưới này là Optional (có cũng được, không có cũng không sao)
+  @IsOptional()
+  @IsString()
+  topic?: string;
+
+  @IsOptional()
+  @IsString()
+  partOfSpeech?: string; // Loại từ (noun, verb...)
+
+  @IsOptional()
+  @IsString()
+  pronunciation?: string;
+
+  @IsOptional()
+  @IsString()
+  meaning?: string;
+
+  @IsOptional()
+  @IsString()
+  example?: string;
+
+  @IsOptional()
+  @IsString()
+  relatedWords?: string;
+
+  @IsOptional()
+  @IsInt() // Phải là số nguyên (Integer)
+  @Min(0) // Giá trị nhỏ nhất là 0
+  occurrence?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isStarred?: boolean; // 👈 Add this property
+}
+
+
+
+================================================
+FILE: src/modules/vocabulary/dto/update-vocabulary.dto.ts
+================================================
+// apps\backend\src\modules\vocabulary\dto\update-vocabulary.dto.ts
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateVocabularyDto } from './create-vocabulary.dto';
+
+export class UpdateVocabularyDto extends PartialType(CreateVocabularyDto) {}
+
+
+================================================
+FILE: src/modules/vocabulary/entities/vocabulary.entity.ts
+================================================
+export class Vocabulary {}
+
+
+
+================================================
+FILE: src/prisma/prisma.module.ts
+================================================
+import { Global, Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Global() // Key concept: Make it global!
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService], // Export to use in other modules
+})
+export class PrismaModule {}
+
+
+
+================================================
+FILE: src/prisma/prisma.service.ts
+================================================
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  constructor() {
+    super({
+      log: [{ emit: 'event', level: 'query' }], // Bắt buộc dòng này để log query
+    });
+  }
+
+  async onModuleInit() {
+    await this.$connect();
+    console.log('✅ DB Connected via Prisma');
+    
+    // @ts-ignore
+    this.$on('query', (e: any) => {
+      // 🕒 T3: Thời gian query thực thi
+      const t3_db_ms = e.duration;
+      
+      // Chỉ in ra nếu query chậm hơn 100ms (Bỏ qua các query nhanh)
+      if (t3_db_ms > 100) {
+        console.log(`🔥 SLOW DB [T3: ${t3_db_ms}ms] Query: ${e.query}`);
+      }
+    });
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+}
+
+
+
+================================================
+FILE: test/app.e2e-spec.ts
+================================================
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { AppModule } from './../src/app.module';
+
+describe('AppController (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  it('/ (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect('Hello World!');
+  });
+});
+
+
+
+================================================
+FILE: test/jest-e2e.json
+================================================
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  }
+}
+
+
