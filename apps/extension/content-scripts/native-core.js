@@ -3,9 +3,9 @@ console.log("✅ Native Core Loaded - Smart Ranking Mode");
 window.NativeCore = (function () {
   let debounceTimer = null;
   let latestQuery = "";
-  let currentMode = "EN";
   let lastDbResults = [];
   let currentApiData = null; // Cache kết quả Translate
+  let currentMode = localStorage.getItem("vocab_last_mode") || "EN";
 
   // --- HELPER: TÍNH ĐIỂM ƯU TIÊN (Ranking) ---
   function sortResultsByRelevance(items, keyword, mode) {
@@ -173,36 +173,34 @@ window.NativeCore = (function () {
     });
   }
 
-  // --- 4. FORM OPEN HANDLERS ---
-  async function onOpenCreate(englishWord, meaningSuggestion = "") {
-    let initialData = {
-      word: englishWord || "",
-      meaning: meaningSuggestion,
-      isEditMode: false,
-    };
+  // --- [FIXED] POPUP LOGIC (Thêm onSpeak/onMic) ---
 
-    if (englishWord) {
-      const autoData = await fetchAutoFillData(englishWord);
-      if (autoData) {
-        initialData = { ...initialData, ...autoData };
-        if (meaningSuggestion) initialData.meaning = meaningSuggestion;
+  // --- FIX POPUP CÂM & LOGIC TẠO TỪ ---
+
+  async function onOpenCreate(englishWord, meaningVal = "") {
+    const h = getHandlers(); // Lấy handlers (chứa onSpeak đã fix Aria)
+
+    window.NativeUI.renderFormModal(
+      { word: englishWord, meaning: meaningVal, isEditMode: false },
+      {
+        onSave: handleSaveVocab,
+        onAutoFill: fetchAutoFillData,
+        onSpeak: h.onSpeak, // 👈 Phải có dòng này thì nút loa trong Popup mới kêu
+        onMic: h.onMic,
       }
-    }
-    window.NativeUI.renderFormModal(initialData, {
-      onAutoFill: fetchAutoFillData,
-      onSave: handleSaveVocab,
-    });
+    );
   }
 
   async function onEdit(item) {
+    const h = getHandlers();
+
     window.NativeUI.renderFormModal(
+      { ...item, isEditMode: true },
       {
-        ...item,
-        isEditMode: true,
-      },
-      {
-        onAutoFill: fetchAutoFillData,
         onSave: handleSaveVocab,
+        onAutoFill: fetchAutoFillData,
+        onSpeak: h.onSpeak, // 👈 Fix lỗi loa
+        onMic: h.onMic,
       }
     );
   }
@@ -213,12 +211,13 @@ window.NativeCore = (function () {
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       runSearch(text.trim());
-    }, 300); // Giảm delay xuống 300ms cho cảm giác nhanh hơn
+    }, 50); // Giảm delay xuống 50ms cho cảm giác nhanh hơn
   }
   function setMode(newMode) {
     if (currentMode === newMode) return;
     currentMode = newMode;
-    runSearch(latestQuery, true); // Search lại ngay với mode mới
+    localStorage.setItem("vocab_last_mode", newMode); // Lưu vào Storage
+    runSearch(latestQuery, true);
   }
   async function handleEnter(text) {
     const rawInput = text.trim();
@@ -244,28 +243,47 @@ window.NativeCore = (function () {
     onOpenCreate(wordToCreate, currentMode === "VI" ? rawInput : "");
   }
 
-  // Cập nhật trong hàm gọi renderSearchModal cũ (hoặc tạo hàm getHandlers riêng nếu bạn refactor):
   function getHandlers() {
     return {
       mode: currentMode,
       rawInput: latestQuery,
       onInput: handleInput,
+      onModeChange: setMode,
       onEnter: handleEnter,
-      onModeChange: setMode, // 👈 Quan trọng: Truyền hàm này xuống UI
-      onSpeak: (t) => speakWithEdgeTTS(t),
-      onOpenCreate: (w, m) => onOpenCreate(w, m),
+
+      // Force English Voice (Aria)
+      onSpeak: (text) => {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "en-US";
+        const voices = window.speechSynthesis.getVoices();
+        const ariaVoice = voices.find(
+          (v) => v.name.includes("Aria") && v.name.includes("English")
+        );
+        const googleVoice = voices.find((v) =>
+          v.name.includes("Google US English")
+        );
+        if (ariaVoice) u.voice = ariaVoice;
+        else if (googleVoice) u.voice = googleVoice;
+        window.speechSynthesis.speak(u);
+      },
+
+      onOpenCreate: (word) => onOpenCreate(word),
       onEdit: onEdit,
-      onMic: onOpenAssessment,
+      onMic: onOpenAssessment, // Đảm bảo hàm này được truyền xuống
       onInteract: handleInteraction,
+
+      // Thêm Handler Save để Popup gọi được
+      onSave: handleSaveVocab,
     };
   }
 
-  // 👇 [UPDATED] RUN SEARCH VỚI LOGIC RANKING MỚI
   async function runSearch(rawInput, forceRefresh = false) {
     if (!rawInput) {
       window.NativeUI.renderSearchModal("", [], null, getHandlers());
       return;
     }
+
     if (forceRefresh) {
       lastDbResults = [];
       currentApiData = null;
@@ -273,26 +291,47 @@ window.NativeCore = (function () {
 
     const runQuery = rawInput;
 
-    // TASK 1: Google Translate (Chạy độc lập)
-    if (currentMode === "VI") {
-      translateViToEn(runQuery).then(async (res) => {
-        if (latestQuery !== runQuery) return; // Query đã cũ -> Bỏ qua
-        if (res) {
-          const phonetics = await getPhoneticForText(res);
-          currentApiData = { trans: res, phonetics };
-          renderUI(); // Render ngay khi có kết quả dịch
-        }
-      });
-    } else {
-      currentApiData = null; // Mode EN không cần dịch Việt->Anh
-    }
+    // TASK 1: GOOGLE TRANSLATE (Chạy cho cả 2 mode)
+    // Mode VI: Dịch Việt -> Anh
+    // Mode EN: Dịch Anh -> Việt (Để lấy nghĩa hiển thị)
+    const promiseTrans =
+      currentMode === "VI"
+        ? translateViToEn(runQuery)
+        : getTranslation(runQuery); // Hàm này trả về object hoặc string tùy implement
 
-    // TASK 2: Database Search (Chạy độc lập)
-    apiSearchVocabulary(runQuery).then((results) => {
-      if (latestQuery !== runQuery) return;
-      lastDbResults = results; // Có thể thêm hàm sortResultsByRelevance ở đây nếu muốn
-      renderUI(); // Render ngay khi có kết quả DB
-    });
+    promiseTrans
+      .then(async (result) => {
+        if (latestQuery !== runQuery) return;
+
+        if (result) {
+          // Chuẩn hóa data
+          const transText =
+            typeof result === "string" ? result : result.wordMeaning;
+
+          // Mode VI: transText là tiếng Anh -> Lấy Phonetic
+          // Mode EN: runQuery là tiếng Anh -> Lấy Phonetic từ runQuery (nếu cần, hoặc DB đã có)
+          let phonetics = "";
+          if (currentMode === "VI") {
+            phonetics = await getPhoneticForText(transText);
+          }
+
+          currentApiData = {
+            trans: transText, // Kết quả dịch
+            phonetics: phonetics,
+          };
+          renderUI();
+        }
+      })
+      .catch((e) => console.log("Trans Err", e));
+
+    // TASK 2: DATABASE SEARCH (Chạy song song)
+    apiSearchVocabulary(runQuery)
+      .then((results) => {
+        if (latestQuery !== runQuery) return;
+        lastDbResults = results;
+        renderUI();
+      })
+      .catch((err) => console.log("DB err", err));
   }
 
   function renderUI() {
@@ -329,17 +368,19 @@ window.NativeCore = (function () {
     }
   }
 
-  // ... (Phần còn lại: toggle, handleSelection, Event Listeners giữ nguyên) ...
   function toggle() {
-    latestQuery = "";
-    currentMode = "EN";
-    lastDbResults = [];
-    window.NativeUI.renderSearchModal("", [], null, {
-      onInput: handleInput,
-      onEnter: handleEnter,
-      mode: "EN",
-      rawInput: "",
-    });
+    const modal = document.getElementById("vocab-search-wrapper");
+    // Nếu đang hiện -> Ẩn
+    if (modal && modal.style.display === "block") {
+      window.NativeUI.hideAll();
+    } else {
+      // Nếu đang ẩn -> Hiện lại (Dữ liệu cũ vẫn còn trong biến lastDbResults/latestQuery)
+      renderUI();
+      setTimeout(() => {
+        const input = document.getElementById("native-search-input");
+        if (input) input.focus();
+      }, 100);
+    }
   }
 
   async function handleSelection() {

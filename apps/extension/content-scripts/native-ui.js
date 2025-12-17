@@ -41,7 +41,12 @@ window.NativeUI = (function () {
     // B. Bắt đầu kéo
     headerEl.onmousedown = (e) => {
       // Chỉ kéo khi click vào vùng trống của header (tránh input)
-      if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+      if (
+        e.target.tagName === "INPUT" ||
+        e.target.closest(".vocab-mode-flag") ||
+        e.target.tagName === "BUTTON"
+      )
+        return;
 
       isDragging = true;
       startX = e.clientX;
@@ -95,28 +100,72 @@ window.NativeUI = (function () {
     document.body.appendChild(root);
     const style = document.createElement("style");
     style.innerHTML = `
-      .vocab-mode-switch { display: flex; align-items: center; background: #f1f3f4; border-radius: 6px; padding: 2px; margin-right: 8px; border: 1px solid #e0e0e0; }
-      .mode-btn { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; color: #5f6368; transition: all 0.2s; user-select: none; }
-      .mode-btn.active { background: #fff; color: #1a73e8; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-      .google-trans-box { background: #f8f9fa; border-bottom: 1px solid #f1f3f4; padding: 10px 16px; margin-bottom: 5px; }
-      .google-main-text { font-size: 15px; color: #202124; font-weight: 500; }
-      .google-sub-text { font-size: 11px; color: #5f6368; margin-top: 2px; }
+      .vocab-mode-flag {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 20;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        user-select: none;
+        transition: all 0.2s;
+      }
+      .vocab-mode-flag:hover { transform: translateY(-50%) scale(1.1); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+      .google-trans-box { background: #f8f9fa; border-bottom: 1px solid #eee; padding: 12px 16px; cursor: pointer; transition: background 0.1s; }
+      .google-trans-box:hover { background: #e8f0fe; }
+      .google-main-text { font-size: 16px; color: #1a73e8; font-weight: 600; margin-bottom: 2px; }
+      .google-sub-text { font-size: 11px; color: #5f6368; }
+      .vocab-list-item { cursor: pointer; padding: 10px 16px; border-bottom: 1px solid #f1f1f1; display: flex; align-items: flex-start; gap: 10px; transition: background 0.1s; }
+      .vocab-list-item:hover { background: #f5f5f5; }
+      .vocab-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+      .vocab-score-badge { font-size:10px; color:#fff; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:bold; }
+      .vocab-search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 14px;
+        color: #333;
+        resize: none; /* Không cho user kéo giãn thủ công */
+        overflow: hidden; /* Ẩn thanh cuộn */
+        min-height: 24px;
+        line-height: 1.5;
+        font-family: inherit;
+        padding-top: 4px; 
+      }
+      .action-btn-circle {
+        width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ddd;
+        background: #fff; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: #5f6368; padding: 0; z-index: 10;
+      }
+      .action-btn-circle:hover { background: #f1f3f4; color: #1a73e8; border-color: #1a73e8; }
+      .action-btn-circle svg { width: 16px; height: 16px; }
     `;
     root.appendChild(style);
     // 1. Search Wrapper
     searchWrapper = document.createElement("div");
     searchWrapper.id = "vocab-search-wrapper";
     searchWrapper.innerHTML = `
-        <div id="vocab-search-modal">
-            <div class="vocab-header" id="vocab-drag-handle">
-                <div class="vocab-input-affix">
-                    <div id="vocab-mode-container"></div>
-                    <input class="vocab-search-input" id="native-search-input" placeholder="Search..." autocomplete="off">
-                </div>
-            </div>
-            <div id="vocab-modal-body" class="vocab-body"></div>
-            <div id="vocab-modal-assessment"></div>
+      <div id="vocab-search-modal">
+        <div class="vocab-header" id="vocab-drag-handle" style="position:relative;">
+          <div class="vocab-input-affix" style="padding-right: 45px;"> ${ICONS.search}
+            <textarea class="vocab-search-input" id="native-search-input" placeholder="Search..." autocomplete="off" rows="1"></textarea>
+          </div>
+          <div id="vocab-mode-trigger"></div>
         </div>
+        <div id="vocab-modal-body" class="vocab-body"></div>
+        <div id="vocab-modal-assessment"></div>
+      </div>
     `;
     root.appendChild(searchWrapper);
 
@@ -170,194 +219,146 @@ window.NativeUI = (function () {
     window.speechSynthesis.cancel();
   }
 
+  // --- RENDER FORM MODAL (POPUP CHI TIẾT) ---
   function renderFormModal(data, handlers) {
-    init();
-    formWrapper.style.display = "flex";
-    searchWrapper.style.display = "none";
-    miniPopup.style.display = "none";
+    if (!formWrapper) return;
+
+    // Style lại wrapper để nó nằm đè lên search nhưng độc lập
+    formWrapper.innerHTML = "";
+    formWrapper.style.display = "flex"; // Hiện form
 
     const isEdit = data.isEditMode;
 
-    formWrapper.innerHTML = `
-        <div class="vocab-modal-content">
-            <div class="vocab-modal-header">
-                <div style="width:100%">
-                    <div class="vocab-modal-title">${
-                      isEdit ? "Editing Vocabulary" : "Create New Vocabulary"
-                    }</div>
-                    <div style="position:relative">
-                        <textarea 
-                            id="form-word" 
-                            class="vocab-input-large" 
-                            placeholder="Word..." 
-                            rows="1"
-                            ${isEdit ? "readonly" : ""}
-                        >${data.word || ""}</textarea>
-                        <div id="form-autofill-status" class="autofill-loading" style="display:none">✨ Auto-filling...</div>
-                    </div>
-                </div>
-                <button id="form-close" style="background:none; border:none; color:white; cursor:pointer;">${
-                  ICONS.close
-                }</button>
-            </div>
-            <div class="vocab-modal-body">
-                <div class="vocab-grid-2">
-                    <div>
-                        <label class="vocab-label">Pronunciation</label>
-                        <input id="form-pronun" class="vocab-input-field" value="${
-                          data.pronunciation || ""
-                        }" placeholder="/.../">
-                    </div>
-                    <div>
-                        <label class="vocab-label">Part Of Speech</label>
-                        <select id="form-pos" class="vocab-select-field">
-                            <option value="">-- Select --</option>
-                            <option value="noun" ${
-                              data.partOfSpeech === "noun" ? "selected" : ""
-                            }>Noun</option>
-                            <option value="verb" ${
-                              data.partOfSpeech === "verb" ? "selected" : ""
-                            }>Verb</option>
-                            <option value="adjective" ${
-                              data.partOfSpeech === "adjective"
-                                ? "selected"
-                                : ""
-                            }>Adjective</option>
-                            <option value="adverb" ${
-                              data.partOfSpeech === "adverb" ? "selected" : ""
-                            }>Adverb</option>
-                            <option value="phrase" ${
-                              data.partOfSpeech === "phrase" ? "selected" : ""
-                            }>Phrase</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="vocab-label">Meaning</label>
-                    <textarea id="form-meaning" class="vocab-textarea-field" placeholder="Nghĩa của từ...">${
-                      data.meaning || ""
-                    }</textarea>
-                </div>
-                <div>
-                    <label class="vocab-label">Example</label>
-                    <textarea id="form-example" class="vocab-textarea-field" style="background:#f9fafb; font-style:italic;" placeholder="Ví dụ...">${
-                      data.example || ""
-                    }</textarea>
-                </div>
-                <div class="vocab-grid-2">
-                    <div>
-                        <label class="vocab-label">Topic</label>
-                        <input id="form-topic" class="vocab-input-field" value="${
-                          data.topic || ""
-                        }" placeholder="IT, Travel...">
-                    </div>
-                    <div>
-                        <label class="vocab-label">Related Words</label>
-                        <input id="form-related" class="vocab-input-field" value="${
-                          data.relatedWords || ""
-                        }" placeholder="Synonyms...">
-                    </div>
-                </div>
-            </div>
-            <div class="vocab-modal-footer">
-                <button id="form-cancel" class="btn-cancel">Cancel</button>
-                <button id="form-save" class="btn-save">${
-                  isEdit ? "Save Changes" : "Create Word"
-                }</button>
-            </div>
+    // Meaning value for prefill
+    const meaningVal = data.meaning || "";
+    // HTML Header có Mic và Loa
+    const html = `
+      <div class="vocab-modal-content" style="width: 400px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column;">
+        <div class="vocab-header" style="justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee; background: #f8f9fa;">
+           <div style="font-weight: 700; font-size: 16px; color: #333; display: flex; align-items: center; gap: 10px;">
+              ${isEdit ? "Edit Word" : "New Word"}
+              
+              <button type="button" class="action-btn-circle btn-sound" id="btn-popup-speak" title="Listen">${
+                ICONS.sound
+              }</button>
+              <button type="button" class="action-btn-circle btn-mic" id="btn-popup-mic" title="Practice">${
+                ICONS.mic
+              }</button>
+           </div>
+           
+           <div id="btn-close-form" style="cursor: pointer; padding: 4px; color: #666;">${
+             ICONS.close
+           }</div>
         </div>
+
+        <div class="vocab-body" style="padding: 16px; overflow-y: auto; max-height: 60vh;">
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">WORD</label>
+                <input id="input-word" value="${
+                  data.word || ""
+                }" class="vocab-form-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; font-weight:bold; color:#1a73e8;">
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-bottom: 12px;">
+                <div style="flex:1">
+                    <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">TYPE</label>
+                    <input id="input-pos" value="${
+                      data.partOfSpeech || ""
+                    }" class="vocab-form-input" placeholder="n, v, adj..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+                <div style="flex:1">
+                    <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">IPA</label>
+                    <input id="input-ipa" value="${
+                      data.pronunciation || ""
+                    }" class="vocab-form-input" placeholder="/.../" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">MEANING</label>
+                <textarea id="input-mean" rows="2" class="vocab-form-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; resize:vertical;">${meaningVal}</textarea>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">EXAMPLE</label>
+                <textarea id="input-ex" rows="2" class="vocab-form-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; resize:vertical;">${
+                  data.example || ""
+                }</textarea>
+            </div>
+
+            <button id="btn-save-form" style="width:100%; background:#1a73e8; color:white; padding:10px; border:none; border-radius:6px; font-weight:600; cursor:pointer;">
+                ${isEdit ? "Update Vocabulary" : "Save to Library"}
+            </button>
+        </div>
+      </div>
     `;
 
-    const wordInput = document.getElementById("form-word");
-    const statusDiv = document.getElementById("form-autofill-status");
+    formWrapper.innerHTML = html;
 
-    // 👇 [FIX 3]: Logic tự động giãn chiều cao (Auto-resize) cho Word Input
-    const adjustHeight = () => {
-      wordInput.style.height = "auto";
-      wordInput.style.height = wordInput.scrollHeight + "px";
-    };
-    wordInput.addEventListener("input", adjustHeight);
-    // Gọi 1 lần lúc init để nó khớp với nội dung ban đầu
-    setTimeout(adjustHeight, 0);
+    // --- BIND EVENTS ---
 
-    if (!isEdit) {
-      wordInput.onblur = async () => {
-        const val = wordInput.value.trim();
-        if (val && handlers.onAutoFill) {
-          statusDiv.style.display = "inline-block";
-          const autoData = await handlers.onAutoFill(val);
-          statusDiv.style.display = "none";
-          if (autoData) {
-            if (autoData.pronunciation)
-              document.getElementById("form-pronun").value =
-                autoData.pronunciation;
-            if (autoData.partOfSpeech)
-              document.getElementById("form-pos").value = autoData.partOfSpeech;
-            if (autoData.meaning)
-              document.getElementById("form-meaning").value = autoData.meaning;
-            if (autoData.example)
-              document.getElementById("form-example").value = autoData.example;
-          }
-        }
-      };
-      if (data.word) wordInput.onblur();
-    }
-
-    document.getElementById("form-close").onclick = () => {
+    // 1. Close Button: Chỉ đóng formWrapper
+    document.getElementById("btn-close-form").onclick = () => {
       formWrapper.style.display = "none";
-    };
-    document.getElementById("form-cancel").onclick = () => {
-      formWrapper.style.display = "none";
+      // Search Modal vẫn giữ nguyên bên dưới
     };
 
-    document.getElementById("form-save").onclick = () => {
+    // 2. Speak Button: Luôn dùng handlers.onSpeak để có giọng Aria
+    document.getElementById("btn-popup-speak").onclick = () => {
+      const currentWord = document.getElementById("input-word").value;
+      // Gọi handler từ Core để dùng giọng Aria
+      if (handlers.onSpeak) handlers.onSpeak(currentWord);
+    };
+
+    // 3. Mic Button
+    document.getElementById("btn-popup-mic").onclick = () => {
+      const currentWord = document.getElementById("input-word").value;
+      const currentIpa = document.getElementById("input-ipa").value;
+      // Gọi Modal Assessment
+      window.NativeCore.openAssessment({
+        word: currentWord,
+        pronunciation: currentIpa,
+        id: data.id || "temp_form",
+      });
+    };
+
+    // 4. Save Button (Giữ nguyên logic cũ)
+    document.getElementById("btn-save-form").onclick = async () => {
       const newData = {
         id: data.id,
-        word: document.getElementById("form-word").value.trim(),
-        pronunciation: document.getElementById("form-pronun").value.trim(),
-        partOfSpeech: document.getElementById("form-pos").value,
-        meaning: document.getElementById("form-meaning").value.trim(),
-        example: document.getElementById("form-example").value.trim(),
-        topic: document.getElementById("form-topic").value.trim(),
-        relatedWords: document.getElementById("form-related").value.trim(),
+        word: document.getElementById("input-word").value,
+        partOfSpeech: document.getElementById("input-pos").value,
+        pronunciation: document.getElementById("input-ipa").value,
+        meaning: document.getElementById("input-mean").value,
+        example: document.getElementById("input-ex").value,
+        occurrence: data.occurrence || 1,
       };
-      handlers.onSave(newData);
-      formWrapper.style.display = "none";
+
+      // Gọi hàm save handler truyền từ Core
+      if (handlers.onSave) {
+        // Show loading text
+        document.getElementById("btn-save-form").textContent = "Saving...";
+        await handlers.onSave(newData);
+        formWrapper.style.display = "none"; // Đóng form sau khi save xong
+      }
     };
-
-    if (!isEdit) setTimeout(() => wordInput.focus(), 100);
   }
-
-  // ... (Các phần trên giữ nguyên) ...
-
   function renderSearchModal(keyword, dbResults, apiData, handlers) {
-    init();
+    init(); // Đảm bảo init đã chạy
     searchWrapper.style.display = "block";
 
     const input = document.getElementById("native-search-input");
     const body = document.getElementById("vocab-modal-body");
-    const modeContainer = document.getElementById("vocab-mode-container");
+    const modeTrigger = document.getElementById("vocab-mode-trigger");
     const mode = handlers.mode || "EN";
     const userTyped = handlers.rawInput || "";
 
-    // 1. RENDER TOGGLE SWITCH
-    modeContainer.innerHTML = `
-      <div class="vocab-mode-switch">
-        <div class="mode-btn ${
-          mode === "EN" ? "active" : ""
-        }" id="btn-mode-en">🇬🇧 Anh</div>
-        <div class="mode-btn ${
-          mode === "VI" ? "active" : ""
-        }" id="btn-mode-vi">🇻🇳 Việt</div>
-      </div>
-    `;
-    document.getElementById("btn-mode-en").onclick = (e) => {
+    // 1. RENDER FLAG BUTTON
+    const flagIcon = mode === "VI" ? "🇻🇳" : "🇬🇧";
+    modeTrigger.innerHTML = `<div class="vocab-mode-flag" title="Chuyển chế độ" style="cursor:pointer;">${flagIcon}</div>`;
+    modeTrigger.onclick = (e) => {
       e.stopPropagation();
-      handlers.onModeChange("EN");
-    };
-    document.getElementById("btn-mode-vi").onclick = (e) => {
-      e.stopPropagation();
-      handlers.onModeChange("VI");
+      handlers.onModeChange(mode === "VI" ? "EN" : "VI");
     };
 
     // 2. INPUT HANDLING
@@ -369,12 +370,22 @@ window.NativeUI = (function () {
       input.value = userTyped;
       input.focus();
     }
-    // Bind events (giữ nguyên logic cũ để tránh mất event listener)
+    // Auto height
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + "px";
+
     if (!input.dataset.hasEvent) {
-      input.oninput = (e) => handlers.onInput(e.target.value);
+      input.oninput = (e) => {
+        e.target.style.height = "auto";
+        e.target.style.height = e.target.scrollHeight + "px";
+        handlers.onInput(e.target.value);
+      };
       input.addEventListener("keydown", (e) => {
         e.stopPropagation();
-        if (e.key === "Enter") handlers.onEnter(input.value);
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handlers.onEnter(input.value);
+        }
       });
       ["paste", "copy", "cut", "selectstart"].forEach((evt) =>
         input.addEventListener(evt, (e) => e.stopPropagation())
@@ -382,35 +393,46 @@ window.NativeUI = (function () {
       input.dataset.hasEvent = "true";
     }
 
-    // 3. RENDER CONTENT
+    // 3. RENDER BODY
     let html = "";
 
-    // A. GOOGLE TRANSLATE (Ưu tiên hiển thị trước)
+    // A. GOOGLE RESULT (STYLE CỨNG ĐỂ HIỆN NÚT)
     if (apiData && apiData.trans) {
-      const mainMean =
+      const transText =
         typeof apiData.trans === "string"
           ? apiData.trans
           : apiData.trans.wordMeaning;
+      const phonetics = apiData.phonetics?.us || "";
+      const label =
+        mode === "VI" ? "Dịch Anh (Tự động)" : "Nghĩa tiếng Việt (Google)";
+
+      // 👇 Style trực tiếp cho nút (width, height, background) để đảm bảo hiện 100%
+      const btnStyle = `width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; min-width:30px; color:#555;`;
+
       html += `
-        <div class="google-trans-box">
-             <div style="display:flex; justify-content:space-between;">
-                <div>
-                    <div class="google-main-text">${mainMean}</div>
-                    <div class="google-sub-text">Google Translate (${
-                      mode === "VI" ? "VI ➝ EN" : "Auto"
-                    })</div>
-                    <div style="font-size:12px; color:#1a73e8;">${
-                      apiData.phonetics?.us || ""
-                    }</div>
+        <div class="google-trans-box" id="google-result-box" style="padding:12px 16px; border-bottom:1px solid #eee; background:#f8f9fa; cursor:pointer;">
+             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div style="flex:1; margin-right:10px;">
+                    <div class="google-main-text" style="font-size:16px; color:#1a73e8; font-weight:bold; margin-bottom:4px; word-break:break-word;">
+                        ${transText}
+                    </div>
+                    <div class="google-sub-text" style="font-size:11px; color:#666;">
+                        ${
+                          phonetics
+                            ? `<span style="color:#333;">/${phonetics}/</span> • `
+                            : ""
+                        }
+                        ${label}
+                    </div>
                 </div>
-                <div style="display:flex; gap:5px;">
-                     <button class="action-btn-circle" id="btn-create-auto">${
-                       ICONS.mark
-                     }</button>
-                     <button class="action-btn-circle" onclick="window.NativeUI.speak('${mainMean.replace(
-                       /'/g,
-                       "\\'"
-                     )}')">${ICONS.sound}</button>
+                
+                <div style="display:flex; gap:8px; align-items:center;">
+                     <button type="button" style="${btnStyle}" id="btn-trans-speak" title="Nghe">${
+        ICONS.sound
+      }</button>
+                     <button type="button" style="${btnStyle}" id="btn-trans-mic" title="Luyện nói">${
+        ICONS.mic
+      }</button>
                 </div>
              </div>
         </div>`;
@@ -418,30 +440,53 @@ window.NativeUI = (function () {
 
     // B. DATABASE RESULTS
     if (dbResults && dbResults.length > 0) {
-      dbResults.forEach((item, idx) => {
-        html += `
-            <div class="vocab-list-item" id="item-${item.id}">
-                <div style="flex:1">
-                    <div class="vocab-word-text" style="${
-                      item.word.toLowerCase() === keyword.toLowerCase()
-                        ? "color:#1a73e8"
-                        : ""
-                    }">
-                        ${item.word} ${
-          item.partOfSpeech
-            ? `<span class="vocab-tag">${item.partOfSpeech}</span>`
-            : ""
+      dbResults.forEach((item) => {
+        const isMatch = item.word.toLowerCase() === keyword.toLowerCase();
+        let scoreHtml = "";
+        if (item.pronunciationScores && item.pronunciationScores.length > 0) {
+          const avg = Math.round(
+            item.pronunciationScores.reduce((a, b) => a + b, 0) /
+              item.pronunciationScores.length
+          );
+          const color =
+            avg >= 80 ? "#4caf50" : avg >= 60 ? "#fbc02d" : "#ef4444";
+          scoreHtml = `<span style="font-size:10px; background:${color}; color:#fff; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:bold;">${avg}</span>`;
         }
+
+        const btnStyle = `width:28px; height:28px; border-radius:50%; border:1px solid #ddd; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; min-width:28px; color:#555;`;
+
+        html += `
+            <div class="vocab-list-item" id="item-${
+              item.id
+            }" style="padding:10px 16px; border-bottom:1px solid #f1f1f1; display:flex; align-items:flex-start; cursor:pointer;">
+                <div style="flex:1;">
+                    <div class="vocab-word-text" style="${
+                      isMatch ? "color:#1a73e8; font-weight:700" : ""
+                    }">
+                        ${item.word}
+                        ${
+                          item.pronunciation
+                            ? `<span style="color:#666; font-weight:400; margin-left:4px;">/${item.pronunciation}/</span>`
+                            : ""
+                        }
+                        ${scoreHtml}
                     </div>
-                    <div class="vocab-word-meta">${item.meaning || ""}</div>
+                    <div class="vocab-word-meta" style="font-size:12px; color:#666; margin-top:2px;">
+                       ${
+                         item.partOfSpeech
+                           ? `<span style="border:1px solid #eee; padding:0 4px; border-radius:4px; margin-right:4px;">${item.partOfSpeech}</span>`
+                           : ""
+                       } 
+                       ${item.meaning || ""}
+                    </div>
                 </div>
-                <div class="vocab-actions">
-                    <button class="action-btn-circle btn-sound" id="btn-speak-${
-                      item.id
-                    }">${ICONS.sound}</button>
-                    <button class="action-btn-circle btn-mic" id="btn-mic-${
-                      item.id
-                    }">${ICONS.mic}</button>
+                <div style="display:flex; gap:8px; align-items:center; margin-left:10px;">
+                    <button type="button" style="${btnStyle}" id="btn-speak-${
+          item.id
+        }">${ICONS.sound}</button>
+                    <button type="button" style="${btnStyle}" id="btn-mic-${
+          item.id
+        }">${ICONS.mic}</button>
                 </div>
             </div>`;
       });
@@ -451,20 +496,52 @@ window.NativeUI = (function () {
 
     body.innerHTML = html;
 
-    // 4. BIND EVENTS CHO LIST ITEM (Sau khi gán innerHTML)
-    if (document.getElementById("btn-create-auto")) {
-      document.getElementById("btn-create-auto").onclick = (e) => {
-        e.stopPropagation();
-        handlers.onOpenCreate(
-          apiData.trans.wordMeaning || apiData.trans || keyword
-        );
-      };
+    // 4. BIND EVENTS
+    if (apiData && apiData.trans) {
+      const transText =
+        typeof apiData.trans === "string"
+          ? apiData.trans
+          : apiData.trans.wordMeaning;
+
+      const box = document.getElementById("google-result-box");
+      if (box)
+        box.onclick = (e) => {
+          if (e.target.closest("button")) return;
+          // Mode VI: Lưu từ Anh (transText), Nghĩa (keyword)
+          // Mode EN: Lưu từ Anh (keyword), Nghĩa (User nhập)
+          const wordToSave = mode === "VI" ? transText : keyword;
+          const meaningToSave = mode === "VI" ? keyword : "";
+          handlers.onOpenCreate(wordToSave, meaningToSave);
+        };
+
+      const btnSpeak = document.getElementById("btn-trans-speak");
+      if (btnSpeak)
+        btnSpeak.onclick = (e) => {
+          e.stopPropagation();
+          // Luôn đọc từ Tiếng Anh
+          const textToSpeak = mode === "VI" ? transText : keyword;
+          handlers.onSpeak(textToSpeak);
+        };
+
+      const btnMic = document.getElementById("btn-trans-mic");
+      if (btnMic)
+        btnMic.onclick = (e) => {
+          e.stopPropagation();
+          const textToPractice = mode === "VI" ? transText : keyword;
+          handlers.onMic({
+            word: textToPractice,
+            id: "temp_google",
+            pronunciation: apiData.phonetics?.us || "",
+          });
+        };
     }
+
     if (dbResults) {
       dbResults.forEach((item) => {
         const row = document.getElementById(`item-${item.id}`);
         if (row) {
-          row.onclick = () => {
+          row.onclick = (e) => {
+            if (e.target.closest("button")) return;
             handlers.onInteract(item);
             handlers.onEdit(item);
           };
@@ -482,6 +559,24 @@ window.NativeUI = (function () {
       });
     }
   }
+
+  // Helper Speak: Update để hỗ trợ set ngôn ngữ tiếng Anh chuẩn
+  function speak(text) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; // 👈 Quan trọng: Ép giọng Anh Mỹ
+    window.speechSynthesis.speak(u);
+  }
+
+  // Return API
+  return {
+    renderSearchModal,
+    renderPopup: window.NativeUI?.renderPopup || function () {},
+    renderFormModal,
+    renderAssessmentModal,
+    hideAll,
+    speak: speak, // Sử dụng hàm speak đã nâng cấp
+  };
 
   // ... (Các hàm khác giữ nguyên) ...
 
