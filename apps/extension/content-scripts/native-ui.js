@@ -20,27 +20,49 @@ window.NativeUI = (function () {
       '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
   };
 
-  // --- 1. HÀM XỬ LÝ KÉO THẢ & LƯU VỊ TRÍ ---
+  // --- 1. HÀM XỬ LÝ KÉO THẢ & RESIZE & LƯU STATE ---
   function enableDragAndPersist(headerEl, modalEl) {
     let isDragging = false;
     let startX, startY, initialLeft, initialTop;
 
-    // A. Khôi phục vị trí cũ (nếu có)
-    const savedPos = localStorage.getItem("vocab_widget_pos");
-    if (savedPos) {
-      const { top, left } = JSON.parse(savedPos);
-      // Kiểm tra xem vị trí có bị trôi ra khỏi màn hình không
-      const safeTop = Math.min(Math.max(0, top), window.innerHeight - 50);
-      const safeLeft = Math.min(Math.max(0, left), window.innerWidth - 50);
+    // A. Load State (Size & Position)
+    const savedState = localStorage.getItem("vocab_widget_state");
+    if (savedState) {
+      try {
+        const { top, left, width, height } = JSON.parse(savedState);
+        // Validate bounds
+        const safeTop = Math.min(Math.max(0, top), window.innerHeight - 50);
+        const safeLeft = Math.min(Math.max(0, left), window.innerWidth - 50);
 
-      modalEl.style.top = safeTop + "px";
-      modalEl.style.left = safeLeft + "px";
-      modalEl.style.transform = "none"; // Bỏ căn giữa mặc định
+        modalEl.style.top = safeTop + "px";
+        modalEl.style.left = safeLeft + "px";
+        modalEl.style.transform = "none"; // Bỏ center default
+
+        if (width) modalEl.style.width = width + "px";
+        if (height) modalEl.style.height = height + "px";
+      } catch (e) {}
+    } else {
+      modalEl.style.width = "600px"; // Default width
+      modalEl.style.top = "15%";
+      modalEl.style.left = "50%";
+      modalEl.style.transform = "translateX(-50%)";
     }
 
-    // B. Bắt đầu kéo
+    // Helper: Save to LocalStorage
+    const saveState = () => {
+      const rect = modalEl.getBoundingClientRect();
+      const state = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      };
+      localStorage.setItem("vocab_widget_state", JSON.stringify(state));
+    };
+
+    // B. Drag Logic
     headerEl.onmousedown = (e) => {
-      // Chỉ kéo khi click vào vùng trống của header (tránh input)
+      // Ignore click on inputs/buttons
       if (
         e.target.tagName === "INPUT" ||
         e.target.closest(".vocab-mode-flag") ||
@@ -52,45 +74,37 @@ window.NativeUI = (function () {
       startX = e.clientX;
       startY = e.clientY;
 
-      // Lấy vị trí hiện tại (tính cả khi đang dùng transform)
       const rect = modalEl.getBoundingClientRect();
       initialLeft = rect.left;
       initialTop = rect.top;
 
-      // Xóa transform để chuyển sang dùng top/left tuyệt đối mượt mà
       modalEl.style.transform = "none";
-      modalEl.style.left = initialLeft + "px";
-      modalEl.style.top = initialTop + "px";
-      modalEl.style.width = rect.width + "px"; // Cố định chiều rộng để không bị co giãn
+      modalEl.style.width = rect.width + "px"; // Fix width khi start drag
     };
 
-    // C. Đang kéo
     const onMouseMove = (e) => {
       if (!isDragging) return;
-      e.preventDefault(); // Chặn bôi đen text
-
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-
-      modalEl.style.left = `${initialLeft + dx}px`;
-      modalEl.style.top = `${initialTop + dy}px`;
+      e.preventDefault();
+      modalEl.style.left = `${initialLeft + (e.clientX - startX)}px`;
+      modalEl.style.top = `${initialTop + (e.clientY - startY)}px`;
     };
 
-    // D. Thả chuột (Lưu vị trí)
     const onMouseUp = () => {
-      if (!isDragging) return;
-      isDragging = false;
-
-      // Lưu vào LocalStorage
-      const pos = {
-        top: parseInt(modalEl.style.top || 0),
-        left: parseInt(modalEl.style.left || 0),
-      };
-      localStorage.setItem("vocab_widget_pos", JSON.stringify(pos));
+      if (isDragging) {
+        isDragging = false;
+        saveState();
+      }
     };
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
+
+    // C. Resize Observer (Auto Save Size)
+    const resizeObserver = new ResizeObserver(() => {
+      if (window.vocabResizeTimer) clearTimeout(window.vocabResizeTimer);
+      window.vocabResizeTimer = setTimeout(saveState, 500); // Debounce save
+    });
+    resizeObserver.observe(modalEl);
   }
 
   function init() {

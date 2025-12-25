@@ -72,7 +72,7 @@ FILE: config.js
 // apps/extension/config.js
 
 // 👇 CÔNG TẮC TỔNG: Đổi true/false ở đây
-const IS_DEV_MODE = true;
+const IS_DEV_MODE = false;
 
 const APP_CONFIG = {
   // Backend
@@ -166,19 +166,1655 @@ FILE: manifest.json
 ================================================
 FILE: popup.css
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 5187: character maps to <undefined>
+:root {
+  --primary-color: #58cc02; /* Xanh lá kiểu Duolingo/Elsa */
+  --primary-dark: #46a302;
+  --accent-color: #1cb0f6; /* Xanh dương */
+  --text-primary: #3c3c3c;
+  --text-secondary: #777777;
+  --bg-color: #ffffff;
+  --card-bg: #f7f7f7;
+  --danger-color: #ff4b4b;
+  --warning-color: #ffc800;
+  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  --border-radius: 16px;
+}
+
+/* Reset & Base */
+* {
+  box-sizing: border-box;
+}
+
+#tts-popup {
+  position: absolute;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  padding: 0;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  z-index: 999999;
+  min-width: 320px;
+  max-width: 400px;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif; /* Font tròn trịa hiện đại */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* --- Header --- */
+.tts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: move;
+  user-select: none;
+}
+
+.sound-btn,
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #bbbbbb;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.sound-btn:hover {
+  background: #f0f8ff;
+  color: var(--accent-color);
+}
+
+.close-btn:hover {
+  background: #fff0f0;
+  color: var(--danger-color);
+}
+
+/* --- Content Area --- */
+.tts-content {
+  padding: 0 20px 20px 20px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* --- Images Grid --- */
+.tts-images-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 15px 0;
+  width: 100%;
+}
+
+.tts-image {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.tts-image:hover {
+  transform: scale(1.05);
+}
+
+.tts-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- Phonetic & Meaning --- */
+.tts-phonetic {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.phonetic-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.phonetic-item .flag {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+.phonetic-text {
+  font-family: "Lucida Console", monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tts-meaning {
+  font-size: 16px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+/* --- Actions (Mic Button) --- */
+.tts-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 20px 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 20%);
+}
+
+.mic-btn {
+  background: var(--accent-color); /* Màu xanh chủ đạo */
+  border: none;
+  box-shadow: 0 4px 0 #118ec7; /* Hiệu ứng nút bấm 3D */
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  margin-bottom: 10px;
+}
+
+.mic-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #118ec7;
+}
+
+.mic-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #118ec7;
+}
+
+.mic-btn.recording {
+  background: var(--danger-color);
+  box-shadow: 0 4px 0 #d63e3e;
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 75, 75, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 75, 75, 0);
+  }
+}
+
+/* --- Assessment Result (ELSA Style) --- */
+#assessment-result {
+  width: 100%;
+}
+
+.assessment-box {
+  background: #ffffff;
+  padding: 15px;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Vòng tròn điểm số */
+.total-score-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 5px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0 auto 5px auto;
+  background: #fff;
+  color: var(--text-primary);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Text Word chính */
+.word-text {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 10px 0 5px 0;
+  color: #2b3b4e; /* Màu xanh đậm sang trọng */
+  letter-spacing: -0.5px;
+}
+
+/* Container Phonemes */
+.analyzed-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.word-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phoneme-row {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.phoneme-char {
+  font-family: "Roboto Mono", monospace;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Màu sắc điểm số (Color Grading) */
+/* Xanh (Excellent) */
+.p-perfect {
+  background-color: #dff6dd;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* Xanh nhạt (Good) */
+.p-good {
+  background-color: #f1f8e9;
+  color: #558b2f;
+  border: 1px solid #dcedc8;
+}
+
+/* Vàng (Fair) */
+.p-fair {
+  background-color: #fff8e1;
+  color: #fbc02d;
+  border: 1px solid #ffecb3;
+}
+
+/* Đỏ (Bad) */
+.p-bad {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  position: relative;
+}
+
+/* Loading & Info */
+.tts-loading,
+.tts-info {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  padding: 10px;
+}
+/* --- Flashcard Passive Learning --- */
+#vocab-flashcard {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 280px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 2147483647; /* Max z-index */
+  font-family: "Nunito", sans-serif;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.flashcard-slide-in {
+  animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.flashcard-slide-out {
+  animation: slideOutRight 0.5s forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* Style cho Context Box trong Popup chính */
+.context-box {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-left: 3px solid var(--accent-color);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  line-height: 1.4;
+}
+/* --- Dictionary Styles --- */
+.dict-container {
+  text-align: left;
+  margin: 10px 0;
+  padding: 0 10px;
+}
+
+.dict-row {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
+}
+
+.dict-pos {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-weight: 700;
+  min-width: 45px;
+  text-align: center;
+}
+
+.dict-meanings {
+  font-size: 15px;
+  color: #333;
+  font-weight: 500;
+}
+/* --- New: Primary Meaning Style --- */
+.primary-meaning {
+  font-size: 18px; /* To hơn text thường */
+  color: var(--primary-dark); /* Màu xanh đậm cho dễ nhìn */
+  font-weight: 700;
+  text-align: center;
+  margin: 5px 0 10px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eee; /* Gạch chân nhẹ ngăn cách với dict */
+  line-height: 1.4;
+}
+/* --- Assessment Action Buttons --- */
+.assessment-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.action-btn-small {
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-user-audio {
+  background: #ffffff;
+  color: #d32f2f; /* Màu đỏ ghi âm */
+}
+.btn-user-audio:hover {
+  background: #ffebee;
+}
+
+.btn-ref-audio {
+  background: #ffffff;
+  color: #1976d2; /* Màu xanh Azure */
+}
+.btn-ref-audio:hover {
+  background: #e3f2fd;
+}
+/* --- FULL FORM MODAL STYLES (Ported from Frontend) --- */
+.vocab-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 2147483650; /* Cao hơn cả Search Wrapper */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.vocab-modal-content {
+  background: #fff;
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.vocab-modal-header {
+  background: #4f46e5; /* Indigo-600 */
+  padding: 24px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.vocab-modal-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.vocab-input-large {
+  background: transparent;
+  font-size: 36px;
+  font-weight: 700;
+  color: white;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  width: 100%;
+  outline: none;
+  padding-bottom: 4px;
+  transition: border-color 0.2s;
+}
+.vocab-input-large:focus {
+  border-color: white;
+}
+.vocab-input-large::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.vocab-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vocab-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.vocab-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #9ca3af; /* Gray-400 */
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.vocab-input-field,
+.vocab-textarea-field,
+.vocab-select-field {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.vocab-input-field:focus,
+.vocab-textarea-field:focus,
+.vocab-select-field:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.vocab-textarea-field {
+  min-height: 80px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.vocab-modal-footer {
+  background: #f9fafb; /* Gray-50 */
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: #4b5563;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-save {
+  background: #4f46e5;
+  color: white;
+  padding: 8px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.1s;
+}
+.btn-save:hover {
+  background: #4338ca;
+}
+.btn-save:active {
+  transform: scale(0.98);
+}
+
+/* Auto-fill Animation */
+.autofill-loading {
+  font-size: 12px;
+  color: #bfdbfe;
+  margin-left: 10px;
+  animation: pulse 1.5s infinite;
+}
+/* =========================================
+   NATIVE SEARCH BAR STYLES (QUICK SEARCH)
+   ========================================= */
+
+/* Root container để cô lập style */
+#vocab-root {
+  all: initial; /* Reset style để không bị ảnh hưởng bởi trang web gốc */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Wrapper: Trong suốt hoàn toàn & Click xuyên qua được */
+#vocab-search-wrapper {
+  position: fixed;
+  inset: 0;
+  background: transparent !important; /* Không màu nền */
+  backdrop-filter: none !important; /* Không làm mờ */
+  z-index: 2147483648;
+  display: none;
+  pointer-events: none; /* QUAN TRỌNG: Cho phép click vào trang web bên dưới */
+}
+
+/* Modal: Hiện rõ & Nhận sự kiện chuột */
+#vocab-search-modal {
+  pointer-events: auto;
+  background: white;
+  width: 600px;
+  max-width: 90vw;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 20px 50px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 0.2s ease-out;
+
+  /* 👇 QUAN TRỌNG: Cho phép bôi đen văn bản trong toàn bộ Modal */
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Header: Tay nắm kéo thả */
+.vocab-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+
+  /* 👇 Chỉ chặn bôi đen ở vùng Header (trừ ô input) để kéo thả mượt */
+  cursor: grab;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  background: #fff;
+}
+
+.vocab-header:active {
+  cursor: grabbing; /* Bàn tay nắm lại khi kéo */
+  background: #fafafa;
+}
+
+.vocab-input-affix {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  color: #999;
+}
+
+.vocab-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 20px;
+  font-weight: 300;
+  color: #333;
+  background: transparent;
+
+  /* 👇 Cực kỳ quan trọng để Paste/Copy hoạt động */
+  cursor: text;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.vocab-search-input::placeholder {
+  color: #ccc;
+}
+
+/* --- BODY LIST STYLES --- */
+.vocab-body {
+  max-height: 450px;
+  overflow-y: auto;
+  background: #fff;
+  padding: 8px 0;
+}
+
+/* Item Row */
+.vocab-list-item {
+  padding: 12px 24px; /* Tăng padding cho thoáng */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  border-left: 4px solid transparent;
+}
+
+.vocab-list-item:hover {
+  background: #f5f7fa;
+  border-left-color: #1890ff;
+}
+
+/* Riêng phần Create New thì highlight nhẹ */
+.vocab-create-item {
+  background: #f6ffed; /* Xanh lá siêu nhạt */
+}
+.vocab-create-item:hover {
+  background: #d9f7be;
+  border-left-color: #52c41a;
+}
+
+/* Typography */
+.vocab-word-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+.vocab-pronun {
+  font-family: "Lucida Console", monospace;
+  font-size: 13px;
+  color: #888;
+  margin-left: 8px;
+}
+
+.vocab-word-meta {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Tags */
+.vocab-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #eee;
+  color: #666;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-left: 8px;
+  border: 1px solid #e0e0e0;
+}
+.tag-green {
+  background: #f6ffed;
+  color: #52c41a;
+  border-color: #b7eb8f;
+}
+.tag-blue {
+  background: #e6f7ff;
+  color: #1890ff;
+  border-color: #91d5ff;
+}
+
+/* --- ACTION BUTTONS (ROUND STYLE - GIỐNG SHIFT) --- */
+.vocab-actions {
+  display: flex;
+  gap: 10px;
+  opacity: 0; /* Mặc định ẩn */
+  transform: translateX(10px);
+  transition: all 0.2s ease;
+}
+
+/* Hover vào dòng thì hiện nút */
+.vocab-list-item:hover .vocab-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Nút bấm tròn xoe */
+.action-btn-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #eee;
+  background: white;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  /* Quan trọng để click được */
+  pointer-events: auto !important;
+  user-select: none;
+}
+
+.action-btn-circle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Hover effects */
+.action-btn-circle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-listen:hover {
+  color: #1890ff;
+  border-color: #1890ff;
+  background: #e6f7ff;
+}
+.btn-mic:hover {
+  color: #52c41a;
+  border-color: #52c41a;
+  background: #f6ffed;
+}
+.btn-edit:hover {
+  color: #faad14;
+  border-color: #faad14;
+  background: #fffbe6;
+}
+.btn-sound:hover {
+  color: #1890ff;
+  border-color: #1890ff;
+  background: #e6f7ff;
+}
+
+/* Luôn hiện nút ở dòng Create New để user biết mà bấm */
+.vocab-create-item .vocab-actions {
+  opacity: 1;
+  transform: none;
+}
+/* --- ASSESSMENT MODAL STYLES (ELSA STYLE) --- */
+.assess-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2147483660; /* Cao nhất */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.assess-modal-content {
+  background: white;
+  width: 100%;
+  max-width: 450px;
+  border-radius: 24px;
+  padding: 30px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: scaleIn 0.2s ease-out;
+}
+
+.assess-word {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 5px;
+}
+
+.assess-pronun {
+  font-family: monospace;
+  color: #6b7280;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+/* Score Circle Animation */
+.score-circle-container {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 8px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 25px auto;
+  font-size: 40px;
+  font-weight: 800;
+  transition: all 0.5s ease;
+}
+
+/* Phonemes Styles */
+.phoneme-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 25px;
+  background: #f9fafb;
+  padding: 15px;
+  border-radius: 16px;
+}
+
+.phoneme-badge {
+  font-family: monospace;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.bg-green {
+  background: #dcfce7;
+  color: #166534;
+}
+.bg-yellow {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.bg-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Control Buttons */
+.assess-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.btn-control {
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-control:active {
+  transform: scale(0.95);
+}
+
+.btn-speaker {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #4f46e5;
+}
+
+.btn-record {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+}
+.btn-record.recording {
+  background: #ef4444;
+  animation: pulse 1.5s infinite;
+}
+
+.btn-playback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #059669;
+}
+.btn-playback:disabled {
+  background: #f3f4f6;
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.assess-status {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #6b7280;
+  min-height: 20px;
+}
+
+/* Header Input (Word) - Chuyển thành Textarea style */
+.vocab-input-large {
+  background: transparent;
+  font-size: 32px; /* Giảm nhẹ font size để đỡ bị tràn */
+  font-weight: 700;
+  color: white;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  width: 100%;
+  outline: none;
+  padding-bottom: 4px;
+  transition: border-color 0.2s;
+
+  /* Fix cho textarea */
+  resize: none; /* Không cho user kéo thủ công */
+  overflow: hidden; /* Ẩn thanh cuộn xấu */
+  font-family: inherit;
+  line-height: 1.3;
+  min-height: 50px;
+  display: block;
+}
+
+.vocab-input-large:focus {
+  border-color: white;
+}
+
+.vocab-input-large::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 
 
 ================================================
 FILE: popup.html
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in position 4519: character maps to <undefined>
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edge TTS Reader - Cài đặt</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 450px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+
+      .guide-section {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        line-height: 1.6;
+        backdrop-filter: blur(10px);
+      }
+
+      .guide-section h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+
+      .guide-section ol {
+        padding-left: 20px;
+      }
+
+      .guide-section li {
+        margin-bottom: 6px;
+      }
+
+      .guide-section a {
+        color: #fff;
+        text-decoration: underline;
+      }
+
+      .guide-section a:hover {
+        opacity: 0.8;
+      }
+
+      .input-group {
+        margin-bottom: 15px;
+        position: relative;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-group input {
+        flex: 1;
+        padding: 10px 40px 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: monospace;
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        transition: all 0.2s;
+      }
+
+      .input-group input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.8);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+      }
+
+      .toggle-visibility {
+        position: absolute;
+        right: 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px;
+        z-index: 10;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+
+      .toggle-visibility:hover {
+        opacity: 1;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .save-btn {
+        background: white;
+        color: #667eea;
+      }
+
+      .save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .test-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .test-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .status-message {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        text-align: center;
+        display: none;
+      }
+
+      .status-message.show {
+        display: block;
+      }
+
+      .status-message.success {
+        background: rgba(76, 175, 80, 0.9);
+        color: white;
+      }
+
+      .status-message.error {
+        background: rgba(244, 67, 54, 0.9);
+        color: white;
+      }
+
+      .status-message.warning {
+        background: rgba(255, 152, 0, 0.9);
+        color: white;
+      }
+
+      .status-message.loading {
+        background: rgba(33, 150, 243, 0.9);
+        color: white;
+      }
+
+      .info-note {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        margin-top: 15px;
+        border-left: 3px solid rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>⚙️ Cài đặt Google Search API</h2>
+
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy API Key:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a href="https://console.cloud.google.com/" target="_blank"
+              >Google Cloud Console</a
+            >
+          </li>
+          <li>Tạo dự án mới hoặc chọn dự án hiện có</li>
+          <li>Bật Custom Search API</li>
+          <li>Tạo API Key từ phần "Credentials"</li>
+          <li>Dán API Key vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="guide-section">
+        <h3>📌 Hướng dẫn lấy Search Engine ID:</h3>
+        <ol>
+          <li>
+            Truy cập
+            <a
+              href="https://programmablesearchengine.google.com/"
+              target="_blank"
+              >Google Programmable Search Engine</a
+            >
+          </li>
+          <li>Tạo search engine mới</li>
+          <li>Sao chép Search Engine ID (cx)</li>
+          <li>Dán vào ô dưới</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label>🔑 Main Google API Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="api-key-0"
+            class="api-key-input"
+            placeholder="Key chính (bắt buộc)"
+          />
+          <button type="button" class="toggle-visibility">👁️</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>🔍 Main Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="cx-0"
+            class="cx-input"
+            placeholder="CX chính (bắt buộc)"
+          />
+        </div>
+      </div>
+
+      <details
+        style="
+          margin-bottom: 15px;
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 6px;
+          padding: 10px;
+        "
+      >
+        <summary style="cursor: pointer; font-weight: 600; font-size: 13px">
+          ➕ Mở rộng: 4 Backup Keys (Dự phòng)
+        </summary>
+
+        <div
+          style="
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 2px solid rgba(255, 255, 255, 0.3);
+          "
+        >
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #1:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-1"
+              class="api-key-input"
+              placeholder="API Key dự phòng 1"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-1"
+              class="cx-input"
+              placeholder="CX ID dự phòng 1"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #2:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-2"
+              class="api-key-input"
+              placeholder="API Key dự phòng 2"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-2"
+              class="cx-input"
+              placeholder="CX ID dự phòng 2"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #3:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-3"
+              class="api-key-input"
+              placeholder="API Key dự phòng 3"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-3"
+              class="cx-input"
+              placeholder="CX ID dự phòng 3"
+            />
+          </div>
+
+          <label
+            style="
+              font-size: 12px;
+              margin-top: 10px;
+              display: block;
+              color: #ddd;
+            "
+            >Backup Set #4:</label
+          >
+          <div class="input-wrapper" style="margin-bottom: 5px">
+            <input
+              type="password"
+              id="api-key-4"
+              class="api-key-input"
+              placeholder="API Key dự phòng 4"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="cx-4"
+              class="cx-input"
+              placeholder="CX ID dự phòng 4"
+            />
+          </div>
+        </div>
+      </details>
+
+      <div class="input-group">
+        <label for="search-engine-input">Search Engine ID (cx):</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="search-engine-input"
+            placeholder="Nhập Search Engine ID"
+          />
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button class="save-btn" id="save-btn">💾 Lưu</button>
+        <button class="test-btn" id="test-btn">🧪 Kiểm tra</button>
+      </div>
+      <div
+        class="guide-section"
+        style="
+          margin-top: 20px;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          padding-top: 15px;
+        "
+      >
+        <h3>🎙️ Cài đặt Azure Speech (Pronunciation):</h3>
+        <ol>
+          <li>
+            Tạo resource <strong>Speech Services</strong> trên Azure Portal
+          </li>
+          <li>Lấy Key và Region (ví dụ: eastus, southeastasia)</li>
+        </ol>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-key-input">Azure Speech Key:</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="azure-key-input"
+            placeholder="Nhập Azure Subscription Key"
+          />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="azure-region-input">Azure Region:</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="azure-region-input"
+            placeholder="Ví dụ: eastus"
+          />
+        </div>
+      </div>
+      <div class="status-message" id="status-message"></div>
+
+      <div class="info-note">
+        💡 <strong>Lưu ý:</strong> Nếu không cấu hình Google API, extension sẽ
+        tự động sử dụng Unsplash để lấy hình ảnh.
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
+
 
 
 ================================================
 FILE: popup.js
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x81 in position 1262: character maps to <undefined>
+document.addEventListener("DOMContentLoaded", async () => {
+  // Elements cho Azure (Giữ nguyên)
+  const azureKeyInput = document.getElementById("azure-key-input");
+  const azureRegionInput = document.getElementById("azure-region-input");
+  const saveBtn = document.getElementById("save-btn");
+  const testBtn = document.getElementById("test-btn");
+
+  // Xử lý nút mắt thần (Toggle Visibility) cho tất cả input password
+  document.querySelectorAll(".toggle-visibility").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      // Tìm input cùng cấp với nút bấm
+      const input = e.target.parentElement.querySelector("input");
+      if (input) {
+        input.type = input.type === "password" ? "text" : "password";
+      }
+    });
+  });
+
+  // --- 1. LOAD DATA ---
+  chrome.storage.sync.get(
+    ["googleApiKeys", "azureKey", "azureRegion"], // Lưu ý: key mới là 'googleApiKeys' (dạng mảng)
+    (result) => {
+      // Load Azure
+      if (result.azureKey) azureKeyInput.value = result.azureKey;
+      if (result.azureRegion) azureRegionInput.value = result.azureRegion;
+
+      // Load Google Keys (List)
+      const keys = result.googleApiKeys || [];
+
+      // Loop qua 5 slot để điền dữ liệu
+      for (let i = 0; i < 5; i++) {
+        const keyInput = document.getElementById(`api-key-${i}`);
+        const cxInput = document.getElementById(`cx-${i}`);
+
+        if (keys[i]) {
+          if (keyInput) keyInput.value = keys[i].key || "";
+          if (cxInput) cxInput.value = keys[i].cx || "";
+        }
+      }
+    }
+  );
+
+  // --- 2. SAVE DATA ---
+  saveBtn.addEventListener("click", () => {
+    const azureKey = azureKeyInput.value.trim();
+    const azureRegion = azureRegionInput.value.trim();
+
+    // Gom dữ liệu từ 5 slot Google
+    let googleKeysList = [];
+    for (let i = 0; i < 5; i++) {
+      const keyVal = document.getElementById(`api-key-${i}`).value.trim();
+      const cxVal = document.getElementById(`cx-${i}`).value.trim();
+
+      // Chỉ lưu nếu có điền Key (CX có thể dùng chung hoặc riêng)
+      if (keyVal) {
+        googleKeysList.push({
+          key: keyVal,
+          cx: cxVal, // Nếu cx trống, logic bên content.js sẽ handle sau
+        });
+      }
+    }
+
+    // Validation
+    if (googleKeysList.length === 0) {
+      showStatusMessage("⚠️ Cần ít nhất 1 Google API Key chính!", "warning");
+      return;
+    }
+
+    // Save to Storage
+    chrome.storage.sync.set(
+      {
+        googleApiKeys: googleKeysList, // Lưu dạng mảng object
+        azureKey: azureKey,
+        azureRegion: azureRegion,
+      },
+      () => {
+        showStatusMessage(
+          `✅ Đã lưu ${googleKeysList.length} bộ key!`,
+          "success"
+        );
+        setTimeout(hideStatusMessage, 3000);
+      }
+    );
+  });
+
+  // --- 3. TEST API (Test key đầu tiên) ---
+  testBtn.addEventListener("click", async () => {
+    const key0 = document.getElementById("api-key-0").value.trim();
+    const cx0 = document.getElementById("cx-0").value.trim();
+
+    if (!key0 || !cx0) {
+      showStatusMessage("⚠️ Cần nhập Key & CX ở ô đầu tiên để test", "warning");
+      return;
+    }
+
+    showStatusMessage("⏳ Đang test Key chính...", "loading");
+
+    try {
+      const url = `https://www.googleapis.com/customsearch/v1?q=test&cx=${cx0}&searchType=image&key=${key0}&num=1`;
+      const response = await fetch(url);
+
+      if (response.ok) {
+        showStatusMessage("✅ Key chính hoạt động ngon lành!", "success");
+        setTimeout(hideStatusMessage, 3000);
+      } else {
+        const errorData = await response.json();
+        showStatusMessage(
+          `❌ Lỗi: ${errorData.error?.message || "Check lại Key/CX"}`,
+          "error"
+        );
+      }
+    } catch (error) {
+      showStatusMessage(`❌ Lỗi mạng: ${error.message}`, "error");
+    }
+  });
+});
+
+function showStatusMessage(message, type) {
+  const statusDiv = document.getElementById("status-message");
+  statusDiv.textContent = message;
+  statusDiv.className = `status-message show ${type}`;
+}
+
+function hideStatusMessage() {
+  const statusDiv = document.getElementById("status-message");
+  statusDiv.className = "status-message";
+}
+
 
 
 ================================================
@@ -529,13 +2165,975 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 ================================================
 FILE: content-scripts/lookup-services.js
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x81 in position 3223: character maps to <undefined>
+// =======================================================================
+// MODULE: SERVICES (API, Audio, Caching)
+// =======================================================================
+
+const BACKEND_URL = APP_CONFIG.API_URL;
+let isSoundEnabled = true;
+
+// --- 1. SETTINGS & AUDIO ---
+function toggleSoundState() {
+  isSoundEnabled = !isSoundEnabled;
+  if (!isSoundEnabled) window.speechSynthesis.cancel();
+  return isSoundEnabled;
+}
+
+async function speakWithEdgeTTS(text) {
+  if (!isSoundEnabled || !text) return;
+  window.speechSynthesis.cancel();
+
+  try {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9;
+
+    // Fix lỗi Chrome load voice chậm
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      await new Promise((resolve) => {
+        window.speechSynthesis.onvoiceschanged = () => {
+          voices = window.speechSynthesis.getVoices();
+          resolve();
+        };
+      });
+    }
+
+    // Ưu tiên Microsoft Aria Online
+    const ariaVoice =
+      voices.find((v) => v.name.includes("Microsoft Aria Online")) ||
+      voices.find((v) => v.name.includes("Aria")) ||
+      voices.find(
+        (v) => v.name.includes("Natural") && v.lang.startsWith("en-US")
+      ) ||
+      voices.find((v) => v.lang === "en-US");
+
+    if (ariaVoice) utterance.voice = ariaVoice;
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error("TTS Error:", error);
+  }
+}
+
+// --- 2. BACKEND API (SAVE VOCAB) ---
+// apps/extension/content-scripts/lookup-services.js
+
+// --- 2. BACKEND API (SAVE VOCAB) ---
+async function apiSaveVocabulary(data) {
+  // 👇 1. LOG CHECK CONFIG
+  console.log(
+    `%c[EXT-DEBUG] 🚀 Starting Save...`,
+    "color: cyan; font-weight: bold"
+  );
+  console.log(`[EXT-DEBUG] Backend URL:`, BACKEND_URL);
+
+  try {
+    const meaning =
+      typeof data.translation === "string"
+        ? data.translation
+        : data.translation?.wordMeaning || "";
+
+    const partOfSpeech =
+      data.translation?.dict && data.translation.dict.length > 0
+        ? data.translation.dict[0].pos
+        : "";
+
+    const pronunciation = data.phonetics?.us
+      ? data.phonetics.us.replace(/\//g, "")
+      : "";
+
+    const payload = {
+      word: data.text,
+      meaning: meaning,
+      example: data.contextText || "",
+      pronunciation: pronunciation,
+      partOfSpeech: partOfSpeech,
+      topic: "Extension",
+      isStarred: false,
+    };
+
+    // 👇 2. LOG REQUEST
+    console.log(`[EXT-DEBUG] Payload:`, payload);
+    console.log(`[EXT-DEBUG] Sending request to: ${BACKEND_URL}/vocabulary`);
+
+    const response = await fetch(`${BACKEND_URL}/vocabulary`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    // 👇 3. LOG RESPONSE STATUS
+    console.log(`[EXT-DEBUG] Response Status:`, response.status);
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`[EXT-DEBUG] Server Error Body:`, errText); // Xem server trả về lỗi gì
+
+      if (response.status === 401) throw new Error("Chưa đăng nhập (401)");
+      if (response.status === 403) throw new Error("Bị chặn quyền (403)");
+      throw new Error(`Lỗi Server: ${response.status}`);
+    }
+
+    const json = await response.json();
+    console.log(`[EXT-DEBUG] Success Data:`, json);
+    return json;
+  } catch (error) {
+    // 👇 4. LOG NETWORK ERROR (Quan trọng nhất)
+    console.error(`[EXT-DEBUG] 🔥 FATAL ERROR:`, error);
+
+    if (error.message.includes("Failed to fetch")) {
+      console.warn(
+        `[EXT-DEBUG] 👉 Gợi ý: Có thể do lỗi SSL, CORS, hoặc chưa add host_permissions trong manifest.`
+      );
+    }
+    throw error;
+  }
+}
+
+// --- 3. CACHING SYSTEM ---
+async function getFromCache(key) {
+  const storageKey = `cache_${key.toLowerCase().trim()}`;
+  const result = await chrome.storage.local.get([storageKey]);
+  const cachedItem = result[storageKey];
+  if (cachedItem && Date.now() - cachedItem.timestamp < 24 * 60 * 60 * 1000) {
+    return cachedItem.data;
+  }
+  return null;
+}
+
+async function saveToCache(key, data) {
+  const storageKey = `cache_${key.toLowerCase().trim()}`;
+  await chrome.storage.local.set({
+    [storageKey]: { data: data, timestamp: Date.now() },
+  });
+}
+
+async function saveToHistory(word, data) {
+  try {
+    const result = await chrome.storage.local.get(["vocabHistory"]);
+    let history = result.vocabHistory || [];
+    history = history.filter(
+      (item) =>
+        item && item.word && item.word.toLowerCase() !== word.toLowerCase()
+    );
+    history.unshift({ word: word, data: data, timestamp: Date.now() });
+    if (history.length > 50) history.pop();
+    await chrome.storage.local.set({ vocabHistory: history });
+  } catch (e) {
+    console.warn("History Error:", e);
+  }
+}
+
+// --- 4. GOOGLE TRANSLATE API ---
+async function getTranslation(text, contextText = "") {
+  try {
+    let contextMeaning = null;
+    if (contextText && contextText.length > 0 && contextText !== text) {
+      try {
+        const urlCtx = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(
+          contextText
+        )}`;
+        const resCtx = await fetch(urlCtx);
+        if (resCtx.ok) {
+          const dataCtx = await resCtx.json();
+          if (dataCtx && dataCtx[0])
+            contextMeaning = dataCtx[0].map((item) => item[0]).join("");
+        }
+      } catch (e) {}
+    }
+
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&dt=bd&q=${encodeURIComponent(
+      text
+    )}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Google API Error");
+    const data = await response.json();
+
+    if (data) {
+      const mainMeaning = data[0]
+        ? data[0].map((item) => item[0]).join("")
+        : "";
+      let dict = [];
+      if (data[1]) {
+        data[1].forEach((group) => {
+          dict.push({ pos: group[0], terms: group[1].slice(0, 5) });
+        });
+      }
+      return {
+        wordMeaning: mainMeaning,
+        contextMeaning: contextMeaning,
+        dict: dict,
+      };
+    }
+  } catch (error) {
+    return null;
+  }
+  return null;
+}
+
+// --- 5. IMAGE API ---
+async function tryFetchGoogleImage(searchTerm, apiKey, cx) {
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
+      searchTerm
+    )}&cx=${cx}&searchType=image&key=${apiKey}&num=3`;
+    const response = await fetch(url);
+    if (response.status === 403 || response.status === 429)
+      throw new Error(`QUOTA_EXCEEDED`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data.items && data.items.length > 0)
+      return data.items.map((item) => item.link);
+  } catch (e) {
+    if (e.message === "QUOTA_EXCEEDED") throw e;
+  }
+  return null;
+}
+
+async function getImages(englishText) {
+  const searchTerm = englishText.trim();
+  let images = [];
+  const result = await chrome.storage.sync.get([
+    "googleApiKeys",
+    "googleApiKey",
+    "googleSearchEngineId",
+  ]);
+  let keyList = result.googleApiKeys || [];
+  if (
+    keyList.length === 0 &&
+    result.googleApiKey &&
+    result.googleSearchEngineId
+  ) {
+    keyList.push({ key: result.googleApiKey, cx: result.googleSearchEngineId });
+  }
+
+  if (keyList.length > 0) {
+    for (const { key, cx } of keyList) {
+      if (!key || !cx) continue;
+      try {
+        const res = await tryFetchGoogleImage(searchTerm, key, cx);
+        if (res) {
+          images = res;
+          break;
+        }
+      } catch (err) {
+        continue;
+      }
+    }
+  }
+  // Fallback Unsplash
+  if (images.length === 0) {
+    try {
+      const res = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
+          searchTerm
+        )}&per_page=3&client_id=E8nbwS_cEWGVX4rM0e_-Eq6IpI_QKlO4eFEKfOl3AUo`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results) images = data.results.map((i) => i.urls.regular);
+      }
+    } catch (e) {}
+  }
+  return images;
+}
+
+// --- 6. PHONETICS (UPDATED FROM OLD CODE) ---
+
+// Helper: Lấy phiên âm từng từ (Logic cũ)
+async function getPhoneticForWord(word) {
+  try {
+    const response = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
+        word.trim()
+      )}`
+    );
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data && data[0]) {
+      const result = { uk: null, us: null };
+
+      // Ưu tiên lấy từ file audio để biết chính xác giọng
+      data[0].phonetics?.forEach((p) => {
+        if (p.text) {
+          if (p.audio && p.audio.includes("-uk")) {
+            result.uk = p.text;
+          } else if (p.audio && p.audio.includes("-us")) {
+            result.us = p.text;
+          } else if (!result.us && !result.uk) {
+            result.us = p.text;
+          }
+        }
+      });
+
+      // Fallback nếu không tìm thấy trong phonetics array
+      if (!result.uk && !result.us && data[0].phonetic) {
+        result.us = data[0].phonetic;
+      }
+      return result;
+    }
+  } catch (error) {}
+  return null;
+}
+
+// Main: Lấy phiên âm cho cả câu/đoạn (Logic cũ)
+async function getPhoneticForText(text) {
+  const words = text
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+  const isLongText = words.length > 5;
+
+  // Chạy song song request cho từng từ
+  const phonetics = await Promise.all(
+    words.map(async (word) => {
+      const cleanWord = word.replace(/[.,!?;:'"()]/g, "");
+      if (!cleanWord) return null;
+      return await getPhoneticForWord(cleanWord);
+    })
+  );
+
+  const ukParts = [];
+  const usParts = [];
+
+  phonetics.forEach((p, idx) => {
+    if (p) {
+      if (!isLongText && p.uk) ukParts.push(p.uk);
+
+      if (p.us) usParts.push(p.us);
+      else if (p.uk) usParts.push(p.uk); // Fallback UK sang US nếu thiếu
+      else {
+        // Fallback word gốc nếu không có phiên âm
+        const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
+        usParts.push(cleanWord);
+      }
+    } else {
+      const cleanWord = words[idx].replace(/[.,!?;:'"()]/g, "");
+      if (!isLongText) ukParts.push(cleanWord);
+      usParts.push(cleanWord);
+    }
+  });
+
+  const format = (parts) => {
+    if (parts.length === 0) return null;
+    const combined = parts
+      .map((part) => (part ? part.replace(/^\/|\/$/g, "") : "")) // Bỏ dấu / thừa
+      .filter(Boolean)
+      .join(" ");
+    return combined ? `/${combined}/` : null; // Bọc lại bằng //
+  };
+
+  return {
+    uk: format(ukParts),
+    us: format(usParts),
+  };
+}
+
+// Helper: Convert Audio
+async function convertAudioToWav(audioBlob) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)({
+    sampleRate: 16000,
+  });
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  const pcmData = audioBuffer.getChannelData(0);
+
+  const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+  const view = new DataView(buffer);
+  const writeString = (view, offset, string) => {
+    for (let i = 0; i < string.length; i++)
+      view.setUint8(offset + i, string.charCodeAt(i));
+  };
+  writeString(view, 0, "RIFF");
+  view.setUint32(4, 36 + pcmData.length * 2, true);
+  writeString(view, 8, "WAVE");
+  writeString(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 16000, true);
+  view.setUint32(28, 32000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, "data");
+  view.setUint32(40, pcmData.length * 2, true);
+  let offset = 44;
+  for (let i = 0; i < pcmData.length; i++, offset += 2) {
+    let s = Math.max(-1, Math.min(1, pcmData[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return new Blob([view], { type: "audio/wav" });
+}
+
+async function assessPronunciation(audioBlob, referenceText) {
+  try {
+    const result = await chrome.storage.sync.get(["azureKey", "azureRegion"]);
+    const key = result.azureKey;
+    const region = result.azureRegion;
+    if (!key || !region) throw new Error("Chưa nhập Azure Key/Region.");
+
+    const wavBlob = await convertAudioToWav(audioBlob);
+    const assessParams = {
+      ReferenceText: referenceText,
+      GradingSystem: "HundredMark",
+      Granularity: "Phoneme",
+      Dimension: "Comprehensive",
+      PhonemeAlphabet: "IPA",
+    };
+    const paramsHeader = btoa(JSON.stringify(assessParams));
+
+    const url = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Ocp-Apim-Subscription-Key": key,
+        "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
+        Accept: "application/json",
+        "Pronunciation-Assessment": paramsHeader,
+      },
+      body: wavBlob,
+    });
+
+    if (!response.ok) throw new Error(`Azure Error ${response.status}`);
+    return await response.json();
+  } catch (e) {
+    throw e;
+  }
+}
+// --- [NEW] CHECK VOCAB EXISTENCE ---
+async function apiCheckVocabulary(word) {
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/vocabulary/check?word=${encodeURIComponent(word)}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Để lấy cookie auth
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      return data; // Trả về object từ vựng nếu có, hoặc null/rỗng
+    }
+  } catch (e) {
+    console.warn("Check vocab failed:", e);
+  }
+  return null;
+}
+// --- [NEW] UPDATE SCORE TO BACKEND ---
+async function apiAddScore(vocabId, score) {
+  // Nếu vocabId là "temp" hoặc không có ID -> Không lưu được (chỉ luyện tập)
+  if (!vocabId || vocabId === "temp") return false;
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/vocabulary/${vocabId}/score`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ score: Math.round(score) }),
+      credentials: "include",
+    });
+    return response.ok;
+  } catch (e) {
+    console.error("Save score failed:", e);
+    return false;
+  }
+}
+
+// Tìm kiếm danh sách từ (cho Quick Search)
+async function apiSearchVocabulary(keyword) {
+  try {
+    if (!keyword) return [];
+    const res = await fetch(
+      `${BACKEND_URL}/vocabulary?search=${encodeURIComponent(keyword)}&limit=5`,
+      {
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+    if (res.ok) {
+      const json = await res.json();
+      return json.data; // Trả về mảng items
+    }
+  } catch (e) {}
+  return [];
+}
+
+// Hàm Save đầy đủ (thay thế hoặc bổ sung cho apiSaveVocabulary cũ)
+async function apiCreateFullVocabulary(payload) {
+  // Payload: { word, meaning, example, topic, partOfSpeech, pronunciation, relatedWords }
+  const response = await fetch(`${BACKEND_URL}/vocabulary`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error("Save failed");
+  return await response.json();
+}
+async function apiUpdateVocabulary(id, data) {
+  try {
+    const payload = {
+      word: data.word,
+      meaning: data.meaning,
+      example: data.example,
+      topic: data.topic,
+      partOfSpeech: data.partOfSpeech,
+      pronunciation: data.pronunciation,
+      relatedWords: data.relatedWords,
+      // Backend không nhận 'isEditMode' nên đừng gửi
+    };
+
+    const response = await fetch(`${BACKEND_URL}/vocabulary/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    if (!response.ok) throw new Error("Update failed");
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+// --- [NEW] DỊCH VIỆT -> ANH ---
+async function translateViToEn(vietnameseText) {
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(
+      vietnameseText
+    )}`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data[0]) {
+      return data[0].map((item) => item[0]).join("");
+    }
+  } catch (error) {
+    console.error("Translate VI->EN error:", error);
+  }
+  return null;
+}
+// ... (các code cũ giữ nguyên)
+
+// --- [NEW] FETCH STARRED VOCABULARY ---
+async function apiGetStarredVocabulary() {
+  try {
+    // Gọi API lấy danh sách từ đã Star (Lấy limit 50 từ mới nhất để random)
+    const res = await fetch(
+      `${BACKEND_URL}/vocabulary?isStarred=true&limit=50`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // Quan trọng để gửi Cookie Auth
+      }
+    );
+
+    if (res.ok) {
+      const json = await res.json();
+      return json.data; // Trả về mảng VocabItem
+    }
+  } catch (e) {
+    console.error("Fetch starred failed:", e);
+  }
+  return [];
+}
+
 
 
 ================================================
 FILE: content-scripts/lookup-ui.js
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x90 in position 2314: character maps to <undefined>
+// =======================================================================
+// MODULE: UI RENDERING
+// =======================================================================
+
+let popup = null;
+let isPopupOpen = false;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
+
+function createPopup() {
+  if (popup) popup.remove();
+  popup = document.createElement("div");
+  popup.id = "tts-popup";
+  popup.style.display = "none";
+  document.body.appendChild(popup);
+  return popup;
+}
+
+function closePopup() {
+  if (popup) popup.style.display = "none";
+  window.speechSynthesis.cancel();
+  isPopupOpen = false;
+}
+
+function enableDragging(header) {
+  header.style.cursor = "move";
+  header.addEventListener("mousedown", (e) => {
+    if (e.target.closest("button")) return;
+    isDragging = true;
+    const rect = popup.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+    header.style.cursor = "grabbing";
+  });
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    popup.style.left = e.clientX - dragOffset.x + "px";
+    popup.style.top = e.clientY - dragOffset.y + "px";
+  });
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+    header.style.cursor = "move";
+  });
+}
+
+function renderPopupContent(data, isSoundEnabled, callbacks) {
+  if (!popup) return;
+  const { toggleSound, closePopup, speakEdge, handleMark, handleMic } =
+    callbacks;
+
+  const existing = data.existing;
+
+  // Logic tính điểm trung bình 3 lần gần nhất (nếu có)
+  let scoreBadge = "";
+  if (
+    existing &&
+    existing.pronunciationScores &&
+    existing.pronunciationScores.length > 0
+  ) {
+    const scores = existing.pronunciationScores.slice(-3); // Lấy 3 điểm cuối
+    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    let color = avg >= 80 ? "#4CAF50" : avg >= 60 ? "#FFC107" : "#F44336";
+    scoreBadge = `<span style="position:absolute; top:-5px; right:-5px; background:${color}; color:white; font-size:10px; padding:2px 5px; border-radius:10px; border:1px solid white;">${avg}</span>`;
+  }
+
+  // 👇 [UPDATE] Render nút Mark
+  let markBtnHtml = "";
+  if (existing) {
+    // A. ĐÃ CÓ: Hiện nút "Đã lưu" (Màu xám hoặc Xanh đậm, không cho click save nữa)
+    markBtnHtml = `
+        <button id="mark-btn-disabled" class="mic-btn" style="width:55px; height:55px; background:#E0E0E0; box-shadow:none; cursor:default; position:relative;" title="Đã có trong bộ từ vựng">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#4CAF50" stroke="#4CAF50" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            ${scoreBadge}
+        </button>`;
+  } else {
+    // B. CHƯA CÓ: Hiện nút Save như cũ
+    markBtnHtml = `
+        <button id="mark-btn" class="mic-btn" style="width:55px; height:55px; background:#FF9800; box-shadow: 0 4px 0 #F57C00;" title="Lưu từ này">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </button>`;
+  }
+
+  let content = `
+      <div class="tts-header" id="popup-header">
+        <button id="sound-toggle" class="sound-btn">${
+          isSoundEnabled ? "🔊" : "🔇"
+        }</button>
+        <div style="flex:1"></div>
+        <button id="close-popup" class="close-btn">✕</button>
+      </div>
+
+      <div class="tts-actions">
+        <div style="display:flex; gap:15px; align-items:center;">
+            <button id="replay-tts-btn" class="mic-btn" style="width:45px; height:45px; background:#4CAF50;" title="Nghe lại">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            
+            ${markBtnHtml}
+
+            <button id="mic-btn" class="mic-btn" style="width:45px; height:45px;" title="Check phát âm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+        </div>
+        <div id="save-status" style="margin-top:8px; font-size:12px; font-weight:600; min-height:18px;"></div>
+        <div id="assessment-result"></div>
+      </div>
+      
+      <div class="tts-content">`;
+
+  // Images
+  if (data.images && data.images.length) {
+    content += `<div class="tts-images-container">${data.images
+      .map(
+        (url) =>
+          `<div class="tts-image"><img src="${url}" onerror="this.style.display='none'"/></div>`
+      )
+      .join("")}</div>`;
+  }
+  // 2. Hiển thị Phiên âm
+  if (data.phonetics && (data.phonetics.us || data.phonetics.uk)) {
+    content += `<div class="tts-phonetic">
+            ${
+              data.phonetics.uk
+                ? `<div class="phonetic-item"><span class="flag">🇬🇧</span><span class="phonetic-text">${data.phonetics.uk}</span></div>`
+                : ""
+            }
+            ${
+              data.phonetics.us
+                ? `<div class="phonetic-item"><span class="flag">🇺🇸</span><span class="phonetic-text">${data.phonetics.us}</span></div>`
+                : ""
+            }
+        </div>`;
+  }
+  // Meaning
+  if (data.translation) {
+    content += `<div class="word-text" style="font-size:24px; text-align:center; margin-bottom:5px;">${data.text}</div>`;
+    const mainMeaning =
+      typeof data.translation === "string"
+        ? data.translation
+        : data.translation.wordMeaning;
+    if (mainMeaning)
+      content += `<div class="primary-meaning">${mainMeaning}</div>`;
+
+    if (data.translation.contextMeaning) {
+      content += `<div class="context-box"><strong>Ngữ cảnh:</strong><br/><em style="color:#777">"...${
+        data.contextText || ""
+      }..."</em><br/>👉 <span style="color:#2e7d32; font-weight:600;">${
+        data.translation.contextMeaning
+      }</span></div>`;
+    }
+  } else {
+    content += `<div class="tts-info">Không tìm thấy bản dịch.</div>`;
+  }
+
+  content += `</div>`; // End .tts-content
+  popup.innerHTML = content;
+
+  // Events
+  enableDragging(document.getElementById("popup-header"));
+  document.getElementById("close-popup").onclick = closePopup;
+  document.getElementById("sound-toggle").onclick = toggleSound;
+  document.getElementById("replay-tts-btn").onclick = () =>
+    speakEdge(data.text);
+
+  // Chỉ gán sự kiện click nếu nút mark-btn tồn tại (tức là chưa lưu)
+  const markBtn = document.getElementById("mark-btn");
+  if (markBtn) {
+    markBtn.onclick = (e) => {
+      e.stopPropagation();
+      handleMark(markBtn, document.getElementById("save-status"));
+    };
+  }
+
+  // Mic Event
+  const micBtn = document.getElementById("mic-btn");
+  micBtn.onclick = (e) => {
+    e.stopPropagation();
+    handleMic(data.text, micBtn, data.existing); // 👈 Thêm data.existing
+  };
+}
+
+function renderAssessmentResult(data, container, referenceText, callbacks) {
+  if (!container) return;
+  if (!data || data.error) {
+    container.innerHTML = `<div style="color:#ff5252; text-align:center;">⚠️ ${
+      data?.error || "Lỗi API"
+    }</div>`;
+    return;
+  }
+  const result = data.NBest[0];
+  const totalScore =
+    result.AccuracyScore || result.PronunciationAssessment?.AccuracyScore || 0;
+  const words = result.Words || [];
+  let scoreColor =
+    totalScore >= 80 ? "#4caf50" : totalScore >= 60 ? "#ffeb3b" : "#ff5252";
+
+  let html = `<div class="assessment-box" style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px; margin-top:10px;">
+    <div class="assessment-actions">
+        <button id="btn-play-user" class="action-btn-small btn-user-audio">🗣️ My Voice</button>
+        <button id="btn-play-standard" class="action-btn-small btn-ref-audio">🎧 Standard</button>
+    </div>
+    <div class="total-score-circle" style="border-color: ${scoreColor}; color: ${scoreColor}">${Math.round(
+    totalScore
+  )}</div>
+    <div class="analyzed-content">`;
+
+  words.forEach((word) => {
+    const wScore =
+      word.AccuracyScore || word.PronunciationAssessment?.AccuracyScore || 0;
+    const errorType =
+      word.ErrorType || word.PronunciationAssessment?.ErrorType || "None";
+    let wordColor =
+      errorType === "Omission" ? "#777" : wScore < 60 ? "#ff5252" : "#fff";
+    let phonemeHtml = "";
+    if (errorType !== "Omission") {
+      (word.Phonemes || []).forEach((p) => {
+        let pClass =
+          p.AccuracyScore >= 90
+            ? "p-perfect"
+            : p.AccuracyScore >= 80
+            ? "p-good"
+            : p.AccuracyScore >= 60
+            ? "p-fair"
+            : "p-bad";
+        phonemeHtml += `<span class="phoneme-char ${pClass}" title="/${p.Phoneme}/: ${p.AccuracyScore}">${p.Phoneme}</span>`;
+      });
+    } else {
+      phonemeHtml = `<span style="font-size:10px; color:#999;">(missed)</span>`;
+    }
+    html += `<div class="word-block"><span class="word-text" style="color:${wordColor}">${word.Word}</span><div class="phoneme-row">${phonemeHtml}</div></div>`;
+  });
+  html += `</div></div>`;
+  container.innerHTML = html;
+
+  setTimeout(() => {
+    const btnUser = document.getElementById("btn-play-user");
+    const btnStandard = document.getElementById("btn-play-standard");
+    if (btnUser) btnUser.onclick = callbacks.playUserAudio;
+    if (btnStandard)
+      btnStandard.onclick = () => callbacks.speakEdge(referenceText);
+  }, 0);
+}
+
+[cite_start]; // [cite: 704]
+function showFlashcard(item, callbacks) {
+  // 1. Xóa thẻ cũ
+  const oldCard = document.getElementById("vocab-flashcard");
+  if (oldCard) oldCard.remove();
+
+  // 2. Lấy trạng thái âm thanh đã lưu (Mặc định là Bật)
+  chrome.storage.local.get(["flashcard_sound_on"], (result) => {
+    // Lưu ý: !== false nghĩa là undefined (lần đầu) cũng là True
+    let isSoundOn = result.flashcard_sound_on !== false;
+
+    // 3. Tạo thẻ
+    const card = document.createElement("div");
+    card.id = "vocab-flashcard";
+    card.className = "flashcard-slide-in";
+
+    // Style Gọn nhẹ, Hiện đại
+    Object.assign(card.style, {
+      cursor: "pointer",
+      borderLeft: "5px solid #58cc02", // Màu xanh thương hiệu
+      fontFamily: "'Segoe UI', sans-serif",
+      display: "flex",
+      flexDirection: "column",
+      maxWidth: "280px", // Gọn gàng
+      background: "#fff",
+      boxShadow: "0 5px 20px rgba(0,0,0,0.15)",
+      borderRadius: "8px",
+      overflow: "hidden",
+    });
+
+    // Icons SVG
+    const ICON_CLOSE = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    const ICON_SOUND_ON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+    const ICON_SOUND_OFF = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff4d4f" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+    const ICON_MIC = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+
+    // 4. Chuẩn bị HTML cho Phiên âm & Từ loại
+    const pronunHtml = item.data.pronunciation
+      ? `<span style="font-family:monospace; font-size:12px; color:#888; margin-left:8px;">/${item.data.pronunciation}/</span>`
+      : "";
+
+    const posHtml = item.data.partOfSpeech
+      ? `<span style="font-size:10px; font-weight:700; color:#1890ff; background:#e6f7ff; border:1px solid #91d5ff; padding:1px 4px; border-radius:4px; margin-left:6px; text-transform:uppercase; vertical-align:middle;">${item.data.partOfSpeech}</span>`
+      : "";
+
+    // 5. Nội dung HTML
+    card.innerHTML = `
+      <div style="padding:12px 12px 4px 12px; display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+              <div style="display:flex; align-items:center; flex-wrap:wrap;">
+                  <span style="font-size:18px; color:#333; font-weight:800; line-height:1.2;">${
+                    item.word
+                  }</span>
+                  ${posHtml}
+              </div>
+              <div style="margin-top:2px;">${pronunHtml}</div>
+          </div>
+          <button id="fc-close" style="background:none; border:none; cursor:pointer; padding:4px;">${ICON_CLOSE}</button>
+      </div>
+
+      <div style="padding:4px 12px 12px 12px;">
+          <p style="margin:0; font-size:15px; color:#444; line-height:1.4;">${
+            item.data.translation
+          }</p>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#f9f9f9; border-top:1px solid #eee;">
+          <div style="display:flex; gap:8px;">
+              <button id="fc-sound-btn" title="Bật/Tắt đọc tự động" style="background:#fff; border:1px solid #ddd; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;">
+                  ${isSoundOn ? ICON_SOUND_ON : ICON_SOUND_OFF}
+              </button>
+              <button id="fc-mic-btn" title="Luyện phát âm" style="background:#fff; border:1px solid #ddd; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#f57c00;">
+                  ${ICON_MIC}
+              </button>
+          </div>
+          <div id="fc-timer" style="font-size:11px; font-weight:bold; color:#aaa;">12s</div>
+      </div>
+    `;
+
+    document.body.appendChild(card);
+
+    // --- LOGIC ---
+
+    // A. Auto Speak (Chỉ đọc nếu Sound đang ON)
+    if (isSoundOn) {
+      callbacks.speakEdge(item.word);
+    }
+
+    // B. Toggle Sound & Save Memory
+    const btnSound = document.getElementById("fc-sound-btn");
+    btnSound.onclick = (e) => {
+      e.stopPropagation();
+      isSoundOn = !isSoundOn; // Đổi trạng thái
+
+      // Update UI Icon
+      btnSound.innerHTML = isSoundOn ? ICON_SOUND_ON : ICON_SOUND_OFF;
+
+      // Save vào Storage (Quan trọng!)
+      chrome.storage.local.set({ flashcard_sound_on: isSoundOn });
+
+      if (!isSoundOn) window.speechSynthesis.cancel();
+      else callbacks.speakEdge(item.word);
+    };
+
+    // C. Các nút khác
+    document.getElementById("fc-mic-btn").onclick = (e) => {
+      e.stopPropagation();
+      card.remove();
+      if (callbacks.onMic) callbacks.onMic();
+    };
+
+    document.getElementById("fc-close").onclick = (e) => {
+      e.stopPropagation();
+      card.remove();
+      window.speechSynthesis.cancel();
+    };
+
+    // Click vào card để Edit
+    card.onclick = (e) => {
+      if (e.target.closest("button")) return;
+      card.remove();
+      if (callbacks.onEdit) callbacks.onEdit();
+    };
+
+    // Timer Auto Close
+    let timeLeft = 12;
+    const interval = setInterval(() => {
+      timeLeft--;
+      const t = document.getElementById("fc-timer");
+      if (t) t.innerText = `${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        card.classList.add("flashcard-slide-out");
+        setTimeout(() => {
+          if (card.parentNode) card.remove();
+        }, 500);
+      }
+    }, 1000);
+  });
+}
+
 
 
 ================================================
@@ -605,12 +3203,9 @@ console.log("✅ Native Core Loaded - Smart Ranking Mode");
 window.NativeCore = (function () {
   let debounceTimer = null;
   let latestQuery = "";
-  let currentMode = "EN";
-
   let lastDbResults = [];
-
-  const VIETNAMESE_REGEX =
-    /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+  let currentApiData = null; // Cache kết quả Translate
+  let currentMode = localStorage.getItem("vocab_last_mode") || "EN";
 
   // --- HELPER: TÍNH ĐIỂM ƯU TIÊN (Ranking) ---
   function sortResultsByRelevance(items, keyword, mode) {
@@ -778,36 +3373,34 @@ window.NativeCore = (function () {
     });
   }
 
-  // --- 4. FORM OPEN HANDLERS ---
-  async function onOpenCreate(englishWord, meaningSuggestion = "") {
-    let initialData = {
-      word: englishWord || "",
-      meaning: meaningSuggestion,
-      isEditMode: false,
-    };
+  // --- [FIXED] POPUP LOGIC (Thêm onSpeak/onMic) ---
 
-    if (englishWord) {
-      const autoData = await fetchAutoFillData(englishWord);
-      if (autoData) {
-        initialData = { ...initialData, ...autoData };
-        if (meaningSuggestion) initialData.meaning = meaningSuggestion;
+  // --- FIX POPUP CÂM & LOGIC TẠO TỪ ---
+
+  async function onOpenCreate(englishWord, meaningVal = "") {
+    const h = getHandlers(); // Lấy handlers (chứa onSpeak đã fix Aria)
+
+    window.NativeUI.renderFormModal(
+      { word: englishWord, meaning: meaningVal, isEditMode: false },
+      {
+        onSave: handleSaveVocab,
+        onAutoFill: fetchAutoFillData,
+        onSpeak: h.onSpeak, // 👈 Phải có dòng này thì nút loa trong Popup mới kêu
+        onMic: h.onMic,
       }
-    }
-    window.NativeUI.renderFormModal(initialData, {
-      onAutoFill: fetchAutoFillData,
-      onSave: handleSaveVocab,
-    });
+    );
   }
 
   async function onEdit(item) {
+    const h = getHandlers();
+
     window.NativeUI.renderFormModal(
+      { ...item, isEditMode: true },
       {
-        ...item,
-        isEditMode: true,
-      },
-      {
-        onAutoFill: fetchAutoFillData,
         onSave: handleSaveVocab,
+        onAutoFill: fetchAutoFillData,
+        onSpeak: h.onSpeak, // 👈 Fix lỗi loa
+        onMic: h.onMic,
       }
     );
   }
@@ -815,20 +3408,22 @@ window.NativeCore = (function () {
   // --- 5. INPUT & HANDLERS ---
   function handleInput(text) {
     latestQuery = text;
-    const detectedMode = VIETNAMESE_REGEX.test(text) ? "VI" : "EN";
-    currentMode = detectedMode;
-
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       runSearch(text.trim());
-    }, 400);
+    }, 50); // Giảm delay xuống 50ms cho cảm giác nhanh hơn
   }
-
+  function setMode(newMode) {
+    if (currentMode === newMode) return;
+    currentMode = newMode;
+    localStorage.setItem("vocab_last_mode", newMode); // Lưu vào Storage
+    runSearch(latestQuery, true);
+  }
   async function handleEnter(text) {
     const rawInput = text.trim();
     if (!rawInput) return;
-    if (debounceTimer) clearTimeout(debounceTimer);
 
+    // 1. Ưu tiên mở từ có trong DB
     const exactMatch = lastDbResults.find(
       (i) => i.word.toLowerCase() === rawInput.toLowerCase()
     );
@@ -837,129 +3432,115 @@ window.NativeCore = (function () {
       return;
     }
 
-    // Logic xử lý Enter nhanh (khi chưa render)
-    // Tự động detect và xử lý y như runSearch nhưng bỏ qua bước render list
-    const isVietnamese = VIETNAMESE_REGEX.test(rawInput);
-    if (isVietnamese) {
-      const englishWord = await translateViToEn(rawInput);
-      if (englishWord) {
-        const existing = await apiCheckVocabulary(englishWord);
-        if (existing) onEdit(existing);
-        else onOpenCreate(englishWord, rawInput);
-      } else {
-        onOpenCreate(rawInput, "");
-      }
-    } else {
-      const existing = await apiCheckVocabulary(rawInput);
-      if (existing) onEdit(existing);
-      else onOpenCreate(rawInput, "");
-    }
+    // 2. Nếu không, mở form tạo mới (Dùng từ đã dịch nếu có)
+    const wordToCreate =
+      currentApiData && currentApiData.trans
+        ? typeof currentApiData.trans === "string"
+          ? currentApiData.trans
+          : currentApiData.trans.wordMeaning
+        : rawInput;
+
+    onOpenCreate(wordToCreate, currentMode === "VI" ? rawInput : "");
   }
 
-  // 👇 [UPDATED] RUN SEARCH VỚI LOGIC RANKING MỚI
-  async function runSearch(rawInput, forceMode = null) {
-    const runMode = forceMode || currentMode;
-    const currentRunQuery = rawInput;
+  function getHandlers() {
+    return {
+      mode: currentMode,
+      rawInput: latestQuery,
+      onInput: handleInput,
+      onModeChange: setMode,
+      onEnter: handleEnter,
 
-    try {
-      let searchKeyword = rawInput; // Từ dùng để Search DB
-      let displayKeyword = rawInput; // Từ dùng để hiển thị đề xuất Create
-      let impliedMeaning = "";
-      let translatedEnglish = "";
-
-      // === BƯỚC 1: XỬ LÝ VIETNAMESE ===
-      if (runMode === "VI" && rawInput.trim()) {
-        // A. Dịch sang Anh để lấy từ chuẩn cho "Create New"
-        translatedEnglish = await translateViToEn(rawInput);
-
-        // B. NHƯNG Search DB thì dùng Tiếng Việt (rawInput)
-        // Lý do: Để tìm ra những từ có nghĩa chứa "tạo" (create, make, generate...)
-        searchKeyword = rawInput;
-
-        if (translatedEnglish) {
-          displayKeyword = translatedEnglish.toLowerCase().trim();
-          impliedMeaning = rawInput;
-        }
-      }
-
-      // === BƯỚC 2: SEARCH DATABASE ===
-      // Lưu ý: searchKeyword ở đây là VI (nếu mode VI) hoặc EN (nếu mode EN)
-      // Backend API search cả cột word và meaning nên tìm kiểu gì cũng ra.
-      let dbResults = await apiSearchVocabulary(searchKeyword);
-
-      if (latestQuery.trim() !== currentRunQuery) return;
-
-      // === BƯỚC 3: SMART FALLBACK (Cho ca khó không dấu) ===
-      // ... (Logic fallback cũ nếu cần, ở đây ta tập trung vào Ranking) ...
-
-      // === BƯỚC 4: SẮP XẾP KẾT QUẢ (RANKING) ===
-      // Sắp xếp lại dbResults dựa trên độ khớp với rawInput
-      dbResults = sortResultsByRelevance(dbResults, rawInput, runMode);
-      lastDbResults = dbResults; // Lưu lại cho handleEnter
-
-      // === BƯỚC 5: CHUẨN BỊ DATA CHO CREATE NEW ===
-      let apiData = null;
-
-      // Kiểm tra xem từ Tiếng Anh (sau khi dịch) đã có trong DB chưa?
-      // (Chỉ áp dụng cho Mode VI để tránh tạo trùng)
-      let exactMatchInDb = null;
-      if (runMode === "VI" && translatedEnglish) {
-        // Tìm trong list kết quả xem có ông nào word == translatedEnglish không
-        exactMatchInDb = dbResults.find(
-          (i) => i.word.toLowerCase() === translatedEnglish.toLowerCase()
+      // Force English Voice (Aria)
+      onSpeak: (text) => {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "en-US";
+        const voices = window.speechSynthesis.getVoices();
+        const ariaVoice = voices.find(
+          (v) => v.name.includes("Aria") && v.name.includes("English")
         );
-      } else {
-        exactMatchInDb = dbResults.find(
-          (i) => i.word.toLowerCase() === displayKeyword.toLowerCase()
+        const googleVoice = voices.find((v) =>
+          v.name.includes("Google US English")
         );
-      }
+        if (ariaVoice) u.voice = ariaVoice;
+        else if (googleVoice) u.voice = googleVoice;
+        window.speechSynthesis.speak(u);
+      },
 
-      // Nếu chưa có, chuẩn bị data để gợi ý tạo mới
-      if (!exactMatchInDb && displayKeyword) {
-        const phonetics = await getPhoneticForText(displayKeyword);
-        let trans = null;
+      onOpenCreate: (word) => onOpenCreate(word),
+      onEdit: onEdit,
+      onMic: onOpenAssessment, // Đảm bảo hàm này được truyền xuống
+      onInteract: handleInteraction,
 
-        if (runMode === "EN") {
-          trans = await getTranslation(displayKeyword);
-        } else {
-          // Mode VI
-          const googleData = await getTranslation(displayKeyword);
-          trans = { wordMeaning: impliedMeaning, dict: googleData?.dict || [] };
-        }
+      // Thêm Handler Save để Popup gọi được
+      onSave: handleSaveVocab,
+    };
+  }
 
-        if (latestQuery.trim() !== currentRunQuery) return;
-        if (trans) apiData = { trans, phonetics };
-      }
-
-      // === BƯỚC 6: RENDER ===
-      // Lưu ý: displayKeyword là từ Tiếng Anh (để hiện ở dòng Create New)
-      window.NativeUI.renderSearchModal(displayKeyword, dbResults, apiData, {
-        onInput: handleInput,
-        onEnter: handleEnter,
-        onSpeak: (t) => speakWithEdgeTTS(t),
-        onOpenCreate: (word) =>
-          onOpenCreate(word, runMode === "VI" ? impliedMeaning : ""),
-        onEdit: onEdit,
-        onMic: onOpenAssessment,
-        onMicPractice: (keyword) =>
-          onOpenAssessment({
-            word: keyword,
-            id: null,
-            pronunciation: apiData?.phonetics?.us || "",
-          }),
-
-        // 👇 THÊM HÀM NÀY XUỐNG UI
-        onInteract: handleInteraction,
-
-        onMark: (item) => {
-          /*...*/
-        },
-        mode: runMode,
-        rawInput: rawInput,
-      });
-    } catch (e) {
-      console.error("Search error:", e);
+  async function runSearch(rawInput, forceRefresh = false) {
+    if (!rawInput) {
+      window.NativeUI.renderSearchModal("", [], null, getHandlers());
+      return;
     }
+
+    if (forceRefresh) {
+      lastDbResults = [];
+      currentApiData = null;
+    }
+
+    const runQuery = rawInput;
+
+    // TASK 1: GOOGLE TRANSLATE (Chạy cho cả 2 mode)
+    // Mode VI: Dịch Việt -> Anh
+    // Mode EN: Dịch Anh -> Việt (Để lấy nghĩa hiển thị)
+    const promiseTrans =
+      currentMode === "VI"
+        ? translateViToEn(runQuery)
+        : getTranslation(runQuery); // Hàm này trả về object hoặc string tùy implement
+
+    promiseTrans
+      .then(async (result) => {
+        if (latestQuery !== runQuery) return;
+
+        if (result) {
+          // Chuẩn hóa data
+          const transText =
+            typeof result === "string" ? result : result.wordMeaning;
+
+          // Mode VI: transText là tiếng Anh -> Lấy Phonetic
+          // Mode EN: runQuery là tiếng Anh -> Lấy Phonetic từ runQuery (nếu cần, hoặc DB đã có)
+          let phonetics = "";
+          if (currentMode === "VI") {
+            phonetics = await getPhoneticForText(transText);
+          }
+
+          currentApiData = {
+            trans: transText, // Kết quả dịch
+            phonetics: phonetics,
+          };
+          renderUI();
+        }
+      })
+      .catch((e) => console.log("Trans Err", e));
+
+    // TASK 2: DATABASE SEARCH (Chạy song song)
+    apiSearchVocabulary(runQuery)
+      .then((results) => {
+        if (latestQuery !== runQuery) return;
+        lastDbResults = results;
+        renderUI();
+      })
+      .catch((err) => console.log("DB err", err));
+  }
+
+  function renderUI() {
+    window.NativeUI.renderSearchModal(
+      latestQuery,
+      lastDbResults,
+      currentApiData,
+      getHandlers()
+    );
   }
 
   // 👇 [NEW] HÀM CẬP NHẬT COUNT & TIME (INTERACTION)
@@ -987,17 +3568,19 @@ window.NativeCore = (function () {
     }
   }
 
-  // ... (Phần còn lại: toggle, handleSelection, Event Listeners giữ nguyên) ...
   function toggle() {
-    latestQuery = "";
-    currentMode = "EN";
-    lastDbResults = [];
-    window.NativeUI.renderSearchModal("", [], null, {
-      onInput: handleInput,
-      onEnter: handleEnter,
-      mode: "EN",
-      rawInput: "",
-    });
+    const modal = document.getElementById("vocab-search-wrapper");
+    // Nếu đang hiện -> Ẩn
+    if (modal && modal.style.display === "block") {
+      window.NativeUI.hideAll();
+    } else {
+      // Nếu đang ẩn -> Hiện lại (Dữ liệu cũ vẫn còn trong biến lastDbResults/latestQuery)
+      renderUI();
+      setTimeout(() => {
+        const input = document.getElementById("native-search-input");
+        if (input) input.focus();
+      }, 100);
+    }
   }
 
   async function handleSelection() {
@@ -1090,7 +3673,12 @@ window.NativeUI = (function () {
     // B. Bắt đầu kéo
     headerEl.onmousedown = (e) => {
       // Chỉ kéo khi click vào vùng trống của header (tránh input)
-      if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+      if (
+        e.target.tagName === "INPUT" ||
+        e.target.closest(".vocab-mode-flag") ||
+        e.target.tagName === "BUTTON"
+      )
+        return;
 
       isDragging = true;
       startX = e.clientX;
@@ -1142,21 +3730,74 @@ window.NativeUI = (function () {
     root = document.createElement("div");
     root.id = "vocab-root";
     document.body.appendChild(root);
-
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .vocab-mode-flag {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 20;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        user-select: none;
+        transition: all 0.2s;
+      }
+      .vocab-mode-flag:hover { transform: translateY(-50%) scale(1.1); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+      .google-trans-box { background: #f8f9fa; border-bottom: 1px solid #eee; padding: 12px 16px; cursor: pointer; transition: background 0.1s; }
+      .google-trans-box:hover { background: #e8f0fe; }
+      .google-main-text { font-size: 16px; color: #1a73e8; font-weight: 600; margin-bottom: 2px; }
+      .google-sub-text { font-size: 11px; color: #5f6368; }
+      .vocab-list-item { cursor: pointer; padding: 10px 16px; border-bottom: 1px solid #f1f1f1; display: flex; align-items: flex-start; gap: 10px; transition: background 0.1s; }
+      .vocab-list-item:hover { background: #f5f5f5; }
+      .vocab-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+      .vocab-score-badge { font-size:10px; color:#fff; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:bold; }
+      .vocab-search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 14px;
+        color: #333;
+        resize: none; /* Không cho user kéo giãn thủ công */
+        overflow: hidden; /* Ẩn thanh cuộn */
+        min-height: 24px;
+        line-height: 1.5;
+        font-family: inherit;
+        padding-top: 4px; 
+      }
+      .action-btn-circle {
+        width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ddd;
+        background: #fff; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: #5f6368; padding: 0; z-index: 10;
+      }
+      .action-btn-circle:hover { background: #f1f3f4; color: #1a73e8; border-color: #1a73e8; }
+      .action-btn-circle svg { width: 16px; height: 16px; }
+    `;
+    root.appendChild(style);
     // 1. Search Wrapper
     searchWrapper = document.createElement("div");
     searchWrapper.id = "vocab-search-wrapper";
     searchWrapper.innerHTML = `
-        <div id="vocab-search-modal">
-            <div class="vocab-header" id="vocab-drag-handle">
-                <div class="vocab-input-affix">
-                    <span style="font-size:20px">${ICONS.search}</span>
-                    <input class="vocab-search-input" id="native-search-input" placeholder="Type to search or create..." autocomplete="off">
-                </div>
-            </div>
-            <div id="vocab-modal-body" class="vocab-body"></div>
-            <div id="vocab-modal-assessment"></div>
+      <div id="vocab-search-modal">
+        <div class="vocab-header" id="vocab-drag-handle" style="position:relative;">
+          <div class="vocab-input-affix" style="padding-right: 45px;"> ${ICONS.search}
+            <textarea class="vocab-search-input" id="native-search-input" placeholder="Search..." autocomplete="off" rows="1"></textarea>
+          </div>
+          <div id="vocab-mode-trigger"></div>
         </div>
+        <div id="vocab-modal-body" class="vocab-body"></div>
+        <div id="vocab-modal-assessment"></div>
+      </div>
     `;
     root.appendChild(searchWrapper);
 
@@ -1210,373 +3851,364 @@ window.NativeUI = (function () {
     window.speechSynthesis.cancel();
   }
 
+  // --- RENDER FORM MODAL (POPUP CHI TIẾT) ---
   function renderFormModal(data, handlers) {
-    init();
-    formWrapper.style.display = "flex";
-    searchWrapper.style.display = "none";
-    miniPopup.style.display = "none";
+    if (!formWrapper) return;
+
+    // Style lại wrapper để nó nằm đè lên search nhưng độc lập
+    formWrapper.innerHTML = "";
+    formWrapper.style.display = "flex"; // Hiện form
 
     const isEdit = data.isEditMode;
 
-    formWrapper.innerHTML = `
-        <div class="vocab-modal-content">
-            <div class="vocab-modal-header">
-                <div style="width:100%">
-                    <div class="vocab-modal-title">${
-                      isEdit ? "Editing Vocabulary" : "Create New Vocabulary"
-                    }</div>
-                    <div style="position:relative">
-                        <textarea 
-                            id="form-word" 
-                            class="vocab-input-large" 
-                            placeholder="Word..." 
-                            rows="1"
-                            ${isEdit ? "readonly" : ""}
-                        >${data.word || ""}</textarea>
-                        <div id="form-autofill-status" class="autofill-loading" style="display:none">✨ Auto-filling...</div>
-                    </div>
-                </div>
-                <button id="form-close" style="background:none; border:none; color:white; cursor:pointer;">${
-                  ICONS.close
-                }</button>
-            </div>
-            <div class="vocab-modal-body">
-                <div class="vocab-grid-2">
-                    <div>
-                        <label class="vocab-label">Pronunciation</label>
-                        <input id="form-pronun" class="vocab-input-field" value="${
-                          data.pronunciation || ""
-                        }" placeholder="/.../">
-                    </div>
-                    <div>
-                        <label class="vocab-label">Part Of Speech</label>
-                        <select id="form-pos" class="vocab-select-field">
-                            <option value="">-- Select --</option>
-                            <option value="noun" ${
-                              data.partOfSpeech === "noun" ? "selected" : ""
-                            }>Noun</option>
-                            <option value="verb" ${
-                              data.partOfSpeech === "verb" ? "selected" : ""
-                            }>Verb</option>
-                            <option value="adjective" ${
-                              data.partOfSpeech === "adjective"
-                                ? "selected"
-                                : ""
-                            }>Adjective</option>
-                            <option value="adverb" ${
-                              data.partOfSpeech === "adverb" ? "selected" : ""
-                            }>Adverb</option>
-                            <option value="phrase" ${
-                              data.partOfSpeech === "phrase" ? "selected" : ""
-                            }>Phrase</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="vocab-label">Meaning</label>
-                    <textarea id="form-meaning" class="vocab-textarea-field" placeholder="Nghĩa của từ...">${
-                      data.meaning || ""
-                    }</textarea>
-                </div>
-                <div>
-                    <label class="vocab-label">Example</label>
-                    <textarea id="form-example" class="vocab-textarea-field" style="background:#f9fafb; font-style:italic;" placeholder="Ví dụ...">${
-                      data.example || ""
-                    }</textarea>
-                </div>
-                <div class="vocab-grid-2">
-                    <div>
-                        <label class="vocab-label">Topic</label>
-                        <input id="form-topic" class="vocab-input-field" value="${
-                          data.topic || ""
-                        }" placeholder="IT, Travel...">
-                    </div>
-                    <div>
-                        <label class="vocab-label">Related Words</label>
-                        <input id="form-related" class="vocab-input-field" value="${
-                          data.relatedWords || ""
-                        }" placeholder="Synonyms...">
-                    </div>
-                </div>
-            </div>
-            <div class="vocab-modal-footer">
-                <button id="form-cancel" class="btn-cancel">Cancel</button>
-                <button id="form-save" class="btn-save">${
-                  isEdit ? "Save Changes" : "Create Word"
-                }</button>
-            </div>
+    // Meaning value for prefill
+    const meaningVal = data.meaning || "";
+    // HTML Header có Mic và Loa
+    const html = `
+      <div class="vocab-modal-content" style="width: 400px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column;">
+        <div class="vocab-header" style="justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee; background: #f8f9fa;">
+           <div style="font-weight: 700; font-size: 16px; color: #333; display: flex; align-items: center; gap: 10px;">
+              ${isEdit ? "Edit Word" : "New Word"}
+              
+              <button type="button" class="action-btn-circle btn-sound" id="btn-popup-speak" title="Listen">${
+                ICONS.sound
+              }</button>
+              <button type="button" class="action-btn-circle btn-mic" id="btn-popup-mic" title="Practice">${
+                ICONS.mic
+              }</button>
+           </div>
+           
+           <div id="btn-close-form" style="cursor: pointer; padding: 4px; color: #666;">${
+             ICONS.close
+           }</div>
         </div>
+
+        <div class="vocab-body" style="padding: 16px; overflow-y: auto; max-height: 60vh;">
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">WORD</label>
+                <input id="input-word" value="${
+                  data.word || ""
+                }" class="vocab-form-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; font-weight:bold; color:#1a73e8;">
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-bottom: 12px;">
+                <div style="flex:1">
+                    <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">TYPE</label>
+                    <input id="input-pos" value="${
+                      data.partOfSpeech || ""
+                    }" class="vocab-form-input" placeholder="n, v, adj..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+                <div style="flex:1">
+                    <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">IPA</label>
+                    <input id="input-ipa" value="${
+                      data.pronunciation || ""
+                    }" class="vocab-form-input" placeholder="/.../" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">MEANING</label>
+                <textarea id="input-mean" rows="2" class="vocab-form-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; resize:vertical;">${meaningVal}</textarea>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; font-size:11px; font-weight:600; color:#5f6368; margin-bottom:4px;">EXAMPLE</label>
+                <textarea id="input-ex" rows="2" class="vocab-form-input" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; resize:vertical;">${
+                  data.example || ""
+                }</textarea>
+            </div>
+
+            <button id="btn-save-form" style="width:100%; background:#1a73e8; color:white; padding:10px; border:none; border-radius:6px; font-weight:600; cursor:pointer;">
+                ${isEdit ? "Update Vocabulary" : "Save to Library"}
+            </button>
+        </div>
+      </div>
     `;
 
-    const wordInput = document.getElementById("form-word");
-    const statusDiv = document.getElementById("form-autofill-status");
+    formWrapper.innerHTML = html;
 
-    // 👇 [FIX 3]: Logic tự động giãn chiều cao (Auto-resize) cho Word Input
-    const adjustHeight = () => {
-      wordInput.style.height = "auto";
-      wordInput.style.height = wordInput.scrollHeight + "px";
-    };
-    wordInput.addEventListener("input", adjustHeight);
-    // Gọi 1 lần lúc init để nó khớp với nội dung ban đầu
-    setTimeout(adjustHeight, 0);
+    // --- BIND EVENTS ---
 
-    if (!isEdit) {
-      wordInput.onblur = async () => {
-        const val = wordInput.value.trim();
-        if (val && handlers.onAutoFill) {
-          statusDiv.style.display = "inline-block";
-          const autoData = await handlers.onAutoFill(val);
-          statusDiv.style.display = "none";
-          if (autoData) {
-            if (autoData.pronunciation)
-              document.getElementById("form-pronun").value =
-                autoData.pronunciation;
-            if (autoData.partOfSpeech)
-              document.getElementById("form-pos").value = autoData.partOfSpeech;
-            if (autoData.meaning)
-              document.getElementById("form-meaning").value = autoData.meaning;
-            if (autoData.example)
-              document.getElementById("form-example").value = autoData.example;
-          }
-        }
-      };
-      if (data.word) wordInput.onblur();
-    }
-
-    document.getElementById("form-close").onclick = () => {
+    // 1. Close Button: Chỉ đóng formWrapper
+    document.getElementById("btn-close-form").onclick = () => {
       formWrapper.style.display = "none";
-    };
-    document.getElementById("form-cancel").onclick = () => {
-      formWrapper.style.display = "none";
+      // Search Modal vẫn giữ nguyên bên dưới
     };
 
-    document.getElementById("form-save").onclick = () => {
+    // 2. Speak Button: Luôn dùng handlers.onSpeak để có giọng Aria
+    document.getElementById("btn-popup-speak").onclick = () => {
+      const currentWord = document.getElementById("input-word").value;
+      // Gọi handler từ Core để dùng giọng Aria
+      if (handlers.onSpeak) handlers.onSpeak(currentWord);
+    };
+
+    // 3. Mic Button
+    document.getElementById("btn-popup-mic").onclick = () => {
+      const currentWord = document.getElementById("input-word").value;
+      const currentIpa = document.getElementById("input-ipa").value;
+      // Gọi Modal Assessment
+      window.NativeCore.openAssessment({
+        word: currentWord,
+        pronunciation: currentIpa,
+        id: data.id || "temp_form",
+      });
+    };
+
+    // 4. Save Button (Giữ nguyên logic cũ)
+    document.getElementById("btn-save-form").onclick = async () => {
       const newData = {
         id: data.id,
-        word: document.getElementById("form-word").value.trim(),
-        pronunciation: document.getElementById("form-pronun").value.trim(),
-        partOfSpeech: document.getElementById("form-pos").value,
-        meaning: document.getElementById("form-meaning").value.trim(),
-        example: document.getElementById("form-example").value.trim(),
-        topic: document.getElementById("form-topic").value.trim(),
-        relatedWords: document.getElementById("form-related").value.trim(),
+        word: document.getElementById("input-word").value,
+        partOfSpeech: document.getElementById("input-pos").value,
+        pronunciation: document.getElementById("input-ipa").value,
+        meaning: document.getElementById("input-mean").value,
+        example: document.getElementById("input-ex").value,
+        occurrence: data.occurrence || 1,
       };
-      handlers.onSave(newData);
-      formWrapper.style.display = "none";
+
+      // Gọi hàm save handler truyền từ Core
+      if (handlers.onSave) {
+        // Show loading text
+        document.getElementById("btn-save-form").textContent = "Saving...";
+        await handlers.onSave(newData);
+        formWrapper.style.display = "none"; // Đóng form sau khi save xong
+      }
     };
-
-    if (!isEdit) setTimeout(() => wordInput.focus(), 100);
   }
-
-  // ... (Các phần trên giữ nguyên) ...
-
-  // --- [UPDATED] RENDER SEARCH MODAL ---
   function renderSearchModal(keyword, dbResults, apiData, handlers) {
-    init();
+    init(); // Đảm bảo init đã chạy
     searchWrapper.style.display = "block";
 
     const input = document.getElementById("native-search-input");
     const body = document.getElementById("vocab-modal-body");
+    const modeTrigger = document.getElementById("vocab-mode-trigger");
     const mode = handlers.mode || "EN";
     const userTyped = handlers.rawInput || "";
 
-    // 1. CẬP NHẬT UI THEO MODE (Placeholder & Icon)
-    const placeholder =
-      mode === "VI"
-        ? "Nhập tiếng Việt để dịch & tra cứu..."
-        : "Type English to search or create...";
-    input.setAttribute("placeholder", placeholder);
+    // 1. RENDER FLAG BUTTON
+    const flagIcon = mode === "VI" ? "🇻🇳" : "🇬🇧";
+    modeTrigger.innerHTML = `<div class="vocab-mode-flag" title="Chuyển chế độ" style="cursor:pointer;">${flagIcon}</div>`;
+    modeTrigger.onclick = (e) => {
+      e.stopPropagation();
+      handlers.onModeChange(mode === "VI" ? "EN" : "VI");
+    };
 
-    // Thêm visual indicator cho mode (Nếu muốn)
-    // Ví dụ đổi màu icon kính lúp: Xanh (EN) - Đỏ (VI)
-    const iconSpan = document.querySelector(".vocab-input-affix span");
-    if (iconSpan) {
-      iconSpan.innerHTML =
-        mode === "VI"
-          ? '<span style="font-size:14px; font-weight:800; color:#e53935;">VI</span>'
-          : ICONS.search;
-    }
-
-    // 2. LOGIC INPUT VALUE
-    // Nếu là active element (đang gõ) -> Không đụng vào value
-    // Nếu mới mở (userTyped rỗng) -> Reset
+    // 2. INPUT HANDLING
+    input.setAttribute(
+      "placeholder",
+      mode === "VI" ? "Nhập tiếng Việt..." : "Type English..."
+    );
     if (document.activeElement !== input) {
       input.value = userTyped;
       input.focus();
     }
+    // Auto height
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + "px";
 
-    // Logic bind event input (như cũ)
     if (!input.dataset.hasEvent) {
-      input.oninput = (e) => handlers.onInput(e.target.value);
+      input.oninput = (e) => {
+        e.target.style.height = "auto";
+        e.target.style.height = e.target.scrollHeight + "px";
+        handlers.onInput(e.target.value);
+      };
       input.addEventListener("keydown", (e) => {
-        e.stopPropagation(); // Chặn Notion cướp phím
-        if (e.key === "Enter") {
+        e.stopPropagation();
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
           handlers.onEnter(input.value);
         }
       });
-      // Chặn sự kiện lan ra ngoài để copy/paste ngon lành
-      ["paste", "copy", "cut", "selectstart"].forEach((evt) => {
-        input.addEventListener(evt, (e) => e.stopPropagation());
-      });
+      ["paste", "copy", "cut", "selectstart"].forEach((evt) =>
+        input.addEventListener(evt, (e) => e.stopPropagation())
+      );
       input.dataset.hasEvent = "true";
     }
 
+    // 3. RENDER BODY
     let html = "";
 
-    // 👇 CREATE NEW ITEM
-    // Lưu ý: 'keyword' ở đây là từ Tiếng Anh (đã dịch từ VI hoặc nguyên gốc EN)
-    const exactMatch = dbResults.find(
-      (w) => w.word.toLowerCase() === (keyword || "").toLowerCase()
-    );
+    // A. GOOGLE RESULT (STYLE CỨNG ĐỂ HIỆN NÚT)
+    if (apiData && apiData.trans) {
+      const transText =
+        typeof apiData.trans === "string"
+          ? apiData.trans
+          : apiData.trans.wordMeaning;
+      const phonetics = apiData.phonetics?.us || "";
+      const label =
+        mode === "VI" ? "Dịch Anh (Tự động)" : "Nghĩa tiếng Việt (Google)";
 
-    if (keyword && !exactMatch) {
-      const trans = apiData?.trans || {};
-
-      // Xác định nghĩa hiển thị:
-      // - Nếu Mode VI: Hiển thị input gốc ("xin chào")
-      // - Nếu Mode EN: Hiển thị kết quả dịch ("Translating...")
-      const displayMeaning =
-        handlers.mode === "VI"
-          ? handlers.rawInput
-          : trans.wordMeaning || "Translating...";
-
-      const pronun = apiData?.phonetics?.us || "";
-
-      // Tạo tiêu đề phụ dựa trên mode
-      const subTitle =
-        handlers.mode === "VI"
-          ? `English match: "${keyword}"` // Cho người dùng biết từ tiếng Anh tương ứng
-          : "New Word";
+      // 👇 Style trực tiếp cho nút (width, height, background) để đảm bảo hiện 100%
+      const btnStyle = `width:30px; height:30px; border-radius:50%; border:1px solid #ddd; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; min-width:30px; color:#555;`;
 
       html += `
-        <div class="vocab-list-item vocab-create-item" id="open-create-form">
-            <div class="vocab-list-left">
-                <div class="vocab-word-row">
-                    <span class="vocab-word-text">${keyword}</span> <span class="vocab-tag tag-green">${subTitle}</span>
-                    <span class="vocab-pronun">${pronun}</span>
+        <div class="google-trans-box" id="google-result-box" style="padding:12px 16px; border-bottom:1px solid #eee; background:#f8f9fa; cursor:pointer;">
+             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div style="flex:1; margin-right:10px;">
+                    <div class="google-main-text" style="font-size:16px; color:#1a73e8; font-weight:bold; margin-bottom:4px; word-break:break-word;">
+                        ${transText}
+                    </div>
+                    <div class="google-sub-text" style="font-size:11px; color:#666;">
+                        ${
+                          phonetics
+                            ? `<span style="color:#333;">/${phonetics}/</span> • `
+                            : ""
+                        }
+                        ${label}
+                    </div>
                 </div>
-                <div class="vocab-word-meta">${displayMeaning}</div>
-                <div style="font-size:11px; color:#1890ff; margin-top:2px;">
-                    Press Enter to save to database
+                
+                <div style="display:flex; gap:8px; align-items:center;">
+                     <button type="button" style="${btnStyle}" id="btn-trans-speak" title="Nghe">${
+        ICONS.sound
+      }</button>
+                     <button type="button" style="${btnStyle}" id="btn-trans-mic" title="Luyện nói">${
+        ICONS.mic
+      }</button>
                 </div>
-            </div>
-            
-            <div class="vocab-actions" style="opacity: 1; transform: none;">
-                <button id="add-listen" class="action-btn-circle btn-sound" title="Listen">
-                    ${ICONS.sound}
-                </button>
-                <button id="add-mic" class="action-btn-circle btn-mic" title="Practice">
-                    ${ICONS.mic}
-                </button>
-            </div>
-        </div>
-        <div style="height:1px; background:#f0f0f0; margin: 0 20px;"></div>
-      `;
+             </div>
+        </div>`;
     }
 
-    // 👇 2. RESULTS LIST
-    if (dbResults.length > 0) {
-      dbResults.forEach((item, idx) => {
+    // B. DATABASE RESULTS
+    if (dbResults && dbResults.length > 0) {
+      dbResults.forEach((item) => {
+        const isMatch = item.word.toLowerCase() === keyword.toLowerCase();
+        let scoreHtml = "";
+        if (item.pronunciationScores && item.pronunciationScores.length > 0) {
+          const avg = Math.round(
+            item.pronunciationScores.reduce((a, b) => a + b, 0) /
+              item.pronunciationScores.length
+          );
+          const color =
+            avg >= 80 ? "#4caf50" : avg >= 60 ? "#fbc02d" : "#ef4444";
+          scoreHtml = `<span style="font-size:10px; background:${color}; color:#fff; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:bold;">${avg}</span>`;
+        }
+
+        const btnStyle = `width:28px; height:28px; border-radius:50%; border:1px solid #ddd; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; min-width:28px; color:#555;`;
+
         html += `
-            <div class="vocab-list-item" id="vocab-item-${idx}">
-                <div class="vocab-list-left">
-                    <div class="vocab-word-row">
-                        <span class="vocab-word-text">${item.word}</span>
+            <div class="vocab-list-item" id="item-${
+              item.id
+            }" style="padding:10px 16px; border-bottom:1px solid #f1f1f1; display:flex; align-items:flex-start; cursor:pointer;">
+                <div style="flex:1;">
+                    <div class="vocab-word-text" style="${
+                      isMatch ? "color:#1a73e8; font-weight:700" : ""
+                    }">
+                        ${item.word}
                         ${
-                          item.partOfSpeech
-                            ? `<span class="vocab-tag">${item.partOfSpeech}</span>`
+                          item.pronunciation
+                            ? `<span style="color:#666; font-weight:400; margin-left:4px;">/${item.pronunciation}/</span>`
                             : ""
                         }
-                        ${
-                          item.topic
-                            ? `<span class="vocab-tag tag-blue">${item.topic}</span>`
-                            : ""
-                        }
-                        <span style="font-size:10px; color:#ccc; margin-left:5px;">(${
-                          item.occurrence || 0
-                        })</span>
+                        ${scoreHtml}
                     </div>
-                    <div class="vocab-word-meta">${item.meaning || ""}</div>
+                    <div class="vocab-word-meta" style="font-size:12px; color:#666; margin-top:2px;">
+                       ${
+                         item.partOfSpeech
+                           ? `<span style="border:1px solid #eee; padding:0 4px; border-radius:4px; margin-right:4px;">${item.partOfSpeech}</span>`
+                           : ""
+                       } 
+                       ${item.meaning || ""}
+                    </div>
                 </div>
-                <div class="vocab-actions">
-                    <button class="action-btn-circle btn-listen" title="Listen">
-                        ${ICONS.sound}
-                    </button>
-                    <button class="action-btn-circle btn-mic" title="Practice">
-                        ${ICONS.mic}
-                    </button>
+                <div style="display:flex; gap:8px; align-items:center; margin-left:10px;">
+                    <button type="button" style="${btnStyle}" id="btn-speak-${
+          item.id
+        }">${ICONS.sound}</button>
+                    <button type="button" style="${btnStyle}" id="btn-mic-${
+          item.id
+        }">${ICONS.mic}</button>
                 </div>
             </div>`;
       });
-    } else if (!keyword) {
-      html += `<div style="text-align:center; padding:40px; color:#999; font-size:14px;">Type any word to search or create...</div>`;
+    } else if (!apiData && keyword) {
+      html += `<div style="padding:20px; text-align:center; color:#999;">Đang tìm kiếm...</div>`;
     }
 
     body.innerHTML = html;
 
-    // --- RE-BIND EVENTS (FIX LỖI CLICK) ---
-    // Sử dụng stopPropagation để không bị kích hoạt click vào row cha
+    // 4. BIND EVENTS
+    if (apiData && apiData.trans) {
+      const transText =
+        typeof apiData.trans === "string"
+          ? apiData.trans
+          : apiData.trans.wordMeaning;
 
-    // 1. Bind cho Create New Box
-    if (keyword && !exactMatch) {
-      const btnListen = document.getElementById("add-listen");
-      if (btnListen) {
-        btnListen.onclick = (e) => {
-          e.stopPropagation(); // Chặn lan ra ngoài
-          handlers.onSpeak(keyword);
+      const box = document.getElementById("google-result-box");
+      if (box)
+        box.onclick = (e) => {
+          if (e.target.closest("button")) return;
+          // Mode VI: Lưu từ Anh (transText), Nghĩa (keyword)
+          // Mode EN: Lưu từ Anh (keyword), Nghĩa (User nhập)
+          const wordToSave = mode === "VI" ? transText : keyword;
+          const meaningToSave = mode === "VI" ? keyword : "";
+          handlers.onOpenCreate(wordToSave, meaningToSave);
         };
-      }
 
-      const btnMic = document.getElementById("add-mic");
-      if (btnMic) {
-        btnMic.onclick = (e) => {
-          e.stopPropagation(); // Chặn lan ra ngoài
-          if (handlers.onMicPractice) handlers.onMicPractice(keyword);
-        };
-      }
-
-      const createBox = document.getElementById("open-create-form");
-      if (createBox) {
-        createBox.onclick = () => handlers.onOpenCreate(keyword);
-      }
-    }
-
-    // 2. Bind cho List Results
-    dbResults.forEach((item, idx) => {
-      const itemEl = document.getElementById(`vocab-item-${idx}`);
-      if (!itemEl) return;
-
-      // 👇 SỰ KIỆN CLICK VÀO DÒNG (ROW CLICK)
-      itemEl.onclick = (e) => {
-        // Nếu click vào nút con (loa/mic) thì bỏ qua, để sự kiện nút con xử lý
-        if (e.target.closest("button")) return;
-
-        // 1. Tăng count & Update time
-        if (handlers.onInteract) handlers.onInteract(item);
-
-        // 2. Mở Popup chỉnh sửa (Edit Mode)
-        handlers.onEdit(item);
-      };
-
-      // 👇 NÚT LOA
-      const btnListen = itemEl.querySelector(".btn-listen");
-      if (btnListen)
-        btnListen.onclick = (e) => {
+      const btnSpeak = document.getElementById("btn-trans-speak");
+      if (btnSpeak)
+        btnSpeak.onclick = (e) => {
           e.stopPropagation();
-          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
-          handlers.onSpeak(item.word);
+          // Luôn đọc từ Tiếng Anh
+          const textToSpeak = mode === "VI" ? transText : keyword;
+          handlers.onSpeak(textToSpeak);
         };
 
-      // 👇 NÚT MIC
-      const btnMic = itemEl.querySelector(".btn-mic");
+      const btnMic = document.getElementById("btn-trans-mic");
       if (btnMic)
         btnMic.onclick = (e) => {
           e.stopPropagation();
-          if (handlers.onInteract) handlers.onInteract(item); // Tăng count
-          if (handlers.onMic) handlers.onMic(item);
+          const textToPractice = mode === "VI" ? transText : keyword;
+          handlers.onMic({
+            word: textToPractice,
+            id: "temp_google",
+            pronunciation: apiData.phonetics?.us || "",
+          });
         };
-    });
+    }
+
+    if (dbResults) {
+      dbResults.forEach((item) => {
+        const row = document.getElementById(`item-${item.id}`);
+        if (row) {
+          row.onclick = (e) => {
+            if (e.target.closest("button")) return;
+            handlers.onInteract(item);
+            handlers.onEdit(item);
+          };
+          document.getElementById(`btn-speak-${item.id}`).onclick = (e) => {
+            e.stopPropagation();
+            handlers.onInteract(item);
+            handlers.onSpeak(item.word);
+          };
+          document.getElementById(`btn-mic-${item.id}`).onclick = (e) => {
+            e.stopPropagation();
+            handlers.onInteract(item);
+            handlers.onMic(item);
+          };
+        }
+      });
+    }
   }
+
+  // Helper Speak: Update để hỗ trợ set ngôn ngữ tiếng Anh chuẩn
+  function speak(text) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; // 👈 Quan trọng: Ép giọng Anh Mỹ
+    window.speechSynthesis.speak(u);
+  }
+
+  // Return API
+  return {
+    renderSearchModal,
+    renderPopup: window.NativeUI?.renderPopup || function () {},
+    renderFormModal,
+    renderAssessmentModal,
+    hideAll,
+    speak: speak, // Sử dụng hàm speak đã nâng cấp
+  };
 
   // ... (Các hàm khác giữ nguyên) ...
 

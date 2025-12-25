@@ -662,30 +662,33 @@
   pointer-events: none; /* QUAN TRỌNG: Cho phép click vào trang web bên dưới */
 }
 
-/* Modal: Hiện rõ & Nhận sự kiện chuột */
 #vocab-search-modal {
   pointer-events: auto;
   background: white;
-  width: 600px;
-  max-width: 90vw;
+
+  /* 👇 UPDATE: Size linh hoạt */
+  min-width: 320px;
+  min-height: 200px;
+  max-width: 95vw;
+  max-height: 90vh;
+  /* width: 600px; -> XÓA fixed width */
+
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 20px 50px -5px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+
+  /* 👇 UPDATE: Resize native */
   display: flex;
   flex-direction: column;
   position: absolute;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-  transition: opacity 0.2s ease-out;
+  resize: both; /* Bật tính năng kéo dãn */
+  overflow: auto !important; /* Bắt buộc để hiện icon resize */
 
-  /* 👇 QUAN TRỌNG: Cho phép bôi đen văn bản trong toàn bộ Modal */
+  transition: opacity 0.2s ease-out;
   user-select: text !important;
   -webkit-user-select: text !important;
+  z-index: 2147483648;
 }
-
-/* Header: Tay nắm kéo thả */
 .vocab-header {
   padding: 24px 28px;
   border-bottom: 1px solid #f0f0f0;
