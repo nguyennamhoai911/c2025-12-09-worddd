@@ -42,6 +42,9 @@ function VocabularyContent() {
     handleSort,
     handleToggleStar,
     triggerInteraction,
+    upsertVocab,
+    removeVocab,
+    refreshCache,
     handleDragStart,
     handleDragOver,
     handleDragEnd,
@@ -62,7 +65,13 @@ function VocabularyContent() {
     handleDelete,
     handleFileChange,
     fetchAutoFillData,
-  } = useVocabModals(token, () => fetchVocabs(page));
+  } = useVocabModals(
+    token,
+    () => fetchVocabs(page),
+    upsertVocab,
+    removeVocab,
+    refreshCache
+  );
 
   const {
     isAssessmentModalOpen,

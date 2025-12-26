@@ -16,7 +16,10 @@ export interface VocabFormData {
 
 const useVocabModals = (
   token: string | null,
-  fetchVocabs: (page?: number) => void
+  fetchVocabs: (page?: number) => void,
+  upsertVocab: (item: VocabItem) => void,
+  removeVocab: (id: string) => void,
+  refreshCache: () => void
 ) => {
   const [selectedVocab, setSelectedVocab] = useState<VocabItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -146,17 +149,26 @@ const useVocabModals = (
     }
     try {
       if (selectedVocab) {
-        await api.patch(
+        const response = await api.patch(
           `/vocabulary/${selectedVocab.id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        const updatedItem =
+          response.data?.data || response.data || {
+            ...selectedVocab,
+            ...formData,
+          };
+        upsertVocab(updatedItem);
       } else {
-        await api.post(
+        const response = await api.post(
           "/vocabulary",
           { ...formData, isStarred: false },
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        const createdItem =
+          response.data?.data || response.data || { ...formData };
+        upsertVocab(createdItem);
       }
       setIsModalOpen(false);
       fetchVocabs();
@@ -172,6 +184,7 @@ const useVocabModals = (
       await api.delete(`/vocabulary/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      removeVocab(id);
       fetchVocabs();
       setIsModalOpen(false);
     } catch (e) {
@@ -199,6 +212,7 @@ const useVocabModals = (
         }
       );
       alert("Import success!");
+      refreshCache();
       fetchVocabs(1);
     } catch (error) {
       alert("Import failed!");

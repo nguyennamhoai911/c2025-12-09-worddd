@@ -175,23 +175,31 @@ document.addEventListener("keydown", async (e) => {
         if (tr) data.translation = tr;
       }
 
-      // 👇 [UPDATE] Logic kiểm tra DB
-      let existingVocab = null;
-      try {
-        existingVocab = await apiCheckVocabulary(selectedText);
-      } catch (e) {}
-
-      // Gộp thông tin existing vào data
-      data.existing = existingVocab; // 👈 Thêm cái này để UI biết
-
+      data.existing = null;
       renderPopupContent(data, isSoundEnabled, {
         toggleSound: toggleSoundState,
         closePopup,
         speakEdge: speakWithEdgeTTS,
         handleMic: (referenceText, btnElement) =>
-          handleMicClick(referenceText, btnElement, existingVocab),
+          handleMicClick(referenceText, btnElement, data.existing),
         handleMark: (btn, status) => onMarkClick(btn, status, data),
       });
+
+      // 👇 [UPDATE] Logic kiểm tra DB (chạy ngầm sau khi render)
+      try {
+        const existingVocab = await apiCheckVocabulary(selectedText);
+        if (existingVocab && isPopupOpen) {
+          data.existing = existingVocab; // 👈 Thêm cái này để UI biết
+          renderPopupContent(data, isSoundEnabled, {
+            toggleSound: toggleSoundState,
+            closePopup,
+            speakEdge: speakWithEdgeTTS,
+            handleMic: (referenceText, btnElement) =>
+              handleMicClick(referenceText, btnElement, data.existing),
+            handleMark: (btn, status) => onMarkClick(btn, status, data),
+          });
+        }
+      } catch (e) {}
     } else if (isPopupOpen) {
       closePopup();
     }

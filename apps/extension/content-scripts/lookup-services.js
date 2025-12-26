@@ -4,6 +4,101 @@
 
 const BACKEND_URL = APP_CONFIG.API_URL;
 let isSoundEnabled = true;
+const VOCAB_CACHE_KEY = "vocab_cache_v1";
+const VOCAB_CACHE_TTL_MS = 5 * 60 * 1000;
+const VOCAB_CACHE_PAGE_LIMIT = 2000;
+
+let vocabCache = null;
+let vocabCacheUpdatedAt = 0;
+let vocabCachePromise = null;
+
+function normalizeText(value) {
+  return (value || "").toString().trim().toLowerCase();
+}
+
+async function loadVocabCacheFromStorage() {
+  const stored = await chrome.storage.local.get([VOCAB_CACHE_KEY]);
+  const cached = stored[VOCAB_CACHE_KEY];
+  if (cached && Array.isArray(cached.items)) {
+    vocabCache = cached.items;
+    vocabCacheUpdatedAt = cached.updatedAt || 0;
+  }
+}
+
+async function saveVocabCacheToStorage(items) {
+  vocabCacheUpdatedAt = Date.now();
+  vocabCache = items;
+  await chrome.storage.local.set({
+    [VOCAB_CACHE_KEY]: { items, updatedAt: vocabCacheUpdatedAt },
+  });
+}
+
+async function fetchAllVocabularies() {
+  const results = [];
+  let page = 1;
+  let lastPage = 1;
+
+  do {
+    const res = await fetch(
+      `${BACKEND_URL}/vocabulary?page=${page}&limit=${VOCAB_CACHE_PAGE_LIMIT}`,
+      {
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+    if (!res.ok) break;
+    const json = await res.json();
+    if (Array.isArray(json.data)) {
+      results.push(...json.data);
+    }
+    lastPage = json.meta?.lastPage || page;
+    page += 1;
+  } while (page <= lastPage);
+
+  return results;
+}
+
+async function ensureVocabCache() {
+  const now = Date.now();
+  if (vocabCache && now - vocabCacheUpdatedAt < VOCAB_CACHE_TTL_MS) {
+    return vocabCache;
+  }
+
+  if (vocabCachePromise) return vocabCachePromise;
+
+  vocabCachePromise = (async () => {
+    await loadVocabCacheFromStorage();
+    if (vocabCache && now - vocabCacheUpdatedAt < VOCAB_CACHE_TTL_MS) {
+      return vocabCache;
+    }
+    const items = await fetchAllVocabularies();
+    if (items.length) {
+      await saveVocabCacheToStorage(items);
+    }
+    return vocabCache;
+  })()
+    .catch(() => vocabCache)
+    .finally(() => {
+      vocabCachePromise = null;
+    });
+
+  return vocabCachePromise;
+}
+
+function updateVocabCacheWithItem(item) {
+  if (!item || !item.id) return;
+  const current = vocabCache || [];
+  const index = current.findIndex((v) => v.id === item.id);
+  const next = index >= 0 ? [...current] : [...current, item];
+  if (index >= 0) next[index] = { ...current[index], ...item };
+  saveVocabCacheToStorage(next).catch(() => {});
+}
+
+function removeVocabCacheItem(id) {
+  if (!id || !vocabCache) return;
+  const next = vocabCache.filter((item) => item.id !== id);
+  saveVocabCacheToStorage(next).catch(() => {});
+}
 
 // --- 1. SETTINGS & AUDIO ---
 function toggleSoundState() {
@@ -110,6 +205,8 @@ async function apiSaveVocabulary(data) {
 
     const json = await response.json();
     console.log(`[EXT-DEBUG] Success Data:`, json);
+    const savedItem = json?.data || json;
+    updateVocabCacheWithItem(savedItem);
     return json;
   } catch (error) {
     // 👇 4. LOG NETWORK ERROR (Quan trọng nhất)
@@ -438,6 +535,15 @@ async function assessPronunciation(audioBlob, referenceText) {
 // --- [NEW] CHECK VOCAB EXISTENCE ---
 async function apiCheckVocabulary(word) {
   try {
+    const cache = await ensureVocabCache();
+    const normalizedWord = normalizeText(word);
+    if (cache && normalizedWord) {
+      const cachedItem = cache.find(
+        (item) => normalizeText(item.word) === normalizedWord
+      );
+      if (cachedItem) return cachedItem;
+    }
+
     const response = await fetch(
       `${BACKEND_URL}/vocabulary/check?word=${encodeURIComponent(word)}`,
       {
@@ -478,6 +584,18 @@ async function apiAddScore(vocabId, score) {
 async function apiSearchVocabulary(keyword) {
   try {
     if (!keyword) return [];
+    const cache = await ensureVocabCache();
+    const normalized = normalizeText(keyword);
+    if (cache && normalized) {
+      return cache
+        .filter((item) => {
+          const word = normalizeText(item.word);
+          const meaning = normalizeText(item.meaning);
+          return word.includes(normalized) || meaning.includes(normalized);
+        })
+        .slice(0, 5);
+    }
+
     const res = await fetch(
       `${BACKEND_URL}/vocabulary?search=${encodeURIComponent(keyword)}&limit=5`,
       {
@@ -503,7 +621,10 @@ async function apiCreateFullVocabulary(payload) {
     credentials: "include",
   });
   if (!response.ok) throw new Error("Save failed");
-  return await response.json();
+  const json = await response.json();
+  const savedItem = json?.data || json;
+  updateVocabCacheWithItem(savedItem);
+  return json;
 }
 async function apiUpdateVocabulary(id, data) {
   try {
@@ -526,7 +647,10 @@ async function apiUpdateVocabulary(id, data) {
     });
 
     if (!response.ok) throw new Error("Update failed");
-    return await response.json();
+    const json = await response.json();
+    const savedItem = json?.data || json;
+    updateVocabCacheWithItem(savedItem);
+    return json;
   } catch (error) {
     throw error;
   }
