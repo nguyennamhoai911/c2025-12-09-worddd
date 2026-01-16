@@ -27,4 +27,10 @@ export class UsersService {
       where: { email },
     });
   }
+  async update(id: string, data: any) {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
 }

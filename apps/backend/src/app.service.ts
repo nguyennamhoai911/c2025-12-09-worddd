@@ -35,7 +35,7 @@ export class AppService {
       timestamp: new Date().toISOString(),
       system: {
         environment: process.env.NODE_ENV || 'development',
-        port: process.env.PORT || 5001,
+        port: process.env.PORT || 5000,
         protocol: protocol,
         platform: isProduction ? 'Render Cloud' : 'Localhost Windows',
       },

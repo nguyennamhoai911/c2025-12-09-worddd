@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>System Health Check</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #eab308;
+      --border: #334155;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      width: 450px; /* Khớp với popup main */
+      padding: 16px;
+      font-size: 14px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      font-size: 20px;
+    }
+    .section {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+    }
+    .section-title {
+      color: var(--text-sub);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .label {
+      font-weight: 500;
+    }
+    .status {
+      font-family: monospace;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status.ok { color: var(--success); }
+    .status.err { color: var(--error); }
+    .status.warn { color: var(--warning); }
+    
+    .loading-spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--text-sub);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .btn-primary {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .btn-secondary {
+      background-color: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+    button:hover { opacity: 0.9; }
+
+    #raw-output {
+      margin-top: 12px;
+      background: #000;
+      color: #0f0;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 10px;
+      max-height: 100px;
+      overflow-y: auto;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>🏥 System Health Check</h2>
+    <button class="close-btn" id="close-x">×</button>
+  </header>
+
+  <div id="check-container">
+    <div class="section">
+      <div class="section-title">Backend Connection</div>
+      <div class="item">
+        <span class="label">API (Port 5000)</span>
+        <span class="status" id="st-backend"><div class="loading-spinner"></div></span>
+      </div>
+      <div class="item">
+        <span class="label">SSL/HTTPS</span>
+        <span class="status" id="st-ssl"><div class="loading-spinner"></div></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Database & Auth</div>
+      <div class="item">
+        <span class="label">PostgreSQL</span>
+        <span class="status" id="st-db">...</span>
+      </div>
+      <div class="item">
+        <span class="label">Google OAuth</span>
+        <span class="status" id="st-oauth">...</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Extension Keys (Local)</div>
+      <div class="item">
+        <span class="label">Auth Token</span>
+        <span class="status" id="st-token">Checking...</span>
+      </div>
+      <div class="item">
+        <span class="label">Google API Key</span>
+        <span class="status" id="st-apikey">Checking...</span>
+      </div>
+      <div class="item">
+        <span class="label">Azure Speech</span>
+        <span class="status" id="st-azure">Checking...</span>
+      </div>
+      <div class="item">
+        <span class="label">Gemini AI</span>
+        <span class="status" id="st-gemini">Checking...</span>
+        <button id="btn-test-gemini" style="padding: 2px 8px; font-size: 10px; margin-left: 8px; background: #9333ea; color: white; border: none; border-radius: 4px; cursor: pointer; display: none;">TEST</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="raw-output"></div>
+
+  <div class="action-row">
+    <button class="btn-secondary" id="back-btn">Back</button>
+    <button class="btn-primary" id="retry-btn">Re-Check</button>
+  </div>
+  
+  <div style="margin-top: 15px; text-align: center; font-size: 11px;">
+    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #a3bffa;">🔗 Quản lý Key tại Google AI Studio</a>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="health.js"></script>
+</body>
+</html>

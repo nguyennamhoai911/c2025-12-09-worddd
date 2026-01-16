@@ -397,42 +397,10 @@ async function getPhoneticForText(text) {
   };
 }
 
-// Sử dụng Edge TTS API
-async function speakWithEdgeTTS(text) {
+// Sử dụng Chrome TTS (Delegate to Background)
+function speakWithEdgeTTS(text) {
   if (!isSoundEnabled) return;
-
-  speechSynthesis.cancel();
-
-  try {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-
-    const voices = speechSynthesis.getVoices();
-    const ariaVoice =
-      voices.find(
-        (voice) => voice.name.includes("Aria") && voice.lang === "en-US"
-      ) ||
-      voices.find(
-        (voice) =>
-          voice.name.includes("Natural") && voice.lang.startsWith("en-US")
-      ) ||
-      voices.find(
-        (voice) =>
-          (voice.name.includes("Microsoft") || voice.name.includes("Online")) &&
-          voice.lang === "en-US"
-      ) ||
-      voices.find((voice) => voice.lang === "en-US");
-
-    if (ariaVoice) {
-      utterance.voice = ariaVoice;
-    }
-
-    speechSynthesis.speak(utterance);
-  } catch (error) {
-    console.error("Error with TTS:", error);
-  }
+  chrome.runtime.sendMessage({ action: "TTS_SPEAK", text: text });
 }
 
 // Toggle âm thanh

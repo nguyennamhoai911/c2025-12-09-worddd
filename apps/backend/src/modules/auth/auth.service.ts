@@ -10,7 +10,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // ========== REGISTER WITH EMAIL/PASSWORD ==========
   async register(email: string, password: string, name?: string) {
@@ -159,6 +159,11 @@ export class AuthService {
         avatar: true,
         provider: true,
         createdAt: true,
+        googleApiKey: true,
+        googleCx: true,
+        azureSpeechKey: true,
+        azureSpeechRegion: true,
+        geminiApiKey: true,
       },
     });
 

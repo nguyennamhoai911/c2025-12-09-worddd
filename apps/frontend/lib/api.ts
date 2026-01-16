@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // 1. Lấy địa chỉ từ biến môi trường (Ưu tiên) hoặc mặc định về Localhost
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:5001';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:5000';
 
 // 2. Tạo một instance axios dùng chung cho cả app
 const api = axios.create({

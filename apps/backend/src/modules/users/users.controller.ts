@@ -1,6 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -11,6 +13,14 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  // Tạm thời bỏ các route findAll, findOne, update, remove 
-  // vì Service chưa implement logic đó.
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req) {
+    // Only allow users to update themselves
+    if (req.user.id !== id) {
+      throw new UnauthorizedException('You can only update your own profile');
+    }
+    console.log('Update User Request:', { id, updateUserDto });
+    return this.usersService.update(id, updateUserDto);
+  }
 }

@@ -1,0 +1,12 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/admin/users/page": "/admin/users",
+  "/app/auth/callback/page": "/app/auth/callback",
+  "/favicon.ico/route": "/favicon.ico",
+  "/login/page": "/login",
+  "/page": "/",
+  "/register/page": "/register",
+  "/settings/page": "/settings",
+  "/vocabulary/page": "/vocabulary"
+}

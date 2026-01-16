@@ -50,7 +50,7 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT || 5001;
+  const port = process.env.PORT || 5000;
   await app.listen(port);
   
   console.log(`🚀 Backend running on ${isProduction ? 'HTTP (Render managed SSL)' : 'HTTPS'} port ${port}`);

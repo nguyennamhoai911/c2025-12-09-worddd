@@ -2,6 +2,127 @@
 // MODULE: MAIN CONTROLLER (Entry Point)
 // =======================================================================
 
+// --- SYNC LOGIC (Added) ---
+// --- SYNC LOGIC (Added) ---
+(function checkAndSyncSettings() {
+  if (typeof APP_CONFIG === 'undefined') return;
+  
+  // Check if we are on the Frontend App
+  const currentOrigin = window.location.origin;
+  const frontendUrl = APP_CONFIG.FRONTEND_URL; // e.g. localhost:3000
+  
+  // Simple check: if current origin matches frontend url (ignoring protocol mostly relative) or localhost:3000/3005
+  if (currentOrigin.includes("localhost:3000") || currentOrigin.includes("localhost:3005") || (frontendUrl && currentOrigin === new URL(frontendUrl).origin)) {
+      
+      console.log("🟢 Detected Web App. Checking for config sync...");
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        chrome.storage.sync.set({ authToken: token });
+        
+        fetch(`${APP_CONFIG.API_URL}/auth/me`, {
+             headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(user => {
+             if(user.id) {
+                 const updates = {};
+                   if (user.googleApiKey && user.googleCx) {
+                        updates.googleApiKeys = [{ key: user.googleApiKey, cx: user.googleCx }];
+                        updates.googleApiKey = user.googleApiKey; 
+                        updates.googleSearchEngineId = user.googleCx;
+                   }
+                   if (user.azureSpeechKey) updates.azureKey = user.azureSpeechKey;
+                   if (user.azureSpeechRegion) updates.azureRegion = user.azureSpeechRegion;
+                   if (user.geminiApiKey) updates.geminiApiKey = user.geminiApiKey; // Sync Gemini Key
+                   
+                   if (Object.keys(updates).length > 0) {
+                       chrome.storage.sync.set(updates, () => {
+                           console.log("✅ Settings synced from Web App:", Object.keys(updates));
+                       });
+                   }
+             }
+        })
+        .catch(err => console.error("❌ Sync Error:", err));
+      }
+  }
+})();
+
+// --- HELPER: Extract Sentence Context (Robust) ---
+function extractSentenceContext(selection) {
+    if (!selection.anchorNode) return "";
+    
+    // 1. Get the paragraph or block text
+    // Note: anchorNode might be a text node, so use parentElement to get the block
+    let parentEl = selection.anchorNode.nodeType === 3 ? selection.anchorNode.parentElement : selection.anchorNode;
+    // Attempt to go up to a block-level element if we are in an inline one (like <span> or <b>)
+    while (parentEl && window.getComputedStyle(parentEl).display === 'inline') {
+        parentEl = parentEl.parentElement;
+    }
+    if (!parentEl) return selection.toString();
+
+    const fullText = parentEl.innerText || parentEl.textContent;
+    const selectedText = selection.toString().trim();
+    if (!fullText || !selectedText) return selectedText;
+
+    // 2. Find the approx index of selection in fullText
+    // Cannot rely on selection.anchorOffset directly against fullText because DOM structure implies multiple nodes.
+    // Instead, we trust that the selected text exists in the paragraph's text.
+    // NOTE: If the word appears multiple times, this simple indexOf might fail to pick the *correct* one.
+    // For a perfect solution, we need Range-to-Text alignment, but for this level, find the first occurrence 
+    // or the one closest to a heuristic is acceptable. 
+    // To Improve: We just grab the sentence containing the *first* match.
+    
+    try {
+        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+            const segmenter = new Intl.Segmenter('en', { granularity: 'sentence' });
+            const segments = segmenter.segment(fullText);
+            
+            // Find segment containing the selection
+            // Since we don't have exact offset in fullText easily, we search for the segment containing the selected string
+            for (const segment of segments) {
+                if (segment.segment.includes(selectedText)) {
+                    return segment.segment.trim();
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("Intl.Segmenter failed, fallback to simple split", e);
+    }
+
+    // Fallback: Regex Split
+    // Split by . ! ? followed by space or end of string
+    const sentences = fullText.match(/[^\.!\?]+[\.!\?]+(\s|$)/g) || [fullText];
+    const match = sentences.find(s => s.includes(selectedText));
+    return match ? match.trim() : selectedText;
+}
+
+// --- API: Get AI Translation ---
+async function apiGetAiTranslation(text, context) {
+    try {
+        const storage = await chrome.storage.sync.get(['geminiApiKey', 'authToken']);
+        if (!storage.geminiApiKey || !storage.authToken) return null; // Fallback to Google Translate if no key
+        
+        console.log("🤖 Calling Gemini AI...");
+        const response = await fetch(`${APP_CONFIG.API_URL}/ai/analyze`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${storage.authToken}`
+            },
+            body: JSON.stringify({ text, context })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data; // { ipa, meaning, context_translation, part_of_speech }
+        }
+    } catch (e) {
+        console.error("AI Error:", e);
+    }
+    return null;
+}
+
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
@@ -115,24 +236,8 @@ document.addEventListener("keydown", async (e) => {
     const selectedText = selection.toString().trim();
 
     if (selectedText) {
-      let contextText = "";
-      try {
-        if (selection.anchorNode && selection.anchorNode.parentElement) {
-          const parentText = selection.anchorNode.parentElement.innerText;
-          const idx = parentText.indexOf(selectedText);
-          if (idx !== -1) {
-            contextText = parentText
-              .substring(
-                Math.max(0, idx - 100),
-                Math.min(parentText.length, idx + selectedText.length + 100)
-              )
-              .trim()
-              .replace(/\s+/g, " ");
-          }
-        }
-      } catch (err) {}
-      if (contextText.length > 200)
-        contextText = "..." + contextText.substring(0, 200) + "...";
+      let contextText = extractSentenceContext(selection); // Use new helper
+      if (contextText.length > 200) contextText = "..." + contextText.substring(0, 200) + "..."; // Safeguard
 
       const rect = selection.getRangeAt(0).getBoundingClientRect();
       const popup = createPopup();
@@ -150,30 +255,63 @@ document.addEventListener("keydown", async (e) => {
       popup.style.top = `${topPos}px`;
       popup.style.left = `${leftPos}px`;
       popup.innerHTML =
-        '<div class="tts-content"><div class="tts-loading">⏳ Đang phân tích...</div></div>';
+        '<div class="tts-content"><div class="tts-loading">✨ Đang hỏi AI...</div></div>';
       popup.style.display = "block";
 
       speakWithEdgeTTS(selectedText);
+      
+      // 1. Always Try AI Translation
+      // User Request: "không sử dụng Google dịch nữa, dùng AI dịch hết"
+      // Note: Old Google Translate code is kept below in comments/unused functions for future reference.
+      
+      let aiData = await apiGetAiTranslation(selectedText, contextText);
+      let data = null;
 
-      let data = await getFromCache(selectedText);
-      if (!data) {
-        const isLong = selectedText.split(/\s+/).length > 5;
-        const [translation, images] = await Promise.all([
-          getTranslation(selectedText, contextText),
-          isLong ? [] : getImages(selectedText),
-        ]);
-        data = {
-          translation,
-          phonetics: await getPhoneticForText(selectedText),
-          images,
-          text: selectedText,
-          contextText,
-        };
-        if (translation) await saveToCache(selectedText, data);
-      } else if (contextText && !data.contextMeaning) {
-        const tr = await getTranslation(selectedText, contextText);
-        if (tr) data.translation = tr;
+      if (aiData) {
+          // AI Success
+          data = {
+              text: selectedText,
+              translation: {
+                  wordMeaning: aiData.meaning,
+                  contextMeaning: aiData.context_translation,
+                  commonMeanings: aiData.common_meanings || "" 
+              },
+              phonetics: { us: aiData.ipa, uk: null },
+              partOfSpeech: aiData.part_of_speech,
+              contextText: contextText,
+              contextHighlight: aiData.context_highlight || '', // Vietnamese text to underline
+              images: [], 
+              isAi: true 
+          };
+          
+          // Optional: Fetch images in background (independent of translation source)
+          getImages(selectedText).then(imgs => {
+             if(imgs && imgs.length > 0) {
+                 // Future: Update UI with images
+             }
+          });
+      } else {
+          // AI Failed Logic
+          // User requested NOT to use Google Translate fallback for now.
+          // We will return a basic object indicating failure or asking to check API Key.
+          console.warn("AI Analysis failed or API Key missing.");
+          
+          data = {
+              text: selectedText,
+              translation: null, // No translation
+              error: "AI Analysis failed. Please check API Key in Settings.",
+              contextText: contextText
+          };
       }
+
+      /*
+      // --- OLD GOOGLE TRANSLATE FALLBACK (KEPT FOR REFERENCE) ---
+      // User switch: Currently DISABLED (AI Only)
+      if (!data) {
+        data = await getFromCache(selectedText);
+        // ... (Old Logic omitted but preserved in git history)
+      } 
+      */
 
       // 👇 [UPDATE] Logic kiểm tra DB
       let existingVocab = null;

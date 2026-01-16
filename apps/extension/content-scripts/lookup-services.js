@@ -12,41 +12,45 @@ function toggleSoundState() {
   return isSoundEnabled;
 }
 
+
+// Sử dụng Edge TTS API (Phiên bản Stable Backup)
 async function speakWithEdgeTTS(text) {
-  if (!isSoundEnabled || !text) return;
-  window.speechSynthesis.cancel();
+  if (!isSoundEnabled) return;
+
+  speechSynthesis.cancel();
 
   try {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 0.9;
+    utterance.pitch = 1;
 
-    // Fix lỗi Chrome load voice chậm
-    let voices = window.speechSynthesis.getVoices();
-    if (voices.length === 0) {
-      await new Promise((resolve) => {
-        window.speechSynthesis.onvoiceschanged = () => {
-          voices = window.speechSynthesis.getVoices();
-          resolve();
-        };
-      });
+    const voices = speechSynthesis.getVoices();
+    const ariaVoice =
+      voices.find(
+        (voice) => voice.name.includes("Aria") && voice.lang === "en-US"
+      ) ||
+      voices.find(
+        (voice) =>
+          voice.name.includes("Natural") && voice.lang.startsWith("en-US")
+      ) ||
+      voices.find(
+        (voice) =>
+          (voice.name.includes("Microsoft") || voice.name.includes("Online")) &&
+          voice.lang === "en-US"
+      ) ||
+      voices.find((voice) => voice.lang === "en-US");
+
+    if (ariaVoice) {
+      utterance.voice = ariaVoice;
     }
 
-    // Ưu tiên Microsoft Aria Online
-    const ariaVoice =
-      voices.find((v) => v.name.includes("Microsoft Aria Online")) ||
-      voices.find((v) => v.name.includes("Aria")) ||
-      voices.find(
-        (v) => v.name.includes("Natural") && v.lang.startsWith("en-US")
-      ) ||
-      voices.find((v) => v.lang === "en-US");
-
-    if (ariaVoice) utterance.voice = ariaVoice;
-    window.speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utterance);
   } catch (error) {
-    console.error("TTS Error:", error);
+    console.error("Error with TTS:", error);
   }
 }
+
 
 // --- 2. BACKEND API (SAVE VOCAB) ---
 // apps/extension/content-scripts/lookup-services.js
@@ -405,7 +409,15 @@ async function assessPronunciation(audioBlob, referenceText) {
     const result = await chrome.storage.sync.get(["azureKey", "azureRegion"]);
     const key = result.azureKey;
     const region = result.azureRegion;
-    if (!key || !region) throw new Error("Chưa nhập Azure Key/Region.");
+    // Fallback: Use Browser Speech Recognition if Azure is missing
+    if (!key || !region) {
+        console.warn("Missing Azure Key, switching to Basic Browser Speech Recognition");
+        return await new Promise((resolve, reject) => {
+             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+             if (!SpeechRecognition) return reject("Browser does not support Speech API");
+             throw new Error("Cần nhập Azure Key để chấm điểm chi tiết. (Browser Basic Mode not supported for pre-recorded blob)");
+        });
+    }
 
     const wavBlob = await convertAudioToWav(audioBlob);
     const assessParams = {

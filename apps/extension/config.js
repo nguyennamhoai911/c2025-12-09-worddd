@@ -6,12 +6,12 @@ const IS_DEV_MODE = true;
 const APP_CONFIG = {
   // Backend
   API_URL: IS_DEV_MODE
-    ? "https://localhost:5001"
+    ? "https://localhost:5000"
     : "https://vocab-backend-aveq.onrender.com",
 
   // Frontend
   FRONTEND_URL: IS_DEV_MODE
-    ? "https://localhost:3001"
+    ? "https://localhost:3000"
     : "https://c2025-12-09-full-app-english.vercel.app",
 };
 

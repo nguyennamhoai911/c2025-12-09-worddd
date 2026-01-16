@@ -200,252 +200,38 @@
   </head>
   <body>
     <div class="container">
-      <h2>⚙️ Cài đặt Google Search API</h2>
+      <h2>⚙️ Cài đặt</h2>
 
       <div class="guide-section">
-        <h3>📌 Hướng dẫn lấy API Key:</h3>
-        <ol>
-          <li>
-            Truy cập
-            <a href="https://console.cloud.google.com/" target="_blank"
-              >Google Cloud Console</a
-            >
-          </li>
-          <li>Tạo dự án mới hoặc chọn dự án hiện có</li>
-          <li>Bật Custom Search API</li>
-          <li>Tạo API Key từ phần "Credentials"</li>
-          <li>Dán API Key vào ô dưới</li>
-        </ol>
-      </div>
-
-      <div class="guide-section">
-        <h3>📌 Hướng dẫn lấy Search Engine ID:</h3>
-        <ol>
-          <li>
-            Truy cập
-            <a
-              href="https://programmablesearchengine.google.com/"
-              target="_blank"
-              >Google Programmable Search Engine</a
-            >
-          </li>
-          <li>Tạo search engine mới</li>
-          <li>Sao chép Search Engine ID (cx)</li>
-          <li>Dán vào ô dưới</li>
-        </ol>
-      </div>
-
-      <div class="input-group">
-        <label>🔑 Main Google API Key:</label>
-        <div class="input-wrapper">
-          <input
-            type="password"
-            id="api-key-0"
-            class="api-key-input"
-            placeholder="Key chính (bắt buộc)"
-          />
-          <button type="button" class="toggle-visibility">👁️</button>
+        <h3>📌 Quản lý tài khoản & API Keys:</h3>
+        <p style="margin-bottom: 10px;">
+          Hiện tại, mọi cấu hình Key (Google, Azure) đã được chuyển sang quản lý tập trung trên Web Dashboard.
+        </p>
+        <button id="open-settings-btn" class="save-btn">🚀 Đi tới Cài đặt Dashboard</button>
+        <div style="margin-top: 10px; text-align: center;">
+          <a href="#" id="open-health-btn" style="color: #a3bffa; font-size: 12px; text-decoration: none;">🏥 Kiểm tra kết nối hệ thống</a>
         </div>
       </div>
 
       <div class="input-group">
-        <label>🔍 Main Search Engine ID (cx):</label>
-        <div class="input-wrapper">
-          <input
-            type="text"
-            id="cx-0"
-            class="cx-input"
-            placeholder="CX chính (bắt buộc)"
-          />
-        </div>
-      </div>
-
-      <details
-        style="
-          margin-bottom: 15px;
-          background: rgba(0, 0, 0, 0.1);
-          border-radius: 6px;
-          padding: 10px;
-        "
-      >
-        <summary style="cursor: pointer; font-weight: 600; font-size: 13px">
-          ➕ Mở rộng: 4 Backup Keys (Dự phòng)
-        </summary>
-
-        <div
-          style="
-            margin-top: 10px;
-            padding-left: 10px;
-            border-left: 2px solid rgba(255, 255, 255, 0.3);
-          "
-        >
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #1:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-1"
-              class="api-key-input"
-              placeholder="API Key dự phòng 1"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-1"
-              class="cx-input"
-              placeholder="CX ID dự phòng 1"
-            />
-          </div>
-
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #2:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-2"
-              class="api-key-input"
-              placeholder="API Key dự phòng 2"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-2"
-              class="cx-input"
-              placeholder="CX ID dự phòng 2"
-            />
-          </div>
-
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #3:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-3"
-              class="api-key-input"
-              placeholder="API Key dự phòng 3"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-3"
-              class="cx-input"
-              placeholder="CX ID dự phòng 3"
-            />
-          </div>
-
-          <label
-            style="
-              font-size: 12px;
-              margin-top: 10px;
-              display: block;
-              color: #ddd;
-            "
-            >Backup Set #4:</label
-          >
-          <div class="input-wrapper" style="margin-bottom: 5px">
-            <input
-              type="password"
-              id="api-key-4"
-              class="api-key-input"
-              placeholder="API Key dự phòng 4"
-            />
-          </div>
-          <div class="input-wrapper">
-            <input
-              type="text"
-              id="cx-4"
-              class="cx-input"
-              placeholder="CX ID dự phòng 4"
-            />
-          </div>
-        </div>
-      </details>
-
-      <div class="input-group">
-        <label for="search-engine-input">Search Engine ID (cx):</label>
-        <div class="input-wrapper">
-          <input
-            type="text"
-            id="search-engine-input"
-            placeholder="Nhập Search Engine ID"
-          />
+        <label>Trạng thái đồng bộ:</label>
+        <div id="sync-status" style="font-size: 13px; color: #eee; line-height: 1.8;">
+          Đang kiểm tra...
         </div>
       </div>
 
       <div class="button-group">
-        <button class="save-btn" id="save-btn">💾 Lưu</button>
-        <button class="test-btn" id="test-btn">🧪 Kiểm tra</button>
-      </div>
-      <div
-        class="guide-section"
-        style="
-          margin-top: 20px;
-          border-top: 1px solid rgba(255, 255, 255, 0.2);
-          padding-top: 15px;
-        "
-      >
-        <h3>🎙️ Cài đặt Azure Speech (Pronunciation):</h3>
-        <ol>
-          <li>
-            Tạo resource <strong>Speech Services</strong> trên Azure Portal
-          </li>
-          <li>Lấy Key và Region (ví dụ: eastus, southeastasia)</li>
-        </ol>
+        <button class="test-btn" id="sync-now-btn">🔄 Đồng bộ ngay</button>
       </div>
 
-      <div class="input-group">
-        <label for="azure-key-input">Azure Speech Key:</label>
-        <div class="input-wrapper">
-          <input
-            type="password"
-            id="azure-key-input"
-            placeholder="Nhập Azure Subscription Key"
-          />
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label for="azure-region-input">Azure Region:</label>
-        <div class="input-wrapper">
-          <input
-            type="text"
-            id="azure-region-input"
-            placeholder="Ví dụ: eastus"
-          />
-        </div>
-      </div>
       <div class="status-message" id="status-message"></div>
 
       <div class="info-note">
-        💡 <strong>Lưu ý:</strong> Nếu không cấu hình Google API, extension sẽ
-        tự động sử dụng Unsplash để lấy hình ảnh.
+        💡 Hãy đăng nhập trên Web Dashboard để Extension tự động tải cấu hình về.
       </div>
     </div>
 
+    <script src="config.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

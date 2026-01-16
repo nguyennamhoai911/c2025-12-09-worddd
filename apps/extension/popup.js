@@ -1,117 +1,111 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  // Elements cho Azure (Giữ nguyên)
-  const azureKeyInput = document.getElementById("azure-key-input");
-  const azureRegionInput = document.getElementById("azure-region-input");
-  const saveBtn = document.getElementById("save-btn");
-  const testBtn = document.getElementById("test-btn");
+  const syncStatus = document.getElementById("sync-status");
+  const openSettingsBtn = document.getElementById("open-settings-btn");
+  const syncNowBtn = document.getElementById("sync-now-btn");
 
-  // Xử lý nút mắt thần (Toggle Visibility) cho tất cả input password
-  document.querySelectorAll(".toggle-visibility").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      // Tìm input cùng cấp với nút bấm
-      const input = e.target.parentElement.querySelector("input");
-      if (input) {
-        input.type = input.type === "password" ? "text" : "password";
-      }
-    });
+  const SETTINGS_URL = "http://localhost:3000/settings"; // TODO: Use config.js if possible, but hardcode for now or parse from config
+
+  // 1. Open Settings
+  openSettingsBtn.addEventListener("click", () => {
+    chrome.tabs.create({ url: SETTINGS_URL });
   });
 
-  // --- 1. LOAD DATA ---
-  chrome.storage.sync.get(
-    ["googleApiKeys", "azureKey", "azureRegion"], // Lưu ý: key mới là 'googleApiKeys' (dạng mảng)
-    (result) => {
-      // Load Azure
-      if (result.azureKey) azureKeyInput.value = result.azureKey;
-      if (result.azureRegion) azureRegionInput.value = result.azureRegion;
+  const openHealthBtn = document.getElementById("open-health-btn");
+  if (openHealthBtn) {
+    openHealthBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "health.html";
+    });
+  }
 
-      // Load Google Keys (List)
-      const keys = result.googleApiKeys || [];
+  // 2. Check current status
+  async function checkStatus() {
+    chrome.storage.sync.get(
+      ["googleApiKeys", "googleApiKey", "azureKey", "authToken"],
+      (result) => {
+        const keys = result.googleApiKeys || [];
+        const singleKey = result.googleApiKey;
+        const azureKey = result.azureKey;
+        const token = result.authToken;
 
-      // Loop qua 5 slot để điền dữ liệu
-      for (let i = 0; i < 5; i++) {
-        const keyInput = document.getElementById(`api-key-${i}`);
-        const cxInput = document.getElementById(`cx-${i}`);
+        let statusHtml = "";
 
-        if (keys[i]) {
-          if (keyInput) keyInput.value = keys[i].key || "";
-          if (cxInput) cxInput.value = keys[i].cx || "";
+        // Login Status
+        if (token) {
+          statusHtml += `<div>👤 Tài khoản: <span style="color:#4CAF50">Đã kết nối</span></div>`;
+        } else {
+          statusHtml += `<div>👤 Tài khoản: <span style="color:#f44336">Chưa đăng nhập</span></div>`;
         }
-      }
-    }
-  );
 
-  // --- 2. SAVE DATA ---
-  saveBtn.addEventListener("click", () => {
-    const azureKey = azureKeyInput.value.trim();
-    const azureRegion = azureRegionInput.value.trim();
+        // Google API Status
+        if (keys.length > 0 || singleKey) {
+          statusHtml += `<div>🔍 Google API: <span style="color:#4CAF50">Đã có (${
+            keys.length || 1
+          } keys)</span></div>`;
+        } else {
+          statusHtml += `<div>🔍 Google API: <span style="color:#FF9800">Chưa có (Dùng Unsplash)</span></div>`;
+        }
 
-    // Gom dữ liệu từ 5 slot Google
-    let googleKeysList = [];
-    for (let i = 0; i < 5; i++) {
-      const keyVal = document.getElementById(`api-key-${i}`).value.trim();
-      const cxVal = document.getElementById(`cx-${i}`).value.trim();
+        // Azure Status
+        if (azureKey) {
+          statusHtml += `<div>🎙️ Azure Speech: <span style="color:#4CAF50">Đã có</span></div>`;
+        } else {
+          statusHtml += `<div>🎙️ Azure Speech: <span style="color:#FF9800">Chưa có</span></div>`;
+        }
 
-      // Chỉ lưu nếu có điền Key (CX có thể dùng chung hoặc riêng)
-      if (keyVal) {
-        googleKeysList.push({
-          key: keyVal,
-          cx: cxVal, // Nếu cx trống, logic bên content.js sẽ handle sau
-        });
-      }
-    }
-
-    // Validation
-    if (googleKeysList.length === 0) {
-      showStatusMessage("⚠️ Cần ít nhất 1 Google API Key chính!", "warning");
-      return;
-    }
-
-    // Save to Storage
-    chrome.storage.sync.set(
-      {
-        googleApiKeys: googleKeysList, // Lưu dạng mảng object
-        azureKey: azureKey,
-        azureRegion: azureRegion,
-      },
-      () => {
-        showStatusMessage(
-          `✅ Đã lưu ${googleKeysList.length} bộ key!`,
-          "success"
-        );
-        setTimeout(hideStatusMessage, 3000);
+        syncStatus.innerHTML = statusHtml;
       }
     );
-  });
+  }
 
-  // --- 3. TEST API (Test key đầu tiên) ---
-  testBtn.addEventListener("click", async () => {
-    const key0 = document.getElementById("api-key-0").value.trim();
-    const cx0 = document.getElementById("cx-0").value.trim();
+  checkStatus();
 
-    if (!key0 || !cx0) {
-      showStatusMessage("⚠️ Cần nhập Key & CX ở ô đầu tiên để test", "warning");
-      return;
-    }
+  // 3. Sync Now
+  syncNowBtn.addEventListener("click", () => {
+      showStatusMessage("⏳ Đang đồng bộ...", "loading");
+      
+      // Gửi message xuống background hoặc content script để trigger fetch
+      // Tuy nhiên context này là popup, ta có thể tự fetch nếu có token
+      chrome.storage.sync.get(["authToken"], async (result) => {
+          if (!result.authToken) {
+               showStatusMessage("❌ Chưa có Token. Hãy đăng nhập Web.", "error");
+               return;
+          }
 
-    showStatusMessage("⏳ Đang test Key chính...", "loading");
-
-    try {
-      const url = `https://www.googleapis.com/customsearch/v1?q=test&cx=${cx0}&searchType=image&key=${key0}&num=1`;
-      const response = await fetch(url);
-
-      if (response.ok) {
-        showStatusMessage("✅ Key chính hoạt động ngon lành!", "success");
-        setTimeout(hideStatusMessage, 3000);
-      } else {
-        const errorData = await response.json();
-        showStatusMessage(
-          `❌ Lỗi: ${errorData.error?.message || "Check lại Key/CX"}`,
-          "error"
-        );
-      }
-    } catch (error) {
-      showStatusMessage(`❌ Lỗi mạng: ${error.message}`, "error");
-    }
+          try {
+               // APP_CONFIG.API_URL loaded from config.js if present
+               const apiUrl = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.API_URL : "https://localhost:5000";
+               
+               const response = await fetch(`${apiUrl}/auth/me`, {
+                   headers: { Authorization: `Bearer ${result.authToken}` }
+               });
+               
+               if (response.ok) {
+                   const user = await response.json();
+                   
+                   // Save to storage
+                   const updates = {};
+                   if (user.googleApiKey && user.googleCx) {
+                        updates.googleApiKeys = [{ key: user.googleApiKey, cx: user.googleCx }];
+                        updates.googleApiKey = user.googleApiKey; // Backward compat
+                        updates.googleSearchEngineId = user.googleCx; // Backward compat
+                   }
+                   if (user.azureSpeechKey) updates.azureKey = user.azureSpeechKey;
+                   if (user.azureSpeechRegion) updates.azureRegion = user.azureSpeechRegion;
+                   if (user.geminiApiKey) updates.geminiApiKey = user.geminiApiKey; // Sync Gemini Key
+                   
+                   chrome.storage.sync.set(updates, () => {
+                       showStatusMessage("✅ Đồng bộ thành công!", "success");
+                       checkStatus();
+                       setTimeout(hideStatusMessage, 2000);
+                   });
+               } else {
+                   showStatusMessage("❌ Lỗi Server: " + response.status, "error");
+               }
+          } catch (e) {
+              showStatusMessage("❌ Lỗi mạng: " + e.message, "error");
+          }
+      });
   });
 });
 

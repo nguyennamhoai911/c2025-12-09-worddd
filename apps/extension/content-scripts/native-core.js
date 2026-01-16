@@ -356,7 +356,7 @@ window.NativeCore = (function () {
     try {
       // Gọi API PATCH trực tiếp để update count
       // (Backend Prisma sẽ tự động update cột 'updatedAt' thành giờ hiện tại)
-      await fetch(`https://localhost:5001/vocabulary/${item.id}`, {
+      await fetch(`https://localhost:5000/vocabulary/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ occurrence: newCount }),

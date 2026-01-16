@@ -44,206 +44,397 @@ function enableDragging(header) {
   });
 }
 
+// --- RENDER POPUP (COMPLETE REDESIGN) ---
 function renderPopupContent(data, isSoundEnabled, callbacks) {
   if (!popup) return;
-  const { toggleSound, closePopup, speakEdge, handleMark, handleMic } =
-    callbacks;
-
+  const { toggleSound, closePopup, speakEdge, handleMark, handleMic } = callbacks;
   const existing = data.existing;
 
-  // Logic tính điểm trung bình 3 lần gần nhất (nếu có)
-  let scoreBadge = "";
-  if (
-    existing &&
-    existing.pronunciationScores &&
-    existing.pronunciationScores.length > 0
-  ) {
-    const scores = existing.pronunciationScores.slice(-3); // Lấy 3 điểm cuối
-    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-    let color = avg >= 80 ? "#4CAF50" : avg >= 60 ? "#FFC107" : "#F44336";
-    scoreBadge = `<span style="position:absolute; top:-5px; right:-5px; background:${color}; color:white; font-size:10px; padding:2px 5px; border-radius:10px; border:1px solid white;">${avg}</span>`;
-  }
+  // 1. Prepare Data
+  const mainMeaning = typeof data.translation === "string" ? data.translation : data.translation?.wordMeaning || "Đang cập nhật...";
+  const contextMeaning = data.translation?.contextMeaning || data.contextMeaning || "";
+  const commonMeanings = data.translation?.commonMeanings || ""; // e.g. "khuyến nghị, đề xuất"
+  const ipa = data.phonetics?.us || data.phonetics?.uk || "/.../";
+  
+  // Clean IPA slashes if present
+  const cleanIpa = ipa.replace(/^\/|\/$/g, ""); 
+  
+  const pos = data.partOfSpeech || ""; // e.g. "Verb Phrase"
+  const isStarred = !!existing;
 
-  // 👇 [UPDATE] Render nút Mark
-  let markBtnHtml = "";
-  if (existing) {
-    // A. ĐÃ CÓ: Hiện nút "Đã lưu" (Màu xám hoặc Xanh đậm, không cho click save nữa)
-    markBtnHtml = `
-        <button id="mark-btn-disabled" class="mic-btn" style="width:55px; height:55px; background:#E0E0E0; box-shadow:none; cursor:default; position:relative;" title="Đã có trong bộ từ vựng">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#4CAF50" stroke="#4CAF50" stroke-width="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-            </svg>
-            ${scoreBadge}
-        </button>`;
-  } else {
-    // B. CHƯA CÓ: Hiện nút Save như cũ
-    markBtnHtml = `
-        <button id="mark-btn" class="mic-btn" style="width:55px; height:55px; background:#FF9800; box-shadow: 0 4px 0 #F57C00;" title="Lưu từ này">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-            </svg>
-        </button>`;
-  }
-
-  let content = `
-      <div class="tts-header" id="popup-header">
-        <button id="sound-toggle" class="sound-btn">${
-          isSoundEnabled ? "🔊" : "🔇"
-        }</button>
-        <div style="flex:1"></div>
-        <button id="close-popup" class="close-btn">✕</button>
-      </div>
-
-      <div class="tts-actions">
-        <div style="display:flex; gap:15px; align-items:center;">
-            <button id="replay-tts-btn" class="mic-btn" style="width:45px; height:45px; background:#4CAF50;" title="Nghe lại">
-               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </button>
+  // 2. Prepare HTML Structure
+  // Using Inline CSS for single-file portability as requested
+  
+  const content = `
+    <div style="
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        padding: 20px;
+        width: 320px;
+        background: #FFFFFF;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        color: #333;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    ">
+        <!-- HEADER -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom:-5px;" id="popup-header">
+            <div style="width: 40px; height: 40px; background: #FFC107; border-radius: 50%; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                <!-- Hippo Logo Placeholder -->
+                 <span style="font-size:24px;">🦛</span>
+            </div>
             
-            ${markBtnHtml}
-
-            <button id="mic-btn" class="mic-btn" style="width:45px; height:45px;" title="Check phát âm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-            </button>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                 <!-- Bookmark Icon -->
+                 <button id="btn-mark" style="background:none; border:none; cursor:pointer; color: ${isStarred ? '#4CAF50' : '#BDBDBD'}; transition: color 0.2s;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="${isStarred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                 </button>
+                 
+                 <!-- Sound Toggle -->
+                 <button id="btn-sound" style="background:none; border:none; cursor:pointer; color: ${isSoundEnabled ? '#333' : '#BDBDBD'};">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        ${isSoundEnabled 
+                           ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>' 
+                           : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>'
+                        }
+                    </svg>
+                 </button>
+                 
+                 <!-- Close -->
+                 <button id="btn-close" style="background:none; border:none; cursor:pointer; color: #BDBDBD;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                 </button>
+            </div>
         </div>
-        <div id="save-status" style="margin-top:8px; font-size:12px; font-weight:600; min-height:18px;"></div>
-        <div id="assessment-result"></div>
-      </div>
-      
-      <div class="tts-content">`;
 
-  // Images
-  if (data.images && data.images.length) {
-    content += `<div class="tts-images-container">${data.images
-      .map(
-        (url) =>
-          `<div class="tts-image"><img src="${url}" onerror="this.style.display='none'"/></div>`
-      )
-      .join("")}</div>`;
-  }
-  // 2. Hiển thị Phiên âm
-  if (data.phonetics && (data.phonetics.us || data.phonetics.uk)) {
-    content += `<div class="tts-phonetic">
-            ${
-              data.phonetics.uk
-                ? `<div class="phonetic-item"><span class="flag">🇬🇧</span><span class="phonetic-text">${data.phonetics.uk}</span></div>`
-                : ""
-            }
-            ${
-              data.phonetics.us
-                ? `<div class="phonetic-item"><span class="flag">🇺🇸</span><span class="phonetic-text">${data.phonetics.us}</span></div>`
-                : ""
-            }
-        </div>`;
-  }
-  // Meaning
-  if (data.translation) {
-    content += `<div class="word-text" style="font-size:24px; text-align:center; margin-bottom:5px;">${data.text}</div>`;
-    const mainMeaning =
-      typeof data.translation === "string"
-        ? data.translation
-        : data.translation.wordMeaning;
-    if (mainMeaning)
-      content += `<div class="primary-meaning">${mainMeaning}</div>`;
+        <!-- WORD & PLAY -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="btn-play-main" style="
+                background: none; 
+                border: none; 
+                cursor: pointer; 
+                color: #00C853; /* Bright Green */
+                padding: 0;
+                display: flex; 
+                align-items: center;
+            ">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+            <span style="font-size: 20px; font-weight: 700; color: #000;">${data.text}</span>
+        </div>
+        
+        <!-- IPA & POS -->
+        <div style="color: #666; font-size: 14px; display:flex; align-items:center; gap:6px;">
+            <span style="font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;">/${cleanIpa}/</span>
+            ${pos ? `<span style="font-size:12px; color:#888; border:1px solid #eee; padding:1px 4px; border-radius:4px;">(${pos})</span>` : ''}
+            <span style="cursor:help; color:#999;" title="Part of Speech Info">ⓘ</span>
+        </div>
+        
+        <!-- MEANING -->
+        <div>
+            <div style="font-size: 18px; font-weight: 700; color: #000; margin-bottom: 4px;">${mainMeaning}</div>
+            ${commonMeanings ? `<div style="font-size: 14px; font-style: italic; color: #757575;">${commonMeanings}</div>` : ''}
+        </div>
+        
+        <!-- DIVIDER -->
+        <hr style="border: 0; border-top: 1px solid #F0F0F0; width: 100%; margin: 4px 0;">
+        
+        <!-- ASSESSMENT SECTION (Practice Mode) -->
+        <div id="assessment-area" style="text-align:center;">
+            <div id="assessment-result" style="margin-bottom:8px;"></div>
+             <!-- Initial State: Just Big Mic Button -->
+             <div id="practice-initial" style="padding: 20px 0;">
+                <button id="btn-mic-initial" style="
+                    width: 64px; height: 64px; 
+                    border-radius: 50%; border: none; 
+                    background: #E8F5E9; 
+                    display: inline-flex; align-items: center; justify-content: center;
+                    cursor: pointer; color: #00C853;
+                    transition: all 0.2s;
+                    box-shadow: 0 4px 10px rgba(0, 200, 83, 0.2);
+                ">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+                <div style="font-size:12px; color:#888; margin-top:8px;">Practice</div>
+             </div>
 
-    if (data.translation.contextMeaning) {
-      content += `<div class="context-box"><strong>Ngữ cảnh:</strong><br/><em style="color:#777">"...${
-        data.contextText || ""
-      }..."</em><br/>👉 <span style="color:#2e7d32; font-weight:600;">${
-        data.translation.contextMeaning
-      }</span></div>`;
-    }
-  } else {
-    content += `<div class="tts-info">Không tìm thấy bản dịch.</div>`;
-  }
+             <!-- Result State (Hidden Initially) -->
+             <div id="practice-result" style="display:none;">
+                 <!-- Colored IPA using existing cleanup logic -->
+                 <div style="text-align:center; margin-bottom:12px;">
+                    <span style="font-size: 18px; font-family: 'Lucida Sans Unicode', sans-serif; font-weight:600;" id="result-ipa">
+                        /${cleanIpa}/
+                    </span>
+                 </div>
+                 
+                 <!-- Score & Mic Re-try -->
+                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+                    <!-- Legend -->
+                    <div style="display:flex; flex-direction:column; gap:4px; font-size:10px; color:#666;">
+                        <div style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; background:#FF5252; border-radius:4px;"></span> 0~59</div>
+                        <div style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; background:#FFC107; border-radius:4px;"></span> 60~79</div>
+                        <div style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; background:#00C853; border-radius:4px;"></span> 80~100</div>
+                    </div>
+                    
+                    <!-- Circle Score -->
+                    <div id="score-circle-container" style="position:relative; width:60px; height:60px;">
+                        <!-- Content injected by JS -->
+                    </div>
+                    
+                    <!-- Mic Button (Small Retry) -->
+                    <div style="text-align:center;">
+                        <button id="btn-mic-retry" style="
+                            width: 48px; height: 48px; 
+                            border-radius: 50%; border: 1px solid #E0E0E0; 
+                            background: #F9F9F9; 
+                            display:flex; align-items:center; justify-content:center;
+                            cursor:pointer; color:#00C853;
+                            transition: all 0.2s;
+                        ">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </button>
+                        <div style="font-size:10px; color:#888; margin-top:4px;">Practice</div>
+                    </div>
+                 </div>
+                 
+                 <!-- Review Buttons -->
+                 <div style="display:flex; gap:12px; margin-top:16px;">
+                    <button id="btn-play-user" style="flex:1; padding:8px; border-radius:20px; border:1px solid #ddd; background:#fff; font-size:13px; color:#555; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#00C853"><path d="M8 5v14l11-7z"/></svg>
+                        My voice
+                    </button>
+                    <button id="btn-play-std" style="flex:1; padding:8px; border-radius:20px; border:1px solid #ddd; background:#fff; font-size:13px; color:#555; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#00C853"><path d="M8 5v14l11-7z"/></svg>
+                        Standard
+                    </button>
+                 </div>
+             </div>
+        </div>
 
-  content += `</div>`; // End .tts-content
+        <hr style="border: 0; border-top: 1px solid #F0F0F0; width: 100%; margin: 4px 0;">
+
+        <!-- CONTEXT -->
+        <div>
+            <div style="font-size: 14px; font-weight: 700; color: #000; margin-bottom: 8px;">Context</div>
+            <div style="font-size: 14px; font-style: italic; color: #666; font-family:serif; line-height: 1.5; margin-bottom: 8px;">
+                ${
+                    data.contextText
+                    ? data.contextText.replace(data.text, `<u style="text-decoration: underline; text-decoration-color: #999;">${data.text}</u>`)
+                    : 'No context found.'
+                }
+            </div>
+            <div style="font-size: 14px; color: #333; line-height: 1.4;">
+                ${
+                  contextMeaning 
+                  ? (data.contextHighlight 
+                      ? contextMeaning.replace(data.contextHighlight, `<u style="text-decoration: underline; text-decoration-color: #333;">${data.contextHighlight}</u>`)
+                      : contextMeaning)
+                  : ''
+                }
+            </div>
+        </div>
+        
+        <div id="save-status" style="display:none;"></div>
+    </div>
+  `;
+  
   popup.innerHTML = content;
 
-  // Events
+  // 3. Attach Events
   enableDragging(document.getElementById("popup-header"));
-  document.getElementById("close-popup").onclick = closePopup;
-  document.getElementById("sound-toggle").onclick = toggleSound;
-  document.getElementById("replay-tts-btn").onclick = () =>
-    speakEdge(data.text);
-
-  // Chỉ gán sự kiện click nếu nút mark-btn tồn tại (tức là chưa lưu)
-  const markBtn = document.getElementById("mark-btn");
-  if (markBtn) {
-    markBtn.onclick = (e) => {
-      e.stopPropagation();
-      handleMark(markBtn, document.getElementById("save-status"));
-    };
-  }
-
-  // Mic Event
-  const micBtn = document.getElementById("mic-btn");
-  micBtn.onclick = (e) => {
-    e.stopPropagation();
-    handleMic(data.text, micBtn, data.existing); // 👈 Thêm data.existing
+  document.getElementById("btn-close").onclick = closePopup;
+  document.getElementById("btn-sound").onclick = toggleSound;
+  
+  // Play Default
+  const playMain = document.getElementById("btn-play-main");
+  const playStd = document.getElementById("btn-play-std");
+  playMain.onclick = () => speakEdge(data.text);
+  playStd.onclick = () => speakEdge(data.text);
+  
+  // Mic Event Binding for New UI (Initial & Retry)
+  // Mic Event Binding for New UI (Initial & Retry)
+  const btnMicInitial = document.getElementById("btn-mic-initial");
+  const btnMicRetry = document.getElementById("btn-mic-retry");
+  
+  // Helper to toggle visual state
+  const toggleMicVisual = (btn, isStreaming) => {
+      if (isStreaming) {
+          // Show STOP state
+          btn.style.background = "#FFEBEE"; 
+          btn.style.color = "#F44336";
+          btn.style.animation = "pulse 1.5s infinite"; // Optional pulse if global css allows
+          // Change Icon to Square (Stop)
+          btn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
+      } else {
+          // Revert to Mic Icon
+          btn.style.background = "#E8F5E9"; // match initial green bg if it was green, or #F9F9F9 for retry
+          if(btn.id === 'btn-mic-retry') btn.style.background = "#F9F9F9";
+          
+          btn.style.color = "#00C853";
+          btn.style.animation = "none";
+          btn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
+      }
   };
+
+  const triggerMic = (btn) => {
+      // NOTE: `handleMic` toggles the actual recording logic in lookup-main.js
+      // We need to know the *next* state. 
+      // Since we don't have direct access to `isRecording` variable from here easily without callback return,
+      // We assume the toggle works.
+      // Better approach: handleMic returns the new state or a promise.
+      
+      // Let's rely on class checking or just toggle local visual state knowing handleMic does the same.
+      const isNowRecording = !btn.classList.contains("recording-active");
+      
+      if (isNowRecording) {
+         btn.classList.add("recording-active");
+         toggleMicVisual(btn, true);
+      } else {
+         btn.classList.remove("recording-active");
+         toggleMicVisual(btn, false);
+      }
+      
+      handleMic(data.text, btn, existing); 
+  };
+
+  if (btnMicInitial) {
+      btnMicInitial.onclick = (e) => {
+          e.stopPropagation();
+          triggerMic(btnMicInitial);
+      };
+  }
+  if (btnMicRetry) {
+      btnMicRetry.onclick = (e) => {
+          e.stopPropagation();
+          triggerMic(btnMicRetry);
+      };
+  }
+  
+  // Mark / Save
+  const btnMark = document.getElementById("btn-mark");
+  if (!isStarred) {
+      btnMark.onclick = (e) => {
+          e.currentTarget.style.color = "#4CAF50"; // Visual feedback imminent
+          handleMark(btnMark, document.getElementById("save-status"));
+      };
+  }
+  
+  // Mic - Logic reused from old code but attached to new UI
+  const btnMic = document.getElementById("btn-mic");
+  if (btnMic) {
+      btnMic.onclick = (e) => {
+          // Add recording visual state
+          btnMic.style.background = "#FFEBEE"; 
+          btnMic.style.color = "#F44336";
+          handleMic(data.text, btnMic, existing);
+      };
+  }
 }
 
+// Keep helper for renderAssessmentResult if needed, or integrate it directly later.
+// --- RENDER ASSESSMENT RESULT ---
 function renderAssessmentResult(data, container, referenceText, callbacks) {
-  if (!container) return;
-  if (!data || data.error) {
-    container.innerHTML = `<div style="color:#ff5252; text-align:center;">⚠️ ${
-      data?.error || "Lỗi API"
-    }</div>`;
-    return;
-  }
-  const result = data.NBest[0];
-  const totalScore =
-    result.AccuracyScore || result.PronunciationAssessment?.AccuracyScore || 0;
-  const words = result.Words || [];
-  let scoreColor =
-    totalScore >= 80 ? "#4caf50" : totalScore >= 60 ? "#ffeb3b" : "#ff5252";
+    const result = data.NBest?.[0];
+    if (!result) return;
 
-  let html = `<div class="assessment-box" style="background:rgba(0,0,0,0.3); padding:15px; border-radius:8px; margin-top:10px;">
-    <div class="assessment-actions">
-        <button id="btn-play-user" class="action-btn-small btn-user-audio">🗣️ My Voice</button>
-        <button id="btn-play-standard" class="action-btn-small btn-ref-audio">🎧 Standard</button>
-    </div>
-    <div class="total-score-circle" style="border-color: ${scoreColor}; color: ${scoreColor}">${Math.round(
-    totalScore
-  )}</div>
-    <div class="analyzed-content">`;
+    // 0. CLEAR PROCESSING / ERROR STATUS
+    const statusDiv = document.getElementById("assessment-result");
+    if (statusDiv) statusDiv.innerHTML = "";
 
-  words.forEach((word) => {
-    const wScore =
-      word.AccuracyScore || word.PronunciationAssessment?.AccuracyScore || 0;
-    const errorType =
-      word.ErrorType || word.PronunciationAssessment?.ErrorType || "None";
-    let wordColor =
-      errorType === "Omission" ? "#777" : wScore < 60 ? "#ff5252" : "#fff";
-    let phonemeHtml = "";
-    if (errorType !== "Omission") {
-      (word.Phonemes || []).forEach((p) => {
-        let pClass =
-          p.AccuracyScore >= 90
-            ? "p-perfect"
-            : p.AccuracyScore >= 80
-            ? "p-good"
-            : p.AccuracyScore >= 60
-            ? "p-fair"
-            : "p-bad";
-        phonemeHtml += `<span class="phoneme-char ${pClass}" title="/${p.Phoneme}/: ${p.AccuracyScore}">${p.Phoneme}</span>`;
-      });
-    } else {
-      phonemeHtml = `<span style="font-size:10px; color:#999;">(missed)</span>`;
+    const score = Math.round(result.PronunciationAssessment?.AccuracyScore || result.AccuracyScore || 0);
+
+    // 1. Hide Initial / Show Result
+    const initialArea = document.getElementById("practice-initial");
+    const resultArea = document.getElementById("practice-result");
+    if (initialArea) initialArea.style.display = "none";
+    if (resultArea) {
+      resultArea.style.display = "block";
+      resultArea.classList.add("fade-in"); // Add simple animation class if css exists
     }
-    html += `<div class="word-block"><span class="word-text" style="color:${wordColor}">${word.Word}</span><div class="phoneme-row">${phonemeHtml}</div></div>`;
-  });
-  html += `</div></div>`;
-  container.innerHTML = html;
 
-  setTimeout(() => {
-    const btnUser = document.getElementById("btn-play-user");
-    const btnStandard = document.getElementById("btn-play-standard");
-    if (btnUser) btnUser.onclick = callbacks.playUserAudio;
-    if (btnStandard)
-      btnStandard.onclick = () => callbacks.speakEdge(referenceText);
-  }, 0);
+    // 2. Render Score Circle
+    const circleContainer = document.getElementById("score-circle-container");
+    if (circleContainer) {
+        let color = "#FF5252"; // Red
+        if (score >= 80) color = "#00C853"; // Green
+        else if (score >= 60) color = "#FFC107"; // Orange
+
+        // SVG Circle Progress
+        const radius = 26;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (score / 100) * circumference;
+        
+        circleContainer.innerHTML = `
+            <svg width="60" height="60" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="${radius}" stroke="#EEEEEE" stroke-width="6" fill="none"></circle>
+                <circle cx="30" cy="30" r="${radius}" stroke="${color}" stroke-width="6" fill="none"
+                        stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+                        stroke-linecap="round" transform="rotate(-90 30 30)"></circle>
+                <text x="50%" y="45%" text-anchor="middle" dy=".3em" font-size="18" font-weight="bold" fill="#333">${score}</text>
+                <text x="50%" y="70%" text-anchor="middle" dy=".3em" font-size="8" fill="${color}">${score >= 80 ? 'Good!' : (score >= 60 ? 'Okay' : 'Try again')}</text>
+            </svg>
+        `;
+    }
+
+    // 3. Render Colored IPA (Phoneme level)
+    const ipaContainer = document.getElementById("result-ipa");
+    if (ipaContainer && result.Words) {
+        // Collect all phonemes with scores
+        // Flattening logic: extension's analyze logic usually returns phonemes per word.
+        // We will reconstruct the sticked IPA string but colored per phoneme.
+        
+        let htmlBuilder = "/";
+        
+        result.Words.forEach(word => {
+            if (word.Phonemes) {
+                word.Phonemes.forEach(p => {
+                    let pScore = p.PronunciationAssessment?.AccuracyScore || p.AccuracyScore || 0;
+                    let pColor = "#FF5252";
+                    if (pScore >= 80) pColor = "#00C853";
+                    else if (pScore >= 60) pColor = "#FFC107";
+                    
+                    htmlBuilder += `<span style="color:${pColor};">${p.Phoneme}</span>`;
+                });
+                htmlBuilder += " "; // Space between words
+            } else {
+                 // Fallback if no phonemes (error word)
+                 htmlBuilder += `<span style="color:#FF5252;">${word.Word}</span> `;
+            }
+        });
+        
+        htmlBuilder = htmlBuilder.trim() + "/";
+        ipaContainer.innerHTML = htmlBuilder;
+    }
+
+    // 4. Bind Review Buttons
+    const btnPlayUser = document.getElementById("btn-play-user");
+    const btnPlayStd = document.getElementById("btn-play-std");
+    
+    if (btnPlayUser && callbacks.playUserAudio) {
+        btnPlayUser.onclick = callbacks.playUserAudio;
+    }
+    if (btnPlayStd && callbacks.speakEdge) {
+        btnPlayStd.onclick = () => callbacks.speakEdge(referenceText);
+    }
 }
 
 [cite_start]; // [cite: 704]

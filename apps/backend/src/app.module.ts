@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
 import { PerformanceInterceptor } from './common/interceptors/performance.interceptor';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PerformanceInterceptor } from './common/interceptors/performance.interc
     AuthModule,
     UsersModule,
     VocabularyModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

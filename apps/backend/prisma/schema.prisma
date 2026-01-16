@@ -19,6 +19,13 @@ model User {
   provider String  @default("local") // "local" hoặc "google"
   googleId String? @unique // ID riêng của Google trả về
 
+  // Extension Settings
+  googleApiKey      String?
+  googleCx          String?
+  azureSpeechKey    String?
+  azureSpeechRegion String?
+  geminiApiKey      String? // Now uses OpenRouter but keep field name for compatibility
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
