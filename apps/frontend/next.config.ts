@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  distDir: '.next_temp', // Temporary fix for locked .next folder
+  /* config options here */
+  // distDir: '.next_temp', // Commented out for Vercel deployment
+
   reactCompiler: true,
   async rewrites() {
     return [
