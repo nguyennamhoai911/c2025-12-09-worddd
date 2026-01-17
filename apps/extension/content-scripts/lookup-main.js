@@ -239,8 +239,9 @@ document.addEventListener("keydown", async (e) => {
       let contextText = extractSentenceContext(selection); // Use new helper
       if (contextText.length > 200) contextText = "..." + contextText.substring(0, 200) + "..."; // Safeguard
 
+      // 1. Setup Popup Coordinates & Create Shell
       const rect = selection.getRangeAt(0).getBoundingClientRect();
-      const popup = createPopup();
+      const popup = createPopup(); // Defined in lookup-ui.js
       isPopupOpen = true;
 
       const topPos =
@@ -254,82 +255,85 @@ document.addEventListener("keydown", async (e) => {
 
       popup.style.top = `${topPos}px`;
       popup.style.left = `${leftPos}px`;
-      popup.innerHTML =
-        '<div class="tts-content"><div class="tts-loading">✨ Đang hỏi AI...</div></div>';
-      popup.style.display = "block";
-
-      speakWithEdgeTTS(selectedText);
       
-      // 1. Always Try AI Translation
-      // User Request: "không sử dụng Google dịch nữa, dùng AI dịch hết"
-      // Note: Old Google Translate code is kept below in comments/unused functions for future reference.
-      
-      let aiData = await apiGetAiTranslation(selectedText, contextText);
-      let data = null;
+      // Mutable Data Object (Filled progressively)
+      const currentData = {
+          text: selectedText,
+          contextText: contextText,
+          isAi: true,
+          existing: null
+      };
 
-      if (aiData) {
-          // AI Success
-          data = {
-              text: selectedText,
-              translation: {
-                  wordMeaning: aiData.meaning,
-                  contextMeaning: aiData.context_translation,
-                  commonMeanings: aiData.common_meanings || "" 
-              },
-              phonetics: { us: aiData.ipa, uk: null },
-              partOfSpeech: aiData.part_of_speech,
-              contextText: contextText,
-              contextHighlight: aiData.context_highlight || '', // Vietnamese text to underline
-              images: [], 
-              isAi: true 
-          };
-          
-          // Optional: Fetch images in background (independent of translation source)
-          getImages(selectedText).then(imgs => {
-             if(imgs && imgs.length > 0) {
-                 // Future: Update UI with images
-             }
-          });
+      // Callbacks
+      const safeToggleSound = typeof toggleSoundState !== 'undefined' ? toggleSoundState : () => {};
+      const callbacks = {
+          closePopup,
+          toggleSound: safeToggleSound,
+          speakEdge: speakWithEdgeTTS,
+          handleMic: (referenceText, btnElement) => handleMicClick(referenceText, btnElement, currentData.existing),
+          handleMark: (btn, status) => onMarkClick(btn, status, currentData)
+      };
+
+      // 2. ⚡ RENDER INITIAL SHELL (Wait for nothing)
+      if (typeof renderInitialPopup === 'function') {
+          renderInitialPopup(selectedText, callbacks);
       } else {
-          // AI Failed Logic
-          // User requested NOT to use Google Translate fallback for now.
-          // We will return a basic object indicating failure or asking to check API Key.
-          console.warn("AI Analysis failed or API Key missing.");
-          
-          data = {
-              text: selectedText,
-              translation: null, // No translation
-              error: "AI Analysis failed. Please check API Key in Settings.",
-              contextText: contextText
-          };
+          // Fallback if UI script outdated
+          popup.innerHTML = '<div class="tts-content"><div class="tts-loading">✨ Đang xử lý...</div></div>';
+          popup.style.display = "block";
       }
 
-      /*
-      // --- OLD GOOGLE TRANSLATE FALLBACK (KEPT FOR REFERENCE) ---
-      // User switch: Currently DISABLED (AI Only)
-      if (!data) {
-        data = await getFromCache(selectedText);
-        // ... (Old Logic omitted but preserved in git history)
-      } 
-      */
+      // Play Audio immediately
+      speakWithEdgeTTS(selectedText);
+      
+      // 3. 🚀 PARALLEL EXECUTION: Start Tasks independently
+      
+      // TASK A: AI Translation
+      apiGetAiTranslation(selectedText, contextText)
+          .then(aiData => {
+              if (aiData) {
+                  // Update Data Object
+                  currentData.translation = {
+                      wordMeaning: aiData.meaning,
+                      contextMeaning: aiData.context_translation,
+                      commonMeanings: aiData.common_meanings || ""
+                  };
+                  currentData.phonetics = { us: aiData.ipa, uk: null };
+                  currentData.partOfSpeech = aiData.part_of_speech;
+                  currentData.contextHighlight = aiData.context_highlight;
 
-      // 👇 [UPDATE] Logic kiểm tra DB
-      let existingVocab = null;
-      try {
-        existingVocab = await apiCheckVocabulary(selectedText);
-      } catch (e) {}
+                   // fetch images in background
+                  getImages(selectedText);
 
-      // Gộp thông tin existing vào data
-      data.existing = existingVocab; // 👈 Thêm cái này để UI biết
+                  // Update UI
+                  if (typeof updatePopupAiData === 'function') {
+                      updatePopupAiData(currentData);
+                  }
+              } else {
+                  // AI Failed UI
+                   const contentArea = document.getElementById("content-area");
+                   if(contentArea) contentArea.innerHTML = `<div style="color:#d32f2f; padding:10px;">⚠️ AI Analysis failed. Please check your API Key.</div>`;
+              }
+          })
+          .catch(err => {
+              console.error("AI Task Error:", err);
+               const contentArea = document.getElementById("content-area");
+               if(contentArea) contentArea.innerHTML = `<div style="color:#d32f2f; padding:10px;">❌ Error: ${err.message}</div>`;
+          });
 
-      renderPopupContent(data, isSoundEnabled, {
-        toggleSound: toggleSoundState,
-        closePopup,
-        speakEdge: speakWithEdgeTTS,
-        handleMic: (referenceText, btnElement) =>
-          handleMicClick(referenceText, btnElement, existingVocab),
-        handleMark: (btn, status) => onMarkClick(btn, status, data),
-      });
+      // TASK B: DB Check (Independent)
+      apiCheckVocabulary(selectedText)
+          .then(existingVocab => {
+              currentData.existing = existingVocab;
+              // Update UI
+              if (typeof updatePopupDbData === 'function') {
+                  updatePopupDbData(existingVocab);
+              }
+          })
+          .catch(err => {
+              // Ignore DB errors (just assume not starred)
+          });
+
     } else if (isPopupOpen) {
       closePopup();
     }

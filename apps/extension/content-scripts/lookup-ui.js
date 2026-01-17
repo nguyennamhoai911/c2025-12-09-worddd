@@ -106,6 +106,333 @@ function enableResizing(handle, content) {
   document.addEventListener("mouseup", handleMouseUp);
 }
 
+// Store callbacks for later updates
+let uiCallbacks = {};
+
+// --- PROGRESSIVE RENDERING: INITIAL SHELL ---
+async function renderInitialPopup(text, callbacks) {
+  if (!popup) return;
+  uiCallbacks = callbacks || {};
+  const { closePopup, toggleSound, speakEdge, handleMic, handleMark } = uiCallbacks;
+
+  // Load width
+  let width = 380;
+  try {
+    const storage = await chrome.storage.local.get(['popupWidth']);
+    if (storage.popupWidth) width = storage.popupWidth;
+  } catch (e) {}
+
+  popup.style.width = width + "px";
+  popup.style.maxWidth = "min(800px, calc(100vw - 40px))";
+  popup.style.height = "auto";
+  popup.style.boxSizing = "border-box";
+  popup.style.display = "block";
+
+  // Skeleton Style
+  const skeletonStyle = `
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    display: inline-block;
+  `;
+
+  // Content Structure
+  const content = `
+    <div id="popup-content" style="
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+        background: #FFFFFF;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        color: #333;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: visible;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    ">
+         <!-- HEADER -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom:-5px;" id="popup-header">
+            <div style="width: 40px; height: 40px; background: #FFC107; border-radius: 50%; display:flex; align-items:center; justify-content:center;">
+                 <span style="font-size:24px;">🦛</span>
+            </div>
+            
+            <div style="display: flex; gap: 12px; align-items: center;">
+                 <!-- Bookmark Icon -->
+                 <button id="btn-mark" disabled style="background:none; border:none; cursor:wait; color: #E0E0E0; transition: color 0.2s;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                 </button>
+
+                 <!-- Sound Toggle -->
+                 <button id="btn-sound" style="background:none; border:none; cursor:pointer; color: #333;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                       <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                 </button>
+
+                 <button id="btn-close" style="background:none; border:none; cursor:pointer; color: #BDBDBD;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                 </button>
+            </div>
+        </div>
+
+        <!-- WORD & PLAY -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="btn-play-main" style="background: none; border: none; cursor: pointer; color: #00C853; padding: 0;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <span style="font-size: 20px; font-weight: 700; color: #000;">${text}</span>
+        </div>
+
+        <!-- MEANING AREA (Skeleton) -->
+        <div id="content-area">
+             <div style="display:flex; gap:8px; margin-bottom:4px;">
+                <div style="${skeletonStyle} width: 60px; height: 14px;"></div>
+                <div style="${skeletonStyle} width: 40px; height: 14px;"></div>
+             </div>
+             <div style="${skeletonStyle} width: 70%; height: 24px; margin-bottom:4px;"></div>
+             <div style="${skeletonStyle} width: 50%; height: 16px;"></div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #F0F0F0; width: 100%; margin: 4px 0;">
+        
+        <!-- PRACTICE AREA (Dual View) -->
+        <div id="assessment-area" style="padding: 10px 0;">
+             <!-- VIEW 1: INITIAL STATE -->
+             <div id="practice-initial" style="text-align:center;">
+                 <button id="btn-mic-initial" style="
+                        width: 64px; height: 64px; 
+                        border-radius: 50%; border: none; 
+                        background: #E8F5E9; 
+                        display: inline-flex; align-items: center; justify-content: center;
+                        cursor: pointer; color: #00C853;
+                        transition: all 0.2s;
+                        box-shadow: 0 4px 10px rgba(0, 200, 83, 0.2);
+                    ">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                </button>
+                <div style="font-size:12px; color:#888; margin-top:8px;">Practice</div>
+             </div>
+
+             <!-- VIEW 2: RESULT STATE (Hidden) -->
+             <div id="practice-result" style="display:none;">
+                  <div style="text-align:center; margin-bottom:12px;">
+                     <span style="font-size: 18px; font-family: 'Lucida Sans Unicode', sans-serif; font-weight:600;" id="result-ipa"></span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+                     <div style="display:flex; flex-direction:column; gap:4px; font-size:10px; color:#666;">
+                         <div style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; background:#FF5252; border-radius:4px;"></span> 0~59</div>
+                         <div style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; background:#FFC107; border-radius:4px;"></span> 60~79</div>
+                         <div style="display:flex; align-items:center; gap:4px;"><span style="width:12px; height:12px; background:#00C853; border-radius:4px;"></span> 80~100</div>
+                     </div>
+                     <div id="score-circle-container" style="position:relative; width:60px; height:60px;"></div>
+                     <div style="text-align:center;">
+                        <button id="btn-mic-retry" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid #E0E0E0; background: #F9F9F9; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#00C853; transition: all 0.2s;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                        </button>
+                        <div style="font-size:10px; color:#888; margin-top:4px;">Practice</div>
+                     </div>
+                  </div>
+                  <div style="display:flex; gap:12px; margin-top:16px;">
+                     <button id="btn-play-user" style="flex:1; padding:8px; border-radius:20px; border:1px solid #ddd; background:#fff; font-size:13px; color:#555; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#00C853"><path d="M8 5v14l11-7z"/></svg>My voice
+                     </button>
+                     <button id="btn-play-std" style="flex:1; padding:8px; border-radius:20px; border:1px solid #ddd; background:#fff; font-size:13px; color:#555; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#00C853"><path d="M8 5v14l11-7z"/></svg>Standard
+                     </button>
+                  </div>
+             </div>
+             
+             <div id="assessment-result"></div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #F0F0F0; width: 100%; margin: 4px 0;">
+
+        <!-- CONTEXT AREA (Skeleton) -->
+        <div id="context-area">
+             <div style="font-size: 14px; font-weight: 700; color: #000; margin-bottom: 8px;">Context</div>
+             <div style="${skeletonStyle} width: 100%; height: 40px;"></div>
+        </div>
+
+        <!-- RESIZE HANDLE -->
+        <div id="resize-handle" style="position: absolute; top: 0; right: 0; width: 10px; height: 100%; cursor: ew-resize; background: rgba(0, 0, 0, 0.05); z-index: 99999;"></div>
+    </div>
+  `;
+
+  popup.innerHTML = content;
+  
+// Helper to toggle visual state (Global)
+const toggleMicVisual = (btn, isStreaming) => {
+   if (isStreaming) {
+       // Show STOP state
+       btn.style.background = "#FFEBEE"; 
+       btn.style.color = "#F44336";
+       btn.style.animation = "pulse 1.5s infinite"; // Optional pulse
+       // Change Icon to Square (Stop)
+       btn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
+       btn.innerHTML += `<span style="position: absolute; bottom: -20px; font-size: 10px; color: #F44336; width: 100%;">Stop</span>`; // Label
+   } else {
+       // Revert to Mic Icon
+       btn.style.background = "#E8F5E9"; 
+       if(btn.id === 'btn-mic-retry') btn.style.background = "#F9F9F9";
+       
+       btn.style.color = "#00C853";
+       btn.style.animation = "none";
+       btn.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
+       
+       // Remove label if any (by simple reset innerHTML above)
+   }
+};
+
+  // Attach Standard Events
+  if(callbacks) {
+      document.getElementById("btn-close").onclick = closePopup;
+      document.getElementById("btn-sound").onclick = toggleSound;
+      document.getElementById("btn-play-main").onclick = () => speakEdge(text);
+      document.getElementById("btn-play-std").onclick = () => speakEdge(text);
+      
+      const btnMic = document.getElementById("btn-mic-initial");
+      const btnMicRetry = document.getElementById("btn-mic-retry");
+      
+      const handleMicWrapper = (btn) => {
+          const isRecording = btn.getAttribute("data-recording") === "true";
+          // Toggle State
+          if(!isRecording) {
+              btn.setAttribute("data-recording", "true");
+              toggleMicVisual(btn, true);
+          } else {
+              btn.setAttribute("data-recording", "false");
+              toggleMicVisual(btn, false);
+          }
+          handleMic(text, btn);
+      };
+      
+      if(btnMic) btnMic.onclick = () => handleMicWrapper(btnMic);
+      if(btnMicRetry) btnMicRetry.onclick = () => handleMicWrapper(btnMicRetry);
+      
+      document.getElementById("btn-mark").onclick = () => handleMark(document.getElementById("btn-mark"), document.createElement('div'));
+  }
+
+  const header = document.getElementById("popup-header");
+  if(header) enableDragging(header);
+  
+  const resizeHandle = document.getElementById("resize-handle");
+  if(resizeHandle) enableResizing(resizeHandle, popup);
+}
+
+// --- UPDATE: INJECT AI DATA ---
+function updatePopupAiData(data) {
+    if (!document.getElementById("content-area")) return; // Popup closed
+
+    const mainMeaning = typeof data.translation === "string" ? data.translation : data.translation?.wordMeaning || "Đang cập nhật...";
+    const contextMeaning = data.translation?.contextMeaning || data.contextMeaning || "";
+    const commonMeanings = data.translation?.commonMeanings || "";
+    const ipa = data.phonetics?.us || data.phonetics?.uk || "/.../";
+    const cleanIpa = ipa.replace(/^\/|\/$/g, ""); 
+    const pos = data.partOfSpeech || "";
+
+    // 1. Update Meaning Area
+    const contentArea = document.getElementById("content-area");
+    contentArea.innerHTML = `
+        <div style="color: #666; font-size: 14px; display:flex; align-items:center; gap:6px;">
+            <span style="font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;">/${cleanIpa}/</span>
+            ${pos ? `<span style="font-size:12px; color:#888; border:1px solid #eee; padding:1px 4px; border-radius:4px;">(${pos})</span>` : ''}
+            <span style="cursor:help; color:#999;" title="Part of Speech Info">ⓘ</span>
+        </div>
+        <div>
+            <div style="font-size: 18px; font-weight: 700; color: #000; margin-bottom: 4px;">${mainMeaning}</div>
+            ${commonMeanings ? `<div style="font-size: 14px; font-style: italic; color: #757575;">${commonMeanings}</div>` : ''}
+        </div>
+    `;
+
+    // 2. Update Context Area
+    const contextArea = document.getElementById("context-area");
+    if (contextArea) {
+        contextArea.innerHTML = `
+            <div style="font-size: 14px; font-weight: 700; color: #000; margin-bottom: 8px;">Context</div>
+            <div style="font-size: 14px; font-style: italic; color: #666; font-family:serif; line-height: 1.5; margin-bottom: 8px;">
+                ${
+                    data.contextText
+                    ? data.contextText.replace(data.text, `<u style="text-decoration: underline; text-decoration-color: #999;">${data.text}</u>`)
+                    : 'No context found.'
+                }
+            </div>
+            <div style="font-size: 14px; color: #333; line-height: 1.4;">
+                ${
+                  contextMeaning 
+                  ? (data.contextHighlight 
+                      ? contextMeaning.replace(data.contextHighlight, `<u style="text-decoration: underline; text-decoration-color: #333;">${data.contextHighlight}</u>`)
+                      : contextMeaning)
+                  : ''
+                }
+            </div>
+        `;
+    }
+}
+
+// --- UPDATE: INJECT DB DATA (STAR STATUS) ---
+function updatePopupDbData(existingVocab) {
+    const btnMark = document.getElementById("btn-mark");
+    if (btnMark) {
+        const isStarred = !!existingVocab;
+        btnMark.disabled = false;
+        btnMark.style.cursor = "pointer";
+        btnMark.style.color = isStarred ? '#4CAF50' : '#BDBDBD';
+        
+        // Update Icon Fill
+        btnMark.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="${isStarred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+        `;
+    }
+
+    // 2. Override: If score exists, show it!
+    if (existingVocab && existingVocab.pronunciationScores && existingVocab.pronunciationScores.length > 0) {
+        // Sort to find latest
+        const sortedScores = existingVocab.pronunciationScores.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const bestScore = sortedScores[0];
+        
+        // Mock Assessment Result Format for renderAssessmentResult
+        const resultData = {
+             AccuracyScore: bestScore.score,
+             NBest: [{ 
+                 AccuracyScore: bestScore.score, 
+                 PronunciationAssessment: { AccuracyScore: bestScore.score },
+                 Words: [] 
+             }] 
+        };
+
+        const assessmentArea = document.getElementById("assessment-area");
+        if(assessmentArea) {
+             // Hide "My Voice" button via inline style injection or finding element
+             // We can do it after renderAssessmentResult call, but let's do it cleanly
+             // Actually renderAssessmentResult re-enables display block on #practice-result.
+             
+             renderAssessmentResult(resultData, assessmentArea, existingVocab.word, uiCallbacks);
+             
+             // Hide User Voice button because we don't have the blob
+             const btnPlayUser = document.getElementById("btn-play-user");
+             if(btnPlayUser) btnPlayUser.style.display = "none";
+        }
+    }
+}
+
 // --- RENDER POPUP (COMPLETE REDESIGN) ---
 async function renderPopupContent(data, isSoundEnabled, callbacks) {
   if (!popup) return;
