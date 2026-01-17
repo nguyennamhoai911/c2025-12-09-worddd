@@ -3,7 +3,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const openSettingsBtn = document.getElementById("open-settings-btn");
   const syncNowBtn = document.getElementById("sync-now-btn");
 
-  const SETTINGS_URL = "http://localhost:3000/settings";
+  const SETTINGS_URL = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.FRONTEND_URL) 
+    ? `${APP_CONFIG.FRONTEND_URL}/settings` 
+    : "http://localhost:3000/settings";
 
   // 1. Open Settings
   openSettingsBtn.addEventListener("click", () => {
