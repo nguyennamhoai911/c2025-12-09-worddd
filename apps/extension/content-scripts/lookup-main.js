@@ -456,29 +456,54 @@ function openPopupFromSelection() {
   const popup = createPopup();
   isPopupOpen = true;
 
-  // [SOURCE: Fixed Position Logic]
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const POPUP_HEIGHT = 450; 
-  const POPUP_WIDTH = 360;
-
-  // Logic mới cho position: fixed (KHÔNG dùng window.scrollY nữa)
-  let topPos = rect.bottom + 10; // Mặc định hiện bên dưới dòng chữ
-  let leftPos = rect.left;
-
-  // 1. Kiểm tra nếu tràn dưới màn hình -> Đẩy lên trên
-  if (topPos + POPUP_HEIGHT > viewportHeight) {
-    topPos = rect.top - POPUP_HEIGHT - 10;
+  // Try to load saved position from localStorage
+  const savedPosition = localStorage.getItem('vocab_popup_position');
+  let topPos, leftPos;
+  
+  if (savedPosition) {
+      try {
+          const pos = JSON.parse(savedPosition);
+          topPos = pos.top;
+          leftPos = pos.left;
+          
+          // Validate saved position is still within viewport
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          
+          if (topPos < 0 || topPos > viewportHeight - 100) topPos = null;
+          if (leftPos < 0 || leftPos > viewportWidth - 100) leftPos = null;
+      } catch (e) {
+          // Invalid saved data, calculate new position
+          topPos = null;
+          leftPos = null;
+      }
   }
+  
+  // If no saved position or invalid, calculate based on selection
+  if (topPos === null || topPos === undefined || leftPos === null || leftPos === undefined) {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const POPUP_HEIGHT = 450; 
+      const POPUP_WIDTH = 360;
 
-  // 2. Kiểm tra nếu tràn bên phải -> Đẩy sang trái
-  if (leftPos + POPUP_WIDTH > viewportWidth) {
-    leftPos = viewportWidth - POPUP_WIDTH - 20; // Cách mép phải 20px
+      // Logic mới cho position: fixed (KHÔNG dùng window.scrollY nữa)
+      topPos = rect.bottom + 10; // Mặc định hiện bên dưới dòng chữ
+      leftPos = rect.left;
+
+      // 1. Kiểm tra nếu tràn dưới màn hình -> Đẩy lên trên
+      if (topPos + POPUP_HEIGHT > viewportHeight) {
+        topPos = rect.top - POPUP_HEIGHT - 10;
+      }
+
+      // 2. Kiểm tra nếu tràn bên phải -> Đẩy sang trái
+      if (leftPos + POPUP_WIDTH > viewportWidth) {
+        leftPos = viewportWidth - POPUP_WIDTH - 20; // Cách mép phải 20px
+      }
+
+      // 3. Kiểm tra an toàn
+      if (leftPos < 10) leftPos = 10;
+      if (topPos < 10) topPos = 10;
   }
-
-  // 3. Kiểm tra an toàn
-  if (leftPos < 10) leftPos = 10;
-  if (topPos < 10) topPos = 10;
 
   popup.style.top = `${topPos}px`;
   popup.style.left = `${leftPos}px`;

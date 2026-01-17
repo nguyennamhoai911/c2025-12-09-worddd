@@ -7,6 +7,10 @@ let isPopupOpen = false;
 let isDragging = false;
 let dragOffset = { x: 0, y: 0 };
 
+// Load saved states from localStorage
+let isPinned = localStorage.getItem('vocab_popup_pinned') === 'true'; // Track if popup is pinned
+let isSearchVisible = false; // Track if search box is visible
+
 function createPopup() {
   // 1. Clean up ghost elements (Zombie Popups)
   const oldPopup = document.getElementById("tts-popup");
@@ -33,6 +37,9 @@ function createPopup() {
   // Add click-outside-to-close functionality
   const handleClickOutside = (e) => {
     if (popup && popup.style.display !== "none" && isPopupOpen) {
+      // Don't close if popup is pinned
+      if (isPinned) return;
+      
       // Check if click is outside the popup
       if (!popup.contains(e.target)) {
         closePopup();
@@ -62,7 +69,9 @@ function closePopup() {
   // Reset Variables
   window.speechSynthesis.cancel();
   isPopupOpen = false;
-  isDragging = false; 
+  isDragging = false;
+  // Don't reset isPinned - we want to keep it across sessions
+  isSearchVisible = false; // Reset search visibility
   
   // Blur focus
   if (document.activeElement instanceof HTMLElement) {
@@ -97,9 +106,19 @@ function enableDragging(header) {
   });
   
   document.addEventListener("mouseup", () => {
-    isDragging = false;
-    if (header) header.style.cursor = "move";
-    document.body.style.userSelect = ""; // Restore selection
+    if (isDragging) {
+      isDragging = false;
+      if (header) header.style.cursor = "move";
+      document.body.style.userSelect = ""; // Restore selection
+      
+      // Save position to localStorage
+      const rect = popup.getBoundingClientRect();
+      const position = {
+        top: rect.top,
+        left: rect.left
+      };
+      localStorage.setItem('vocab_popup_position', JSON.stringify(position));
+    }
   });
 }
 
@@ -209,6 +228,21 @@ async function renderInitialPopup(text, callbacks) {
             </div>
             
             <div style="display: flex; gap: 12px; align-items: center;">
+                 <!-- Pin Icon -->
+                 <button id="btn-pin" style="background:none; border:none; cursor:pointer; color: #757575; transition: color 0.2s;" title="Ghim popup">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4v9l3 3-2 1-5-5-5 5-2-1 3-3V4M12 4h4M12 4H8"></path>
+                    </svg>
+                 </button>
+
+                 <!-- Search Icon -->
+                 <button id="btn-search" style="background:none; border:none; cursor:pointer; color: #757575; transition: color 0.2s;" title="Tìm kiếm">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                 </button>
+                 
                  <!-- Bookmark Icon -->
                  <button id="btn-mark" disabled style="background:none; border:none; cursor:wait; color: #E0E0E0; transition: color 0.2s;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -238,6 +272,27 @@ async function renderInitialPopup(text, callbacks) {
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
             </button>
             <span style="font-size: 20px; font-weight: 700; color: #000;">${text}</span>
+        </div>
+
+        <!-- SEARCH BOX (Hidden by default) -->
+        <div id="search-box-container" style="display: none; margin-top: -8px;">
+            <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Nhập từ để tìm kiếm..." 
+                style="
+                    width: 100%; 
+                    padding: 10px 12px; 
+                    border: 2px solid #E0E0E0; 
+                    border-radius: 8px; 
+                    font-size: 14px; 
+                    outline: none;
+                    transition: border-color 0.2s;
+                    box-sizing: border-box;
+                "
+                onfocus="this.style.borderColor='#00C853'"
+                onblur="this.style.borderColor='#E0E0E0'"
+            />
         </div>
 
         <!-- MEANING AREA (Skeleton) -->
@@ -401,6 +456,49 @@ const toggleMicVisual = (btn, isStreaming) => {
       if(btnMicRetry) btnMicRetry.onclick = () => handleMicWrapper(btnMicRetry);
       
       document.getElementById("btn-mark").onclick = () => handleMark(document.getElementById("btn-mark"), document.createElement('div'));
+      
+      // Pin button handler
+      const btnPin = document.getElementById("btn-pin");
+      if (btnPin) {
+          btnPin.onclick = () => {
+              isPinned = !isPinned;
+              // Save to localStorage
+              localStorage.setItem('vocab_popup_pinned', isPinned);
+              // Update visual state
+              btnPin.style.color = isPinned ? '#00C853' : '#757575';
+              btnPin.title = isPinned ? 'Bỏ ghim' : 'Ghim popup';
+              // Change icon fill when pinned
+              const svg = btnPin.querySelector('svg');
+              if (svg) {
+                  svg.setAttribute('fill', isPinned ? 'currentColor' : 'none');
+              }
+          };
+          
+          // Set initial visual state based on saved isPinned
+          btnPin.style.color = isPinned ? '#00C853' : '#757575';
+          btnPin.title = isPinned ? 'Bỏ ghim' : 'Ghim popup';
+          const svg = btnPin.querySelector('svg');
+          if (svg) {
+              svg.setAttribute('fill', isPinned ? 'currentColor' : 'none');
+          }
+      }
+      
+      // Search button handler
+      const btnSearch = document.getElementById("btn-search");
+      const searchContainer = document.getElementById("search-box-container");
+      const searchInput = document.getElementById("search-input");
+      if (btnSearch && searchContainer && searchInput) {
+          btnSearch.onclick = () => {
+              isSearchVisible = !isSearchVisible;
+              searchContainer.style.display = isSearchVisible ? 'block' : 'none';
+              btnSearch.style.color = isSearchVisible ? '#00C853' : '#757575';
+              
+              // Focus input when shown
+              if (isSearchVisible) {
+                  setTimeout(() => searchInput.focus(), 100);
+              }
+          };
+      }
   }
 
   const header = document.getElementById("popup-header");
@@ -622,6 +720,21 @@ async function renderPopupContent(data, isSoundEnabled, callbacks) {
             </div>
             
             <div style="display: flex; gap: 12px; align-items: center;">
+                 <!-- Pin Icon -->
+                 <button id="btn-pin" style="background:none; border:none; cursor:pointer; color: #757575; transition: color 0.2s;" title="Ghim popup">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4v9l3 3-2 1-5-5-5 5-2-1 3-3V4M12 4h4M12 4H8"></path>
+                    </svg>
+                 </button>
+
+                 <!-- Search Icon -->
+                 <button id="btn-search" style="background:none; border:none; cursor:pointer; color: #757575; transition: color 0.2s;" title="Tìm kiếm">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                 </button>
+                 
                  <!-- Bookmark Icon -->
                  <button id="btn-mark" style="background:none; border:none; cursor:pointer; color: ${isStarred ? '#4CAF50' : '#BDBDBD'}; transition: color 0.2s;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="${isStarred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
@@ -665,6 +778,27 @@ async function renderPopupContent(data, isSoundEnabled, callbacks) {
                 </svg>
             </button>
             <span style="font-size: 20px; font-weight: 700; color: #000;">${data.text}</span>
+        </div>
+
+        <!-- SEARCH BOX (Hidden by default) -->
+        <div id="search-box-container" style="display: none; margin-top: -8px;">
+            <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Nhập từ để tìm kiếm..." 
+                style="
+                    width: 100%; 
+                    padding: 10px 12px; 
+                    border: 2px solid #E0E0E0; 
+                    border-radius: 8px; 
+                    font-size: 14px; 
+                    outline: none;
+                    transition: border-color 0.2s;
+                    box-sizing: border-box;
+                "
+                onfocus="this.style.borderColor='#00C853'"
+                onblur="this.style.borderColor='#E0E0E0'"
+            />
         </div>
         
         <!-- IPA & POS -->
@@ -896,6 +1030,46 @@ async function renderPopupContent(data, isSoundEnabled, callbacks) {
           btnMic.style.background = "#FFEBEE"; 
           btnMic.style.color = "#F44336";
           handleMic(data.text, btnMic, existing);
+      };
+  }
+  
+  // Pin button handler
+  const btnPin = document.getElementById("btn-pin");
+  if (btnPin) {
+      btnPin.onclick = () => {
+          isPinned = !isPinned;
+          // Save to localStorage
+          localStorage.setItem('vocab_popup_pinned', isPinned);
+          btnPin.style.color = isPinned ? '#00C853' : '#757575';
+          btnPin.title = isPinned ? 'Bỏ ghim' : 'Ghim popup';
+          const svg = btnPin.querySelector('svg');
+          if (svg) {
+              svg.setAttribute('fill', isPinned ? 'currentColor' : 'none');
+          }
+      };
+      
+      // Set initial visual state based on saved isPinned
+      btnPin.style.color = isPinned ? '#00C853' : '#757575';
+      btnPin.title = isPinned ? 'Bỏ ghim' : 'Ghim popup';
+      const svg = btnPin.querySelector('svg');
+      if (svg) {
+          svg.setAttribute('fill', isPinned ? 'currentColor' : 'none');
+      }
+  }
+  
+  // Search button handler
+  const btnSearch = document.getElementById("btn-search");
+  const searchContainer = document.getElementById("search-box-container");
+  const searchInput = document.getElementById("search-input");
+  if (btnSearch && searchContainer && searchInput) {
+      btnSearch.onclick = () => {
+          isSearchVisible = !isSearchVisible;
+          searchContainer.style.display = isSearchVisible ? 'block' : 'none';
+          btnSearch.style.color = isSearchVisible ? '#00C853' : '#757575';
+          
+          if (isSearchVisible) {
+              setTimeout(() => searchInput.focus(), 100);
+          }
       };
   }
 }
