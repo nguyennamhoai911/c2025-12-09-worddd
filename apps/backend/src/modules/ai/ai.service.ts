@@ -51,71 +51,16 @@ Output:
   "part_of_speech": "Verb"
 }`;
 
-    // 🚀 SPEED OPTIMIZATION: RACE CONDITION
-    // Fire requests to top 3 fastest models simultaneously. First to reply wins.
-    // This avoids waiting for a slow/cold model to timeout.
-    const RACERS = [
-        'google/gemini-2.0-flash-exp:free',
-        'google/gemini-2.0-flash-thinking-exp:free',
-        'microsoft/phi-3-mini-128k-instruct:free' 
-    ];
+    // DIRECT CALL: XIAOMI MIMO V2 FLASH
+    const MODEL_ID = 'xiaomi/mimo-v2-flash'; 
 
     try {
-        console.log("🏎️ Starting AI Race between:", RACERS.join(", "));
-        const winner = await Promise.any(
-            RACERS.map(modelId => this.callOpenRouterWithTimeout(modelId, prompt, apiKey, 8000))
-        );
-        console.log("🏆 Race Winner found!");
-        return winner;
-    } catch (aggregateError) {
-        console.warn("⚠️ All racers failed or timed out. Switching to Sequential Fallback...", aggregateError);
+        console.log(`🚀 AI Analyzing with: ${MODEL_ID}...`);
+        return await this.callOpenRouter(MODEL_ID, prompt, apiKey);
+    } catch (e) {
+        console.error(`❌ Model ${MODEL_ID} failed:`, e.message);
+        throw new BadRequestException(`AI Model (${MODEL_ID}) failed. Please try again later.`);
     }
-
-    // 2. Sequential Fallback (Slower but reliable)
-    // Try Llama 3.3 (Heavy but reliable) explicitly if racers fail
-    try {
-        console.log("🐢 Trying Backup: meta-llama/llama-3.3-70b-instruct:free");
-        return await this.callOpenRouter(
-            'meta-llama/llama-3.3-70b-instruct:free', 
-            prompt, 
-            apiKey
-        );
-    } catch(e) {}
-
-    console.warn("⚠️ Priority backups failed. Switch to Auto-Discovery Mode...");
-
-    // 2. Fallback: Fetch ALL Free Models from OpenRouter (slower but safer)
-    try {
-        const modelsResponse = await fetch('https://openrouter.ai/api/v1/models', {
-            headers: { 'Authorization': `Bearer ${apiKey}` }
-        });
-        
-        if (modelsResponse.ok) {
-            const modelsData = await modelsResponse.json();
-            const freeModels = modelsData.data
-                .filter((m: any) => (m.id.includes(':free') || m.pricing?.prompt === '0') && !m.id.includes('experimental'))
-                .sort((a: any, b: any) => (b.context_length || 0) - (a.context_length || 0)); // Sort by capability
-
-            console.log(`📋 Found ${freeModels.length} fallback free models.`);
-
-            for (const model of freeModels) {
-                 // Skip if we already tried it in priority list
-                 if (this.PREFERRED_MODELS.includes(model.id)) continue;
-
-                 try {
-                    console.log(`🔄 Trying Fallback Model: ${model.id}...`);
-                    const result = await this.callOpenRouter(model.id, prompt, apiKey);
-                    if (result) return result;
-                 } catch (e) {
-                    // Continue
-                 }
-            }
-        }
-    } catch (err) {
-        console.error("Fallback discovery failed:", err);
-    }
-
-    throw new Error("All AI models (Priority & Fallback) failed. Please check backend logs.");
   }
 
   // Helper to standardise the call

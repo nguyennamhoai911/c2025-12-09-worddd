@@ -12,6 +12,8 @@ function createPopup() {
   popup = document.createElement("div");
   popup.id = "tts-popup";
   popup.style.display = "none";
+  popup.style.position = "absolute"; // Ensure absolute positioning
+  popup.style.zIndex = "10000";      // Ensure high z-index
   document.body.appendChild(popup);
   return popup;
 }
@@ -31,16 +33,27 @@ function enableDragging(header) {
     dragOffset.x = e.clientX - rect.left;
     dragOffset.y = e.clientY - rect.top;
     header.style.cursor = "grabbing";
+    
+    // Disable Text Selection while dragging
+    document.body.style.userSelect = "none";
   });
+  
   document.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    popup.style.left = e.clientX - dragOffset.x + "px";
-    popup.style.top = e.clientY - dragOffset.y + "px";
+    
+    // Calculate position taking Scroll into account (since it's absolute)
+    const newLeft = e.clientX + window.scrollX - dragOffset.x;
+    const newTop = e.clientY + window.scrollY - dragOffset.y;
+    
+    popup.style.left = newLeft + "px";
+    popup.style.top = newTop + "px";
   });
+  
   document.addEventListener("mouseup", () => {
     isDragging = false;
-    header.style.cursor = "move";
+    if (header) header.style.cursor = "move";
+    document.body.style.userSelect = ""; // Restore selection
   });
 }
 

@@ -1,5 +1,4 @@
 {
-  "/login/page": "app/login/page.js",
   "/settings/page": "app/settings/page.js",
   "/vocabulary/page": "app/vocabulary/page.js"
 }
