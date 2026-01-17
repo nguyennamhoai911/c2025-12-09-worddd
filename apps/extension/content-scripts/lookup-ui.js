@@ -29,6 +29,20 @@ function createPopup() {
   }, { passive: false });
 
   document.body.appendChild(popup);
+  
+  // Add click-outside-to-close functionality
+  const handleClickOutside = (e) => {
+    if (popup && popup.style.display !== "none" && isPopupOpen) {
+      // Check if click is outside the popup
+      if (!popup.contains(e.target)) {
+        closePopup();
+      }
+    }
+  };
+  
+  // Store the handler so we can remove it later if needed
+  popup._clickOutsideHandler = handleClickOutside;
+  
   return popup;
 }
 
@@ -38,6 +52,11 @@ function closePopup() {
   if (el) {
     el.style.display = "none";
     el.innerHTML = ""; // Clear content to free memory/media
+    
+    // Remove click-outside listener
+    if (el._clickOutsideHandler) {
+      document.removeEventListener("mousedown", el._clickOutsideHandler);
+    }
   }
   
   // Reset Variables
@@ -389,6 +408,17 @@ const toggleMicVisual = (btn, isStreaming) => {
   
   const resizeHandle = document.getElementById("resize-handle");
   if(resizeHandle) enableResizing(resizeHandle, popup);
+  
+  // Activate click-outside-to-close functionality
+  if (popup._clickOutsideHandler) {
+    // Remove any existing listener first
+    document.removeEventListener("mousedown", popup._clickOutsideHandler);
+    // Add with a delay to prevent immediate closing from the same click that opened the popup
+    setTimeout(() => {
+      document.addEventListener("mousedown", popup._clickOutsideHandler);
+      isPopupOpen = true;
+    }, 100);
+  }
 }
 
 // --- UPDATE: INJECT AI DATA ---

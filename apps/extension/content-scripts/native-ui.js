@@ -606,7 +606,7 @@ window.NativeUI = (function () {
     const trans = data.trans;
     const meaning = typeof trans === "string" ? trans : trans.wordMeaning;
     miniPopup.innerHTML = `
-        <div style="padding:16px;">
+        <div id="mini-popup-content" style="padding:16px;">
             <div style="font-weight:700; font-size:18px; color:#1890ff; margin-bottom:4px;">${
               data.text
             }</div>
@@ -635,6 +635,24 @@ window.NativeUI = (function () {
       hideAll();
       handlers.onOpenCreate(data.text);
     };
+
+    // Add click-outside-to-close functionality
+    const handleClickOutside = (e) => {
+      if (miniPopup && miniPopup.style.display === "block") {
+        const popupContent = document.getElementById("mini-popup-content");
+        if (popupContent && !popupContent.contains(e.target)) {
+          miniPopup.style.display = "none";
+          document.removeEventListener("mousedown", handleClickOutside);
+        }
+      }
+    };
+
+    // Remove any existing listener before adding new one
+    document.removeEventListener("mousedown", handleClickOutside);
+    // Use setTimeout to avoid immediate closing from the same click that opened it
+    setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 100);
   }
 
   // --- [NEW] RENDER ASSESSMENT MODAL ---
