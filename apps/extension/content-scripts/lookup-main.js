@@ -98,10 +98,19 @@ function extractSentenceContext(selection) {
 }
 
 // --- API: Get AI Translation ---
+// --- API: Get AI Translation ---
 async function apiGetAiTranslation(text, context) {
     try {
-        const storage = await chrome.storage.sync.get(['geminiApiKey', 'authToken']);
-        if (!storage.geminiApiKey || !storage.authToken) return null; // Fallback to Google Translate if no key
+        const storage = await chrome.storage.sync.get(['geminiApiKey', 'authToken', 'azureTranslatorKey', 'azureTranslatorRegion']);
+        
+        // 1. LOCAL OVERRIDE: Azure Translator
+        if (storage.azureTranslatorKey && storage.azureTranslatorRegion) {
+            console.log("🌐 Using Azure Translator (Local)...");
+            return await apiCallAzureTranslatorLocal(text, context, storage.azureTranslatorKey, storage.azureTranslatorRegion);
+        }
+
+        // 2. DEFAULT: Backend AI (Gemini)
+        if (!storage.geminiApiKey || !storage.authToken) return { error: "Chưa cấu hình Azure/AI Key." }; 
         
         console.log("🤖 Calling Gemini AI...");
         const response = await fetch(`${APP_CONFIG.API_URL}/ai/analyze`, {
@@ -115,12 +124,164 @@ async function apiGetAiTranslation(text, context) {
         
         if (response.ok) {
             const data = await response.json();
-            return data; // { ipa, meaning, context_translation, part_of_speech }
+            return data; 
+        } else {
+            return { error: `Server Error: ${response.status}` };
         }
     } catch (e) {
         console.error("AI Error:", e);
+        return { error: e.message };
     }
-    return null;
+    return { error: "Unknown Error" };
+}
+
+// --- Helper: Free Dictionary API for POS & IPA ---
+async function getDictionaryData(word) {
+    try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const entry = data[0];
+        if (!entry) return null;
+
+        const pos = entry.meanings?.[0]?.partOfSpeech || "";
+        const ipa = entry.phonetic || entry.phonetics?.find(p => p.text)?.text || "";
+        
+        return { pos, ipa };
+    } catch { return null; }
+}
+
+// --- Helper: Azure Dictionary Lookup ---
+async function apiCallAzureDictionary(text, key, region) {
+    try {
+        const endpoint = "https://api.cognitive.microsofttranslator.com/dictionary/lookup?api-version=3.0&from=en&to=vi";
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Ocp-Apim-Subscription-Key': key,
+                'Ocp-Apim-Subscription-Region': region,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify([{ Text: text }])
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data[0]?.translations?.map(t => t.displayTarget) || [];
+    } catch { return null; }
+}
+
+// --- Helper: Azure Translator Local ---
+async function apiCallAzureTranslatorLocal(text, context, key, region) {
+    try {
+        const endpoint = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=vi";
+        
+        // Prepare Batch (Text + Context)
+        const body = [{ Text: text }];
+        let contextIndex = -1;
+        if(context && context !== text) {
+            body.push({ Text: context });
+            contextIndex = 1;
+        }
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Ocp-Apim-Subscription-Key': key,
+                'Ocp-Apim-Subscription-Region': region,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) throw new Error("Azure Translation Failed");
+        
+        const data = await response.json();
+        let wordTranslation = data[0]?.translations?.[0]?.text || "Đang cập nhật...";
+        const contextTranslation = (contextIndex !== -1) ? data[contextIndex]?.translations?.[0]?.text : "";
+
+        // === SMART CONTEXT FIX logic ===
+        // Nếu có ngữ cảnh, hãy kiểm tra xem từ dịch đơn lẻ có khớp với ngữ cảnh không.
+        // Nếu không khớp (ví dụ "Chì" ko có trong "Dẫn dắt..."), ta dùng Dictionary API để tìm từ đúng.
+        if (contextTranslation && wordTranslation) {
+             const lowerContext = contextTranslation.toLowerCase();
+             const lowerWord = wordTranslation.toLowerCase();
+             
+             if (!lowerContext.includes(lowerWord)) {
+                 // Từ dịch đơn lẻ KHÔNG khớp với ngữ cảnh. Khả năng cao là sai nghĩa (Homonym).
+                 console.log("⚠️ Context Mismatch detected. Trying Dictionary Search...");
+                 
+                 const candidates = await apiCallAzureDictionary(text, key, region);
+                 if (candidates && candidates.length > 0) {
+                     // Tìm candidate nào xuất hiện trong Context (Ưu tiên từ dài nhất để chính xác nhất)
+                     // Ví dụ: "Dẫn dắt" > "Dẫn"
+                     const bestMatch = candidates
+                        .filter(c => lowerContext.includes(c.toLowerCase()))
+                        .sort((a, b) => b.length - a.length)[0];
+                     
+                     if (bestMatch) {
+                         console.log(`✅ Fixed Meaning: "${wordTranslation}" -> "${bestMatch}"`);
+                         wordTranslation = bestMatch; // Override with better meaning
+                     }
+                 }
+             }
+        }
+
+        // 1. Enrich with POS & IPA (Dictionary API + Local Fallback)
+        let phonetics = { us: "", uk: "" };
+        let partOfSpeech = "";
+
+        // Parallel fetch for speed
+        const [dictData, azureIpa] = await Promise.all([
+            getDictionaryData(text),
+            (window.getPhoneticForText ? getPhoneticForText(text).catch(()=>null) : null)
+        ]);
+
+        if (dictData) {
+            partOfSpeech = dictData.pos; // e.g. "noun", "verb"
+            phonetics.us = dictData.ipa; // Dictionary API usually gives good IPA
+        }
+        
+        // If Azure Speech gave IPA, prefer or merge? 
+        if (azureIpa && (!phonetics.us || phonetics.us === "")) {
+            phonetics = azureIpa;
+        }
+
+        // 2. Smart Auto Highlight Logic (Simple & Reliable)
+        let contextHighlight = "";
+        if (contextTranslation && wordTranslation) {
+             // Normalize both strings
+             const normalizedContext = contextTranslation.toLowerCase().trim();
+             const normalizedWord = wordTranslation.toLowerCase().trim();
+             
+             // Find position in normalized string
+             const idx = normalizedContext.indexOf(normalizedWord);
+             
+             if (idx !== -1) {
+                 // Extract from ORIGINAL string (preserving case)
+                 contextHighlight = contextTranslation.substring(idx, idx + normalizedWord.length);
+                 var highlightIndices = { start: idx, end: idx + normalizedWord.length };
+             }
+        }
+
+        // Construct Data Object compatible with UI
+        return {
+            text: text,
+            contextText: context,
+            translation: {
+                wordMeaning: wordTranslation,
+                contextMeaning: contextTranslation,
+                commonMeanings: "", 
+                dict: [] 
+            },
+            phonetics: phonetics || { us: "", uk: "" },
+            partOfSpeech: partOfSpeech, 
+            contextHighlight: contextHighlight,
+            contextHighlightRange: highlightIndices || null // Pass indices for 100% accuracy
+        };
+    } catch (e) {
+        console.error("Azure Translator Local Error:", e);
+        return { error: "Azure Error: " + e.message };
+    }
 }
 
 let mediaRecorder = null;
@@ -291,16 +452,16 @@ document.addEventListener("keydown", async (e) => {
       // TASK A: AI Translation
       apiGetAiTranslation(selectedText, contextText)
           .then(aiData => {
-              if (aiData) {
+              if (aiData && !aiData.error) {
                   // Update Data Object
                   currentData.translation = {
-                      wordMeaning: aiData.meaning,
-                      contextMeaning: aiData.context_translation,
+                      wordMeaning: aiData.meaning || (aiData.translation ? aiData.translation.wordMeaning : ""),
+                      contextMeaning: aiData.context_translation || (aiData.translation ? aiData.translation.contextMeaning : ""),
                       commonMeanings: aiData.common_meanings || ""
                   };
-                  currentData.phonetics = { us: aiData.ipa, uk: null };
-                  currentData.partOfSpeech = aiData.part_of_speech;
-                  currentData.contextHighlight = aiData.context_highlight;
+                  currentData.phonetics = { us: aiData.ipa || (aiData.phonetics ? aiData.phonetics.us : ""), uk: null };
+                  currentData.partOfSpeech = aiData.part_of_speech || "";
+                  currentData.contextHighlight = aiData.context_highlight || "";
 
                    // fetch images in background
                   getImages(selectedText);
@@ -311,8 +472,9 @@ document.addEventListener("keydown", async (e) => {
                   }
               } else {
                   // AI Failed UI
+                   const msg = aiData?.error || "AI/Translator Config Missing.";
                    const contentArea = document.getElementById("content-area");
-                   if(contentArea) contentArea.innerHTML = `<div style="color:#d32f2f; padding:10px;">⚠️ AI Analysis failed. Please check your API Key.</div>`;
+                   if(contentArea) contentArea.innerHTML = `<div style="color:#d32f2f; padding:10px; font-size:13px;">❌ ${msg}</div>`;
               }
           })
           .catch(err => {
@@ -340,7 +502,7 @@ document.addEventListener("keydown", async (e) => {
   } else if (e.key === "Escape" && isPopupOpen) {
     closePopup();
   }
-});
+}, true);
 
 // 4. Flashcard Listener
 // 4. Flashcard Listener

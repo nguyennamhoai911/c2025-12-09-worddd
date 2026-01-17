@@ -220,7 +220,7 @@ function AuthProvider({ children }) {
         children: children
     }, void 0, false, {
         fileName: "[project]/contexts/AuthContext.tsx",
-        lineNumber: 121,
+        lineNumber: 122,
         columnNumber: 5
     }, this);
 }

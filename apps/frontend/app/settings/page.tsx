@@ -43,13 +43,14 @@ export default function SettingsPage() {
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<any>({
         name: '',
         googleApiKey: '',
         googleCx: '',
         azureSpeechKey: '',
         azureSpeechRegion: '',
-        geminiApiKey: '',
+        azureTranslatorKey: '',
+        azureTranslatorRegion: '',
     });
 
     useEffect(() => {
@@ -60,7 +61,8 @@ export default function SettingsPage() {
                 googleCx: user.googleCx || '',
                 azureSpeechKey: user.azureSpeechKey || '',
                 azureSpeechRegion: user.azureSpeechRegion || '',
-                geminiApiKey: user.geminiApiKey || '',
+                azureTranslatorKey: user.azureTranslatorKey || '',
+                azureTranslatorRegion: user.azureTranslatorRegion || '',
             });
         }
     }, [user]);
@@ -188,18 +190,39 @@ export default function SettingsPage() {
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: '1rem' }}>
-                                <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center justify-between">
-                                    Gemini API Key (AI Analysis)
-                                    {formData.geminiApiKey ? <span className="text-xs text-green-400 font-semibold bg-green-900/30 px-2 py-0.5 rounded">✅ Đã cấu hình</span> : <span className="text-xs text-red-300 font-semibold bg-red-900/30 px-2 py-0.5 rounded">❌ Chưa nhập</span>}
-                                </label>
-                                <PasswordInput
-                                    name="geminiApiKey"
-                                    value={formData.geminiApiKey}
-                                    onChange={handleChange}
-                                    placeholder="AIza..."
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Dùng để phân tích ngữ cảnh và dịch nâng cao.</p>
+                            <div className="grid grid-cols-2 gap-4 mt-4 border-t border-white/10 pt-4">
+                                <div className="col-span-2">
+                                    <h3 className="text-sm font-semibold text-purple-300 mb-2">Azure Translator (Thay thế AI Analysis)</h3>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center justify-between">
+                                        Translator Key
+                                        {formData.azureTranslatorKey ? <span className="text-xs text-green-400 font-semibold bg-green-900/30 px-2 py-0.5 rounded">✅ Đã nhập</span> : <span className="text-xs text-red-300 font-semibold bg-red-900/30 px-2 py-0.5 rounded">❌ Chưa nhập</span>}
+                                    </label>
+                                    <PasswordInput
+                                        name="azureTranslatorKey"
+                                        value={formData.azureTranslatorKey}
+                                        onChange={handleChange}
+                                        placeholder="Key..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1 flex items-center justify-between">
+                                        Translator Region
+                                        {formData.azureTranslatorRegion ? <span className="text-xs text-green-400 font-semibold bg-green-900/30 px-2 py-0.5 rounded">✅ Đã nhập</span> : <span className="text-xs text-red-300 font-semibold bg-red-900/30 px-2 py-0.5 rounded">❌ Chưa nhập</span>}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="azureTranslatorRegion"
+                                        value={formData.azureTranslatorRegion}
+                                        onChange={handleChange}
+                                        placeholder="southeastasia"
+                                        className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                                    />
+                                </div>
+                                <div className="col-span-2">
+                                    <p className="text-xs text-gray-500">Dùng để dịch văn bản và lấy nghĩa từ vựng (thay thế Gemini).</p>
+                                </div>
                             </div>
                         </div>
                     </section>

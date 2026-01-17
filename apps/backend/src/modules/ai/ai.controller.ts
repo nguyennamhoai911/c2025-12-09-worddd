@@ -13,16 +13,11 @@ export class AiController {
     @UseGuards(JwtAuthGuard)
     @Post('analyze')
     async analyze(@Body() body: { text: string; context: string }, @Req() req) {
-        // 1. Get User's Gemini Key from DB
-        const user = await this.prisma.user.findUnique({
-            where: { id: req.user.id },
-            select: { geminiApiKey: true },
-        });
-
+        // Gemini Key is no longer stored per user.
         return this.aiService.analyzeVocabulary(
             body.text,
             body.context,
-            user?.geminiApiKey || '',
+            '',
         );
     }
 }

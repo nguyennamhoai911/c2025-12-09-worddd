@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const openSettingsBtn = document.getElementById("open-settings-btn");
   const syncNowBtn = document.getElementById("sync-now-btn");
 
-  const SETTINGS_URL = "http://localhost:3000/settings"; // TODO: Use config.js if possible, but hardcode for now or parse from config
+  const SETTINGS_URL = "http://localhost:3000/settings";
 
   // 1. Open Settings
   openSettingsBtn.addEventListener("click", () => {
@@ -21,11 +21,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 2. Check current status
   async function checkStatus() {
     chrome.storage.sync.get(
-      ["googleApiKeys", "googleApiKey", "azureKey", "authToken"],
+      ["googleApiKeys", "googleApiKey", "azureKey", "authToken", "azureTranslatorKey"],
       (result) => {
         const keys = result.googleApiKeys || [];
         const singleKey = result.googleApiKey;
         const azureKey = result.azureKey;
+        const azureTranslatorKey = result.azureTranslatorKey;
         const token = result.authToken;
 
         let statusHtml = "";
@@ -46,11 +47,18 @@ document.addEventListener("DOMContentLoaded", async () => {
           statusHtml += `<div>🔍 Google API: <span style="color:#FF9800">Chưa có (Dùng Unsplash)</span></div>`;
         }
 
-        // Azure Status
+        // Azure Speech Status
         if (azureKey) {
           statusHtml += `<div>🎙️ Azure Speech: <span style="color:#4CAF50">Đã có</span></div>`;
         } else {
           statusHtml += `<div>🎙️ Azure Speech: <span style="color:#FF9800">Chưa có</span></div>`;
+        }
+
+        // Azure Translator Status
+        if (azureTranslatorKey) {
+          statusHtml += `<div>🌐 Azure Translator: <span style="color:#4CAF50">Đã có</span></div>`;
+        } else {
+          statusHtml += `<div>🌐 Azure Translator: <span style="color:#FF9800">Chưa có</span></div>`;
         }
 
         syncStatus.innerHTML = statusHtml;
@@ -64,8 +72,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   syncNowBtn.addEventListener("click", () => {
       showStatusMessage("⏳ Đang đồng bộ...", "loading");
       
-      // Gửi message xuống background hoặc content script để trigger fetch
-      // Tuy nhiên context này là popup, ta có thể tự fetch nếu có token
       chrome.storage.sync.get(["authToken"], async (result) => {
           if (!result.authToken) {
                showStatusMessage("❌ Chưa có Token. Hãy đăng nhập Web.", "error");
@@ -73,10 +79,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
 
           try {
-               // APP_CONFIG.API_URL loaded from config.js if present
-               const apiUrl = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.API_URL : "https://localhost:5000";
-               
-               const response = await fetch(`${apiUrl}/auth/me`, {
+               const configApiUrl = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG.API_URL : "http://localhost:3001"; // Fallback if config missing
+
+               const response = await fetch(`${configApiUrl}/auth/me`, {
                    headers: { Authorization: `Bearer ${result.authToken}` }
                });
                
@@ -87,12 +92,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                    const updates = {};
                    if (user.googleApiKey && user.googleCx) {
                         updates.googleApiKeys = [{ key: user.googleApiKey, cx: user.googleCx }];
-                        updates.googleApiKey = user.googleApiKey; // Backward compat
-                        updates.googleSearchEngineId = user.googleCx; // Backward compat
+                        updates.googleApiKey = user.googleApiKey; 
+                        updates.googleSearchEngineId = user.googleCx; 
                    }
                    if (user.azureSpeechKey) updates.azureKey = user.azureSpeechKey;
                    if (user.azureSpeechRegion) updates.azureRegion = user.azureSpeechRegion;
-                   if (user.geminiApiKey) updates.geminiApiKey = user.geminiApiKey; // Sync Gemini Key
+                   
+                   // SYNC AZURE TRANSLATOR
+                   if (user.azureTranslatorKey) updates.azureTranslatorKey = user.azureTranslatorKey;
+                   if (user.azureTranslatorRegion) updates.azureTranslatorRegion = user.azureTranslatorRegion;
                    
                    chrome.storage.sync.set(updates, () => {
                        showStatusMessage("✅ Đồng bộ thành công!", "success");

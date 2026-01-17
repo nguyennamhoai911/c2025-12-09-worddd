@@ -13,7 +13,8 @@ interface User {
   googleCx?: string;
   azureSpeechKey?: string;
   azureSpeechRegion?: string;
-  geminiApiKey?: string;
+  azureTranslatorKey?: string;
+  azureTranslatorRegion?: string;
 }
 
 interface AuthContextType {

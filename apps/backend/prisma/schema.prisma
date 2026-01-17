@@ -24,7 +24,9 @@ model User {
   googleCx          String?
   azureSpeechKey    String?
   azureSpeechRegion String?
-  geminiApiKey      String? // Now uses OpenRouter but keep field name for compatibility
+  azureTranslatorKey    String?
+  azureTranslatorRegion String?
+  // geminiApiKey Removed
 
   // UI Preferences
   popupWidth  Int? @default(380)

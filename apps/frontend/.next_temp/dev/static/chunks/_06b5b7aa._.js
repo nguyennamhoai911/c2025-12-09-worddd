@@ -142,7 +142,7 @@ function AuthProvider({ children }) {
         children: children
     }, void 0, false, {
         fileName: "[project]/contexts/AuthContext.tsx",
-        lineNumber: 124,
+        lineNumber: 125,
         columnNumber: 10
     }, this);
 }
@@ -151,11 +151,11 @@ _c = AuthProvider;
 function useAuth() {
     _s1();
     const $ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$compiler$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["c"])(1);
-    if ($[0] !== "1d59d2766366dd89ba62e594adf91bec874c17866811ad585cb9bf532ec8e284") {
+    if ($[0] !== "eb7f9f0f806928395546c322ccc613519fe7dcf5027c625624a9a4395ca569ee") {
         for(let $i = 0; $i < 1; $i += 1){
             $[$i] = Symbol.for("react.memo_cache_sentinel");
         }
-        $[0] = "1d59d2766366dd89ba62e594adf91bec874c17866811ad585cb9bf532ec8e284";
+        $[0] = "eb7f9f0f806928395546c322ccc613519fe7dcf5027c625624a9a4395ca569ee";
     }
     const context = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useContext"])(AuthContext);
     if (context === undefined) {

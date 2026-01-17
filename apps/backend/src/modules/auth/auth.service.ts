@@ -163,7 +163,8 @@ export class AuthService {
         googleCx: true,
         azureSpeechKey: true,
         azureSpeechRegion: true,
-        geminiApiKey: true,
+        azureTranslatorKey: true,
+        azureTranslatorRegion: true,
       },
     });
 

@@ -13,7 +13,7 @@ function createPopup() {
   popup.id = "tts-popup";
   popup.style.display = "none";
   popup.style.position = "absolute"; // Ensure absolute positioning
-  popup.style.zIndex = "10000";      // Ensure high z-index
+  popup.style.zIndex = "2147483647";      // Max z-index to stay on top
   document.body.appendChild(popup);
   return popup;
 }
@@ -282,12 +282,39 @@ const toggleMicVisual = (btn, isStreaming) => {
        // Show STOP state
        btn.style.background = "#FFEBEE"; 
        btn.style.color = "#F44336";
-       btn.style.animation = "pulse 1.5s infinite"; // Optional pulse
-       // Change Icon to Square (Stop)
+       btn.style.animation = "pulse 1.5s infinite"; 
        btn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
-       btn.innerHTML += `<span style="position: absolute; bottom: -20px; font-size: 10px; color: #F44336; width: 100%;">Stop</span>`; // Label
+       btn.innerHTML += `<span style="position: absolute; bottom: -24px; font-size: 10px; color: #F44336; width: 100%;">Stop</span>`;
+
+       // SHOW IPA PREVIEW (User Request: "take from above")
+       if(btn.id === "btn-mic-initial") {
+           let ipaPreview = document.getElementById("temp-ipa-preview");
+           if (!ipaPreview) {
+               ipaPreview = document.createElement("div");
+               ipaPreview.id = "temp-ipa-preview";
+               ipaPreview.style.fontFamily = "'Lucida Sans Unicode', sans-serif";
+               ipaPreview.style.fontSize = "18px";
+               ipaPreview.style.marginBottom = "12px";
+               ipaPreview.style.fontWeight = "bold";
+               
+               btn.parentElement.insertBefore(ipaPreview, btn);
+           }
+           
+           // Copy content from Top
+           const ipaSource = document.querySelector("#content-area span");
+           if(ipaSource) {
+               // Mimic Color Style from User Image (Green/Yellow/Red mix - static for now or just green)
+               // User image has specific phoneme coloring which is hard to guess without analysis.
+               // We will use a gradient text or just simple Green as "Standard".
+               ipaPreview.innerHTML = `<span style="color:#00C853">${ipaSource.textContent}</span>`;
+           } else {
+               ipaPreview.textContent = "/.../";
+           }
+           ipaPreview.style.display = "block";
+       }
+
    } else {
-       // Revert to Mic Icon
+       // Revert
        btn.style.background = "#E8F5E9"; 
        if(btn.id === 'btn-mic-retry') btn.style.background = "#F9F9F9";
        
@@ -295,7 +322,9 @@ const toggleMicVisual = (btn, isStreaming) => {
        btn.style.animation = "none";
        btn.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
        
-       // Remove label if any (by simple reset innerHTML above)
+       // Hide Temp IPA
+       const ipaPreview = document.getElementById("temp-ipa-preview");
+       if (ipaPreview) ipaPreview.style.display = "none";
    }
 };
 
@@ -374,11 +403,28 @@ function updatePopupAiData(data) {
             </div>
             <div style="font-size: 14px; color: #333; line-height: 1.4;">
                 ${
-                  contextMeaning 
-                  ? (data.contextHighlight 
-                      ? contextMeaning.replace(data.contextHighlight, `<u style="text-decoration: underline; text-decoration-color: #333;">${data.contextHighlight}</u>`)
-                      : contextMeaning)
-                  : ''
+                  (() => {
+                      const text = contextMeaning || "";
+                      const range = data.contextHighlightRange;
+                      
+                      // 1. Precise Index-Based Highlighting (The Silver Bullet)
+                      if (range && typeof range.start === 'number' && typeof range.end === 'number') {
+                          if (range.end <= text.length) {
+                              return text.substring(0, range.start) + 
+                                     `<u style="text-decoration: underline; font-weight: 600;">${text.substring(range.start, range.end)}</u>` + 
+                                     text.substring(range.end);
+                          }
+                      }
+
+                      // 2. Fallback: Regex Search
+                      const hl = data.contextHighlight;
+                      if (!hl) return text;
+                      try {
+                          const escaped = hl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                          const regex = new RegExp(escaped, 'gi'); 
+                          return text.replace(regex, `<u style="text-decoration: underline; font-weight: 600;">$&</u>`);
+                      } catch(e) { return text; }
+                  })()
                 }
             </div>
         `;
@@ -405,8 +451,14 @@ function updatePopupDbData(existingVocab) {
     // 2. Override: If score exists, show it!
     if (existingVocab && existingVocab.pronunciationScores && existingVocab.pronunciationScores.length > 0) {
         // Sort to find latest
-        const sortedScores = existingVocab.pronunciationScores.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-        const bestScore = sortedScores[0];
+        // Sort to find latest VALID score (>0)
+        // Fixes bug where previous error/zero scores from database caused "0 Try again" view
+        const validScores = existingVocab.pronunciationScores
+             .filter(s => typeof s.score === 'number' && s.score > 0)
+             .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+             
+        if (validScores.length === 0) return; // No valid scores -> Show Mic
+        const bestScore = validScores[0];
         
         // Mock Assessment Result Format for renderAssessmentResult
         const resultData = {

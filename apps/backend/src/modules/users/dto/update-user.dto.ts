@@ -21,5 +21,9 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
     @IsOptional()
     @IsString()
-    geminiApiKey?: string;
+    azureTranslatorKey?: string;
+
+    @IsOptional()
+    @IsString()
+    azureTranslatorRegion?: string;
 }

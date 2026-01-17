@@ -44,6 +44,8 @@
     "https://www.googleapis.com/*",
     "https://api.unsplash.com/*",
     "https://*.cognitiveservices.azure.com/*",
+    "https://api.cognitive.microsofttranslator.com/*",
+    "https://api.dictionaryapi.dev/*",
     "https://*.onrender.com/*",
     "http://localhost:3000/*",
     "https://localhost:3001/*",

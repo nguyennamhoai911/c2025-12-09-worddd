@@ -22,11 +22,11 @@ var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.sign
 function PasswordInput(t0) {
     _s();
     const $ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$compiler$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["c"])(17);
-    if ($[0] !== "bb19ae542215a3dd723726bad65c5db3bdc9f75d1bdfeb475a66fa0a781a61e9") {
+    if ($[0] !== "6d5496301be1bed8c7258f476183f96020e713ccdef799205d9e988c79b6222a") {
         for(let $i = 0; $i < 17; $i += 1){
             $[$i] = Symbol.for("react.memo_cache_sentinel");
         }
-        $[0] = "bb19ae542215a3dd723726bad65c5db3bdc9f75d1bdfeb475a66fa0a781a61e9";
+        $[0] = "6d5496301be1bed8c7258f476183f96020e713ccdef799205d9e988c79b6222a";
     }
     const { value, onChange, name, placeholder: t1 } = t0;
     const placeholder = t1 === undefined ? "" : t1;
@@ -177,7 +177,8 @@ function SettingsPage() {
         googleCx: '',
         azureSpeechKey: '',
         azureSpeechRegion: '',
-        geminiApiKey: ''
+        azureTranslatorKey: '',
+        azureTranslatorRegion: ''
     });
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "SettingsPage.useEffect": ()=>{
@@ -188,7 +189,8 @@ function SettingsPage() {
                     googleCx: user.googleCx || '',
                     azureSpeechKey: user.azureSpeechKey || '',
                     azureSpeechRegion: user.azureSpeechRegion || '',
-                    geminiApiKey: user.geminiApiKey || ''
+                    azureTranslatorKey: user.azureTranslatorKey || '',
+                    azureTranslatorRegion: user.azureTranslatorRegion || ''
                 });
             }
         }
@@ -223,7 +225,7 @@ function SettingsPage() {
         children: "Loading..."
     }, void 0, false, {
         fileName: "[project]/app/settings/page.tsx",
-        lineNumber: 127,
+        lineNumber: 129,
         columnNumber: 27
     }, this);
     if (!user) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -231,7 +233,7 @@ function SettingsPage() {
         children: "Vui lòng đăng nhập để xem cài đặt."
     }, void 0, false, {
         fileName: "[project]/app/settings/page.tsx",
-        lineNumber: 128,
+        lineNumber: 130,
         columnNumber: 21
     }, this);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -244,7 +246,7 @@ function SettingsPage() {
                     children: "Cài đặt tài khoản"
                 }, void 0, false, {
                     fileName: "[project]/app/settings/page.tsx",
-                    lineNumber: 131,
+                    lineNumber: 133,
                     columnNumber: 17
                 }, this),
                 success && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -252,7 +254,7 @@ function SettingsPage() {
                     children: success
                 }, void 0, false, {
                     fileName: "[project]/app/settings/page.tsx",
-                    lineNumber: 135,
+                    lineNumber: 137,
                     columnNumber: 29
                 }, this),
                 error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -260,7 +262,7 @@ function SettingsPage() {
                     children: error
                 }, void 0, false, {
                     fileName: "[project]/app/settings/page.tsx",
-                    lineNumber: 136,
+                    lineNumber: 138,
                     columnNumber: 27
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -274,7 +276,7 @@ function SettingsPage() {
                                     children: "Thông tin cá nhân"
                                 }, void 0, false, {
                                     fileName: "[project]/app/settings/page.tsx",
-                                    lineNumber: 141,
+                                    lineNumber: 143,
                                     columnNumber: 25
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -287,7 +289,7 @@ function SettingsPage() {
                                                     children: "Email"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 144,
+                                                    lineNumber: 146,
                                                     columnNumber: 33
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -297,13 +299,13 @@ function SettingsPage() {
                                                     className: "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-gray-400 cursor-not-allowed"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 145,
+                                                    lineNumber: 147,
                                                     columnNumber: 33
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/settings/page.tsx",
-                                            lineNumber: 143,
+                                            lineNumber: 145,
                                             columnNumber: 29
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -313,7 +315,7 @@ function SettingsPage() {
                                                     children: "Tên hiển thị"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 148,
+                                                    lineNumber: 150,
                                                     columnNumber: 33
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -324,25 +326,25 @@ function SettingsPage() {
                                                     className: "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 149,
+                                                    lineNumber: 151,
                                                     columnNumber: 33
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/settings/page.tsx",
-                                            lineNumber: 147,
+                                            lineNumber: 149,
                                             columnNumber: 29
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/settings/page.tsx",
-                                    lineNumber: 142,
+                                    lineNumber: 144,
                                     columnNumber: 25
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/settings/page.tsx",
-                            lineNumber: 140,
+                            lineNumber: 142,
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -352,7 +354,7 @@ function SettingsPage() {
                                     children: "Cấu hình Extension"
                                 }, void 0, false, {
                                     fileName: "[project]/app/settings/page.tsx",
-                                    lineNumber: 155,
+                                    lineNumber: 157,
                                     columnNumber: 25
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -360,7 +362,7 @@ function SettingsPage() {
                                     children: "Các thông tin này sẽ được Extension tự động đồng bộ."
                                 }, void 0, false, {
                                     fileName: "[project]/app/settings/page.tsx",
-                                    lineNumber: 156,
+                                    lineNumber: 158,
                                     columnNumber: 25
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -377,20 +379,20 @@ function SettingsPage() {
                                                             children: "✅ Đã nhập"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 162,
+                                                            lineNumber: 164,
                                                             columnNumber: 62
                                                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                             className: "text-xs text-gray-500",
                                                             children: "⚪ Không bắt buộc"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 162,
+                                                            lineNumber: 164,
                                                             columnNumber: 172
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 160,
+                                                    lineNumber: 162,
                                                     columnNumber: 33
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(PasswordInput, {
@@ -400,13 +402,13 @@ function SettingsPage() {
                                                     placeholder: "AIza..."
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 164,
+                                                    lineNumber: 166,
                                                     columnNumber: 33
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/settings/page.tsx",
-                                            lineNumber: 159,
+                                            lineNumber: 161,
                                             columnNumber: 29
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -420,20 +422,20 @@ function SettingsPage() {
                                                             children: "✅ Đã nhập"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 169,
+                                                            lineNumber: 171,
                                                             columnNumber: 58
                                                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                             className: "text-xs text-gray-500",
                                                             children: "⚪ Không bắt buộc"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 169,
+                                                            lineNumber: 171,
                                                             columnNumber: 168
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 167,
+                                                    lineNumber: 169,
                                                     columnNumber: 33
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -445,13 +447,13 @@ function SettingsPage() {
                                                     className: "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 171,
+                                                    lineNumber: 173,
                                                     columnNumber: 33
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/settings/page.tsx",
-                                            lineNumber: 166,
+                                            lineNumber: 168,
                                             columnNumber: 29
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -468,20 +470,20 @@ function SettingsPage() {
                                                                     children: "✅ Đã nhập"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/settings/page.tsx",
-                                                                    lineNumber: 178,
+                                                                    lineNumber: 180,
                                                                     columnNumber: 68
                                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                     className: "text-xs text-gray-500",
                                                                     children: "⚪ Không bắt buộc"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/settings/page.tsx",
-                                                                    lineNumber: 178,
+                                                                    lineNumber: 180,
                                                                     columnNumber: 178
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 176,
+                                                            lineNumber: 178,
                                                             columnNumber: 37
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(PasswordInput, {
@@ -490,13 +492,13 @@ function SettingsPage() {
                                                             onChange: handleChange
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 180,
+                                                            lineNumber: 182,
                                                             columnNumber: 37
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 175,
+                                                    lineNumber: 177,
                                                     columnNumber: 33
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -510,20 +512,20 @@ function SettingsPage() {
                                                                     children: "✅ Đã nhập"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/settings/page.tsx",
-                                                                    lineNumber: 185,
+                                                                    lineNumber: 187,
                                                                     columnNumber: 71
                                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                     className: "text-xs text-gray-500",
                                                                     children: "⚪ Không bắt buộc"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/app/settings/page.tsx",
-                                                                    lineNumber: 185,
+                                                                    lineNumber: 187,
                                                                     columnNumber: 181
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 183,
+                                                            lineNumber: 185,
                                                             columnNumber: 37
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -535,85 +537,158 @@ function SettingsPage() {
                                                             className: "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 187,
+                                                            lineNumber: 189,
                                                             columnNumber: 37
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 182,
+                                                    lineNumber: 184,
                                                     columnNumber: 33
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/settings/page.tsx",
-                                            lineNumber: 174,
+                                            lineNumber: 176,
                                             columnNumber: 29
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            style: {
-                                                marginTop: '1rem'
-                                            },
+                                            className: "grid grid-cols-2 gap-4 mt-4 border-t border-white/10 pt-4",
                                             children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                    className: "block text-sm font-medium text-gray-300 mb-1 flex items-center justify-between",
-                                                    children: [
-                                                        "Gemini API Key (AI Analysis)",
-                                                        formData.geminiApiKey ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                            className: "text-xs text-green-400 font-semibold bg-green-900/30 px-2 py-0.5 rounded",
-                                                            children: "✅ Đã cấu hình"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 196,
-                                                            columnNumber: 62
-                                                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                            className: "text-xs text-red-300 font-semibold bg-red-900/30 px-2 py-0.5 rounded",
-                                                            children: "❌ Chưa nhập"
-                                                        }, void 0, false, {
-                                                            fileName: "[project]/app/settings/page.tsx",
-                                                            lineNumber: 196,
-                                                            columnNumber: 176
-                                                        }, this)
-                                                    ]
-                                                }, void 0, true, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "col-span-2",
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                                        className: "text-sm font-semibold text-purple-300 mb-2",
+                                                        children: "Azure Translator (Thay thế AI Analysis)"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/app/settings/page.tsx",
+                                                        lineNumber: 195,
+                                                        columnNumber: 37
+                                                    }, this)
+                                                }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
                                                     lineNumber: 194,
                                                     columnNumber: 33
                                                 }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(PasswordInput, {
-                                                    name: "geminiApiKey",
-                                                    value: formData.geminiApiKey,
-                                                    onChange: handleChange,
-                                                    placeholder: "AIza..."
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                            className: "block text-sm font-medium text-gray-300 mb-1 flex items-center justify-between",
+                                                            children: [
+                                                                "Translator Key",
+                                                                formData.azureTranslatorKey ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                    className: "text-xs text-green-400 font-semibold bg-green-900/30 px-2 py-0.5 rounded",
+                                                                    children: "✅ Đã nhập"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/settings/page.tsx",
+                                                                    lineNumber: 200,
+                                                                    columnNumber: 72
+                                                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                    className: "text-xs text-red-300 font-semibold bg-red-900/30 px-2 py-0.5 rounded",
+                                                                    children: "❌ Chưa nhập"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/settings/page.tsx",
+                                                                    lineNumber: 200,
+                                                                    columnNumber: 182
+                                                                }, this)
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/app/settings/page.tsx",
+                                                            lineNumber: 198,
+                                                            columnNumber: 37
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(PasswordInput, {
+                                                            name: "azureTranslatorKey",
+                                                            value: formData.azureTranslatorKey,
+                                                            onChange: handleChange,
+                                                            placeholder: "Key..."
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/settings/page.tsx",
+                                                            lineNumber: 202,
+                                                            columnNumber: 37
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 198,
+                                                    lineNumber: 197,
                                                     columnNumber: 33
                                                 }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                    className: "text-xs text-gray-500 mt-1",
-                                                    children: "Dùng để phân tích ngữ cảnh và dịch nâng cao."
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                            className: "block text-sm font-medium text-gray-300 mb-1 flex items-center justify-between",
+                                                            children: [
+                                                                "Translator Region",
+                                                                formData.azureTranslatorRegion ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                    className: "text-xs text-green-400 font-semibold bg-green-900/30 px-2 py-0.5 rounded",
+                                                                    children: "✅ Đã nhập"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/settings/page.tsx",
+                                                                    lineNumber: 207,
+                                                                    columnNumber: 75
+                                                                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                    className: "text-xs text-red-300 font-semibold bg-red-900/30 px-2 py-0.5 rounded",
+                                                                    children: "❌ Chưa nhập"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/app/settings/page.tsx",
+                                                                    lineNumber: 207,
+                                                                    columnNumber: 185
+                                                                }, this)
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/app/settings/page.tsx",
+                                                            lineNumber: 205,
+                                                            columnNumber: 37
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                            type: "text",
+                                                            name: "azureTranslatorRegion",
+                                                            value: formData.azureTranslatorRegion,
+                                                            onChange: handleChange,
+                                                            placeholder: "southeastasia",
+                                                            className: "w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/app/settings/page.tsx",
+                                                            lineNumber: 209,
+                                                            columnNumber: 37
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/app/settings/page.tsx",
+                                                    lineNumber: 204,
+                                                    columnNumber: 33
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "col-span-2",
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                        className: "text-xs text-gray-500",
+                                                        children: "Dùng để dịch văn bản và lấy nghĩa từ vựng (thay thế Gemini)."
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/app/settings/page.tsx",
+                                                        lineNumber: 212,
+                                                        columnNumber: 37
+                                                    }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/settings/page.tsx",
-                                                    lineNumber: 199,
+                                                    lineNumber: 211,
                                                     columnNumber: 33
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/settings/page.tsx",
-                                            lineNumber: 191,
+                                            lineNumber: 193,
                                             columnNumber: 29
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/settings/page.tsx",
-                                    lineNumber: 158,
+                                    lineNumber: 160,
                                     columnNumber: 25
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/settings/page.tsx",
-                            lineNumber: 154,
+                            lineNumber: 156,
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -623,28 +698,28 @@ function SettingsPage() {
                             children: loading ? 'Đang lưu...' : 'Lưu cài đặt'
                         }, void 0, false, {
                             fileName: "[project]/app/settings/page.tsx",
-                            lineNumber: 204,
+                            lineNumber: 218,
                             columnNumber: 21
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/settings/page.tsx",
-                    lineNumber: 138,
+                    lineNumber: 140,
                     columnNumber: 17
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/settings/page.tsx",
-            lineNumber: 130,
+            lineNumber: 132,
             columnNumber: 13
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/settings/page.tsx",
-        lineNumber: 129,
+        lineNumber: 131,
         columnNumber: 10
     }, this);
 }
-_s1(SettingsPage, "OODUn0Y+GC3KClwXr6la2HlUink=", false, function() {
+_s1(SettingsPage, "HGMS7J9Q3W9IdLnVnfiCh/uxNkA=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$contexts$2f$AuthContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"]
     ];
