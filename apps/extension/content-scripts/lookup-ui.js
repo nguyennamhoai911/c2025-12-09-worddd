@@ -8,20 +8,47 @@ let isDragging = false;
 let dragOffset = { x: 0, y: 0 };
 
 function createPopup() {
-  if (popup) popup.remove();
+  // 1. Clean up ghost elements (Zombie Popups)
+  const oldPopup = document.getElementById("tts-popup");
+  if (oldPopup) {
+    oldPopup.remove();
+  }
+
+  // 2. Create New
   popup = document.createElement("div");
   popup.id = "tts-popup";
   popup.style.display = "none";
-  popup.style.position = "absolute"; // Ensure absolute positioning
-  popup.style.zIndex = "2147483647";      // Max z-index to stay on top
+  
+  // Ensure Inline Styles match CSS for robustness
+  popup.style.position = "fixed"; 
+  popup.style.zIndex = "2147483647"; 
+  
+  // Prevent Scroll Leak
+  popup.addEventListener("wheel", (e) => {
+    e.stopPropagation(); 
+  }, { passive: false });
+
   document.body.appendChild(popup);
   return popup;
 }
 
 function closePopup() {
-  if (popup) popup.style.display = "none";
+  // Lookup by ID to ensure we catch the exact element in DOM
+  const el = document.getElementById("tts-popup");
+  if (el) {
+    el.style.display = "none";
+    el.innerHTML = ""; // Clear content to free memory/media
+  }
+  
+  // Reset Variables
   window.speechSynthesis.cancel();
   isPopupOpen = false;
+  isDragging = false; 
+  
+  // Blur focus
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
 }
 
 function enableDragging(header) {
@@ -42,9 +69,9 @@ function enableDragging(header) {
     if (!isDragging) return;
     e.preventDefault();
     
-    // Calculate position taking Scroll into account (since it's absolute)
-    const newLeft = e.clientX + window.scrollX - dragOffset.x;
-    const newTop = e.clientY + window.scrollY - dragOffset.y;
+    // Calculate position relative to Viewport (Fixed)
+    const newLeft = e.clientX - dragOffset.x;
+    const newTop = e.clientY - dragOffset.y;
     
     popup.style.left = newLeft + "px";
     popup.style.top = newTop + "px";

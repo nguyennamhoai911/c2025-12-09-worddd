@@ -427,7 +427,7 @@ async function assessPronunciation(audioBlob, referenceText) {
       Dimension: "Comprehensive",
       PhonemeAlphabet: "IPA",
     };
-    const paramsHeader = btoa(JSON.stringify(assessParams));
+    const paramsHeader = btoa(unescape(encodeURIComponent(JSON.stringify(assessParams))));
 
     const url = `https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US`;
     const response = await fetch(url, {

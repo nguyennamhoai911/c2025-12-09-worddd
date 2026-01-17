@@ -1,7 +1,8 @@
-:root {
-  --primary-color: #58cc02; /* Xanh lá kiểu Duolingo/Elsa */
+/* --- SCOPED VARIABLES (Avoid :root pollution) --- */
+#tts-popup {
+  --primary-color: #58cc02;
   --primary-dark: #46a302;
-  --accent-color: #1cb0f6; /* Xanh dương */
+  --accent-color: #1cb0f6;
   --text-primary: #3c3c3c;
   --text-secondary: #777777;
   --bg-color: #ffffff;
@@ -12,23 +13,32 @@
   --border-radius: 16px;
 }
 
-/* Reset & Base */
-* {
+/* --- RESETS (Scoped Only) --- */
+#tts-popup *, 
+#vocab-root * {
   box-sizing: border-box;
 }
 
+/* --- POPUP CONTAINER --- */
 #tts-popup {
-  position: absolute;
+  /* Positioning Logic */
+  position: fixed; 
+  z-index: 2147483647 !important; 
+  top: 0;
+  left: 0;
+  margin: 0;
+  line-height: 1.5;
+  text-align: left;
+  
+  /* Visuals */
   background: var(--bg-color);
   color: var(--text-primary);
   padding: 0;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-soft);
-  z-index: 999999;
   min-width: 320px;
   max-width: 400px;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif; /* Font tròn trịa hiện đại */
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   border: 1px solid rgba(0, 0, 0, 0.08);
   overflow: hidden;
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
