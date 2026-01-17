@@ -26,6 +26,10 @@ model User {
   azureSpeechRegion String?
   geminiApiKey      String? // Now uses OpenRouter but keep field name for compatibility
 
+  // UI Preferences
+  popupWidth  Int? @default(380)
+  popupHeight Int? @default(500)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

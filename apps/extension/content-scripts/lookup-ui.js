@@ -57,8 +57,57 @@ function enableDragging(header) {
   });
 }
 
+function enableResizing(handle, content) {
+  console.log('🔧 enableResizing called', { handle, content });
+  if (!handle || !content) {
+    console.warn('⚠️ Resize handle or content not found!');
+    return;
+  }
+  
+  let isResizing = false;
+  let startX, startWidth;
+
+  const handleMouseDown = (e) => {
+    e.stopPropagation();
+    isResizing = true;
+    startX = e.clientX;
+    startWidth = parseInt(window.getComputedStyle(content).width, 10);
+    document.body.style.userSelect = "none";
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isResizing) return;
+    e.preventDefault();
+    
+    const newWidth = Math.max(300, startWidth + (e.clientX - startX));
+    const maxWidth = Math.min(800, window.innerWidth - 40);
+    const clampedWidth = Math.min(newWidth, maxWidth);
+    
+    content.style.width = clampedWidth + "px";
+  };
+
+  const handleMouseUp = async () => {
+    if (!isResizing) return;
+    isResizing = false;
+    document.body.style.userSelect = "";
+    
+    const finalWidth = parseInt(content.style.width, 10);
+    
+    try {
+      await chrome.storage.local.set({ popupWidth: finalWidth });
+      console.log(`✅ Popup width saved: ${finalWidth}px`);
+    } catch (e) {
+      console.warn("Failed to save popup width:", e);
+    }
+  };
+
+  handle.addEventListener("mousedown", handleMouseDown);
+  document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("mouseup", handleMouseUp);
+}
+
 // --- RENDER POPUP (COMPLETE REDESIGN) ---
-function renderPopupContent(data, isSoundEnabled, callbacks) {
+async function renderPopupContent(data, isSoundEnabled, callbacks) {
   if (!popup) return;
   const { toggleSound, closePopup, speakEdge, handleMark, handleMic } = callbacks;
   const existing = data.existing;
@@ -75,14 +124,29 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
   const pos = data.partOfSpeech || ""; // e.g. "Verb Phrase"
   const isStarred = !!existing;
 
-  // 2. Prepare HTML Structure
-  // Using Inline CSS for single-file portability as requested
+  // 1.5. Load User Preferences (Width only) from Local Storage
+  let width = 380; // Default
   
+  try {
+    const storage = await chrome.storage.local.get(['popupWidth']);
+    if (storage.popupWidth) width = storage.popupWidth;
+  } catch (e) {
+    console.warn("Failed to load popup preferences:", e);
+  }
+
+  // Apply Width to Container (Not Content)
+  popup.style.width = width + "px";
+  popup.style.maxWidth = "min(800px, calc(100vw - 40px))";
+  popup.style.height = "auto";
+  popup.style.boxSizing = "border-box";
+
+  // 2. Prepare HTML Structure
   const content = `
-    <div style="
+    <div id="popup-content" style="
         font-family: 'Segoe UI', Roboto, sans-serif;
         padding: 20px;
-        width: 320px;
+        width: 100%;
+        height: 100%;
         background: #FFFFFF;
         border-radius: 16px;
         box-shadow: 0 10px 40px rgba(0,0,0,0.15);
@@ -91,7 +155,29 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
         display: flex;
         flex-direction: column;
         gap: 12px;
+        overflow-y: visible;
+        overflow-x: hidden;
+        box-sizing: border-box;
     ">
+        <!-- Global Style for All Children -->
+        <style>
+            #popup-content * {
+                box-sizing: border-box;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            #popup-content > div {
+                min-width: 0;
+                flex-shrink: 1;
+            }
+            #popup-content button {
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+            #popup-content div[style*="display: flex"] {
+                flex-wrap: wrap;
+            }
+        </style>
         <!-- HEADER -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom:-5px;" id="popup-header">
             <div style="width: 40px; height: 40px; background: #FFC107; border-radius: 50%; display:flex; align-items:center; justify-content:center; overflow:hidden;">
@@ -267,6 +353,20 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
         </div>
         
         <div id="save-status" style="display:none;"></div>
+        
+        <!-- RESIZE HANDLE (Right Edge) -->
+        <div id="resize-handle" style="
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 100%;
+            cursor: ew-resize;
+            background: rgba(0, 0, 0, 0.1);
+            z-index: 99999;
+            transition: background 0.2s;
+            border-left: 1px solid rgba(0,0,0,0.05);
+        " onmouseover="this.style.background='rgba(0, 0, 0, 0.3)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.1)'"></div>
     </div>
   `;
   
@@ -274,6 +374,7 @@ function renderPopupContent(data, isSoundEnabled, callbacks) {
 
   // 3. Attach Events
   enableDragging(document.getElementById("popup-header"));
+  enableResizing(document.getElementById("resize-handle"), popup);
   document.getElementById("btn-close").onclick = closePopup;
   document.getElementById("btn-sound").onclick = toggleSound;
   
